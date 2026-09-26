@@ -4,12 +4,15 @@ import Button from "../components/primitives/Button";
 import Toggle from "../components/primitives/Toggle";
 import Input from "../components/primitives/Input";
 import SearchInput from "../components/primitives/SearchInput";
+import Picker from "../components/primitives/Picker";
 import { ButtonType, ToggleType, InputType } from '../theme/types';
 
 export default function Index() {
 const [pushEnabled, setPushEnabled] = useState(true);
 const [studentId, setStudentId] = useState("");
 const [search, setSearch] = useState("");
+const [program, setProgram] = useState(null);
+const [guestType, setGuestType] = useState(null);
 
   return (
     <View style={styles.container}>
@@ -39,6 +42,21 @@ const [search, setSearch] = useState("");
         value={search}
         onChangeText={setSearch}
         placeholder="Search..."
+      />
+
+      <Picker
+        searchable
+        placeholder="Search programs"
+        options={['Computer Science', 'Information Technology', 'Data Science and Analytics']}
+        value={program}
+        onSelect={setProgram}
+      />
+      
+      <Picker
+        placeholder="Select guest type"
+        options={['Parent or Guardian', 'Relative', 'Representative', 'Alumni', 'Other']}
+        value={guestType}
+        onSelect={setGuestType}
       />
     </View>
   );
