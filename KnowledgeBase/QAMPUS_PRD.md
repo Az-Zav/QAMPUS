@@ -1,8 +1,15 @@
 # QAMPUS — Product Requirements Document
 
-**Version:** 1.2 · **Scope:** Version 1 · **Status:** Authoritative for product behavior.
+**Version:** 1.3 · **Scope:** Version 1 · **Status:** Authoritative for product behavior.
 
 Companion documents: `QAMPUS_TDD.md` (architecture, data model, implementation) and `QAMPUS_UIUX.md` (screens, components, visual system, surface-level journeys). Rule IDs run in one sequence across the PRD and TDD; this document owns `R-01` to `R-31`. Rules added after v1.0 use suffix IDs (`R-08a`, `R-08b`) so existing IDs and cross-references stay stable.
+
+**Revision notes (v1.2 → v1.3).**
+- Backend decided: full Firebase (Firebase Auth, Firestore, Cloud Functions) on the Blaze plan within the free quota. No Express server. TDD v2.0 (Express/Postgres) is superseded in full and is to be rewritten; product rules here do not depend on it.
+- Staff may mark an `IN_SERVICE` ticket `NO_SHOW` when the verified person never reached the window (R-23a). Chosen over a separate `ARRIVED` state or rotating QR.
+- Rotating QR moved from Future to rejected: the office QR is static and encodes only the office code (R-20).
+- Guests are a device-bound anonymous account (R-02); guest types cut to three; guest ID is `G` + six digits with no dash.
+- New user notification: offense revoked (R-15, R-24).
 
 **Revision notes (v1.1 → v1.2).**
 - The backend is undecided (Firebase/NoSQL is under consideration). TDD sections tied to Express/Postgres — including the lazy no-show sweep (R-34, R-45) — are superseded pending that decision; product rules here are unaffected.
@@ -82,17 +89,17 @@ Indicators are qualitative by design. V1 collects no analytics beyond what the c
 
 ### In scope
 
-Campus service offices, one queue each · remote joining from a mobile app · Google OAuth for students, followed by a one-time student ID and program entry · device-token identity with a self-declared profile and a generated guest ID for guests · QR arrival verification with a manual-code fallback for users and a staff ID-number fallback for students and guests · staff-controlled FIFO with authorized override · staff-marked no-shows · a flat two-strike temporary ban for abandoned calls · in-app notifications for all events, push for "your turn" · a staff web application with an attached public "Now Serving" display · closing-time capacity guardrail · append-only logging of ticket transitions and privileged actions.
+Campus service offices, one queue each · remote joining from a mobile app · Google OAuth for students, followed by a one-time student ID and program entry · device-bound anonymous identity with a self-declared profile and a generated guest ID for guests · static per-office QR arrival verification with a manual-code fallback for users and a staff ID-number fallback for students and guests · staff-controlled FIFO with authorized override · staff-marked no-shows, including reversal of a verified arrival the person never followed through · a flat two-strike temporary ban for abandoned calls · in-app notifications for all events, push for "your turn" · a staff web application with an attached public "Now Serving" display · closing-time capacity guardrail · append-only logging of ticket transitions and privileged actions.
 
 ### Out of scope
 
-Appointment scheduling and time slots · multiple queues or windows per office · multi-campus · rotating QR codes · non-school queues · automatic queue advancement or optimization · automatic no-show expiry · email/password login · SMS/OTP of any kind · offline terminal operation · a super-admin interface · functional biometric login · functional theme switching · scheduled reminder notifications · analytics beyond the capacity formula · data retention policy.
+Appointment scheduling and time slots · multiple queues or windows per office · multi-campus · rotating or time-limited QR codes (rejected, not deferred) · a separate `ARRIVED` state between verification and service · non-school queues · automatic queue advancement or optimization · automatic no-show expiry · email/password login · SMS/OTP of any kind · offline terminal operation · a super-admin interface · functional biometric login · functional theme switching · scheduled reminder notifications · analytics beyond the capacity formula · data retention policy.
 
 Biometric login and theme switching appear in Settings as inert, navigable toggles that preserve the interface layout. They do nothing in V1.
 
 ### Future
 
-Deferred, not rejected: rotating QR · offline terminal operation · multiple service queues and windows · appointment scheduling · multi-campus and institutional integrations · a super-admin interface · verified guest and student identity · operational analytics · retention policy · functional biometric login and theme switching · automatic no-show expiry · handling a user called at two offices at once.
+Deferred, not rejected: offline terminal operation · multiple service queues and windows · appointment scheduling · multi-campus and institutional integrations · a super-admin interface · verified guest and student identity · operational analytics · retention policy · functional biometric login and theme switching · automatic no-show expiry · handling a user called at two offices at once.
 
 ---
 
@@ -108,7 +115,7 @@ Deferred, not rejected: rotating QR · offline terminal operation · multiple se
 
 **Grace period** — one minute from the call, within which the user must arrive and verify. It is a countdown, not a negotiation: when it lapses the ticket is expired, scans no longer work, and staff mark it a no-show.
 
-**Offense** — a permanent record that a user abandoned a called ticket, either by cancelling it or by being marked a no-show.
+**Offense** — a permanent record that a user abandoned a called ticket, either by cancelling it or by being marked a no-show — after the grace period, or after a verification they never followed through.
 
 **Strike** — the running count of a user's unresolved offenses. Two means a ban.
 
@@ -116,7 +123,7 @@ Deferred, not rejected: rotating QR · offline terminal operation · multiple se
 
 **Capacity guardrail** — an arithmetic check, run before every join, that the office can plausibly serve one more person before it closes.
 
-**Verification** — proving physical arrival, normally by scanning the office's QR code with the app. Fallbacks are manual code entry by the user and ID-number verification by staff.
+**Verification** — proving physical arrival, normally by scanning the office's static QR code (which encodes only the office code) with the app. Fallbacks are manual code entry by the user and ID-number verification by staff. Staff remain the final check: a verification can be reversed to a no-show (R-23a).
 
 **Institutional ID** — the identifier staff use to look up a person: the student ID for students, the generated guest ID for guests.
 
@@ -137,6 +144,7 @@ stateDiagram-v2
     CALLED --> CANCELLED: user cancels (offense)
     CALLED --> NO_SHOW: staff marks no-show after 1 minute (offense)
     IN_SERVICE --> COMPLETED: staff completes
+    IN_SERVICE --> NO_SHOW: staff marks no-show, never arrived (offense)
     COMPLETED --> [*]
     CANCELLED --> [*]
     NO_SHOW --> [*]
@@ -145,6 +153,8 @@ stateDiagram-v2
 `COMPLETED`, `CANCELLED`, and `NO_SHOW` are terminal. A ticket in `WAITING`, `CALLED`, or `IN_SERVICE` is active, counts toward the three-ticket limit, and is shown on the user's Home. A ticket that reaches a terminal state leaves Home and appears in history (R-08b).
 
 A `CALLED` ticket whose grace period has lapsed is expired but remains `CALLED` until staff mark it `NO_SHOW`.
+
+An `IN_SERVICE` ticket whose holder verified but never reached the window can be marked `NO_SHOW` by staff (R-23a).
 
 ### 7.2 Student journey
 
@@ -171,11 +181,13 @@ flowchart TD
     J -->|Scan QR or enter code| K[IN_SERVICE · confirmation shown]
     J -->|No: scans now invalid| L[Expired · staff marks NO_SHOW · offense · strike]
     K --> M[Staff completes · COMPLETED]
+    K -->|Never reaches the window| L2[Staff marks NO_SHOW · offense · strike]
+    L2 --> N
     M --> N[Leaves Home · appears in history]
     L --> N
 ```
 
-Governed by R-01, R-04, R-07, R-08, R-08a, R-08b, R-12, R-13, R-14, R-17, R-19, R-20, R-25.
+Governed by R-01, R-04, R-07, R-08, R-08a, R-08b, R-12, R-13, R-14, R-17, R-19, R-20, R-23a, R-25.
 
 ### 7.3 Onboarding
 
@@ -204,13 +216,16 @@ flowchart TD
     E -->|Phone dead / scan fails| G[Verify by ID number<br/>student ID or guest ID]
     E -->|Not within 1 minute| H[Ticket expired ·<br/>staff marks NO_SHOW]
     G --> F
-    F --> I[Serve · Complete]
+    F --> F2{Person at the window?}
+    F2 -->|Yes| I[Serve · Complete]
+    F2 -->|No: verified but never arrived| H2[Staff marks NO_SHOW<br/>with reason]
+    H2 --> C
     I --> C
     H --> C
     C --> J[Close queue at end of day]
 ```
 
-Staff trigger each step: calling, marking a no-show, and calling the next ticket are separate actions. Governed by R-04, R-05, R-06, R-11, R-12, R-20, R-22, R-27.
+Staff trigger each step: calling, marking a no-show, and calling the next ticket are separate actions. Governed by R-04, R-05, R-06, R-11, R-12, R-20, R-22, R-23a, R-27.
 
 ### 7.5 Exception paths
 
@@ -220,6 +235,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 | Cancel while `CALLED` | Confirmation states it counts as an offense; offense + strike. This includes an expired ticket not yet marked. | R-11 |
 | Grace period lapses | Ticket is expired; scans are invalid; staff mark `NO_SHOW`; offense + strike. | R-12 |
 | Scan after the grace period | Rejected with an "expired" message; nothing changes; logged only. | R-12, R-23 |
+| Verified but never reaches the window | Staff mark the `IN_SERVICE` ticket `NO_SHOW` with a reason; offense + strike. | R-23a |
 | Second offense | 24-hour ban; strike count resets. | R-13 |
 | Join attempt while banned | Rejected with the expiry time and the offenses behind it. | R-14 |
 | Fourth active ticket | Rejected, naming the three-ticket limit. | R-07 |
@@ -239,10 +255,10 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 - First sign-in: enter a 7-digit student ID and a program (searchable list). Both are editable in Profile.
 - *Why: one identity system to build; staff need the ID to verify people when the QR path fails.*
 
-**R-02 — A guest is a device token, a self-declared profile, and a generated guest ID**
-- A device token is created on first use and backs a real user record.
-- Before joining: `name` (required), `email` (optional), `guest_type` (required: parent/guardian, relative, representative, alumnus, other). Editable afterward.
-- The system generates a unique guest ID (`G-` + six digits), shown in the profile the same way as a student ID.
+**R-02 — A guest is a device-bound anonymous account, a self-declared profile, and a generated guest ID**
+- An anonymous account is created on first use and bound to the device; it backs a real user record tagged as a guest.
+- Before joining: `name` (required), `email` (optional), `guest_type` (required: parent or guardian, alumni, representative). Editable afterward.
+- The system generates a unique guest ID (`G` + six digits, no dash, e.g. `G104728`), shown in the profile the same way as a student ID.
 - *Why: staff need to know who they serve and need a lookup key; verifying guests would need an SMS gateway V1 cannot justify.*
 
 **R-03 — One account is one person**
@@ -271,7 +287,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 
 **R-08 — Ticket states and transitions are fixed**
 - `WAITING → CALLED → IN_SERVICE → COMPLETED`.
-- `WAITING`/`CALLED → CANCELLED`; `CALLED → NO_SHOW` (marked by staff).
+- `WAITING`/`CALLED → CANCELLED`; `CALLED`/`IN_SERVICE → NO_SHOW` (marked by staff; from `IN_SERVICE` only per R-23a).
 - Verified arrival goes straight to `IN_SERVICE`.
 - *Why: in a single-window office, marking someone arrived is starting their service.*
 
@@ -298,7 +314,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 - *Why: leaving a physical line before being served costs nothing.*
 
 **R-11 — Abandoning a called ticket is an offense, however it happens**
-- Cancelling a called ticket and being marked a no-show each record an offense and a strike. There is no lighter tier.
+- Cancelling a called ticket, being marked a no-show after the grace period, and being marked a no-show after a verification the user never followed through (R-23a) each record an offense and a strike. There is no lighter tier.
 - Cancelling an expired ticket that staff have not yet marked is still a cancellation of a called ticket.
 - Before cancelling a called ticket, the user is told it counts as an offense and confirms.
 - *Why: from the office's side both produce the same wasted call.*
@@ -321,6 +337,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 **R-15 — Authorized staff can revoke offenses**
 - Assigned staff may revoke offenses tied to their own office's tickets; a super administrator may revoke any.
 - Revocation reverses the strike and lifts any ban it caused.
+- The user is notified that the offense was revoked.
 - *Why: the system will sometimes be wrong, and there must be a way to say so.*
 
 **R-16 — Office- or system-initiated cancellation never penalizes**
@@ -342,6 +359,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 
 **R-18 — Average service duration is measured, not configured**
 - Taken from tickets completed today and yesterday at that office; falls back to a per-office default when there are none.
+- The average may be kept as a running value updated when tickets complete, rather than recomputed on every join; the window and fallback are unchanged. Tickets reversed to `NO_SHOW` never contribute.
 - *Why: offices differ; a static estimate would be wrong for most of them.*
 
 **R-19 — Authorized staff may override the cutoff**
@@ -351,7 +369,8 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 ### 8.5 Arrival Verification
 
 **R-20 — Valid verification starts service**
-- The system checks the user's identity, that the ticket belongs to the scanned office, that it is `CALLED`, and that the grace period has not lapsed.
+- Each office has one static QR code that encodes only its office code; it carries no user, ticket, or time data.
+- The system checks the user's identity, that the ticket belongs to the scanned office, that it is `CALLED`, and that the grace period has not lapsed. All checks and the transition run on the server; the client submits only the scanned office code.
 - On success the ticket moves to `IN_SERVICE` and the user sees a confirmation.
 - The scanner is reachable at any time from main navigation and is offered when the user is notified of a call.
 - *Why: proving presence is the whole point of the QR.*
@@ -371,10 +390,17 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 - The user sees a plain-language reason: wrong office, no called ticket, or expired.
 - *Why: most invalid scans are honest mistakes; policing them costs more than it saves.*
 
+**R-23a — Staff may reverse a verification to a no-show**
+- While a ticket is `IN_SERVICE`, assigned staff may mark it `NO_SHOW` when the verified person never reached the window (for example, the static QR was scanned from a photo or from elsewhere).
+- Staff confirm and give a reason. The action is logged with its actor (R-28).
+- The outcome is identical to R-12: offense + strike, `NO_SHOW` notification, revocable under R-15. The ticket leaves Home and appears in history.
+- Not available once a ticket is `COMPLETED`. Calling the next ticket remains a separate action.
+- *Why: a static QR proves possession of the code, not presence. The person at the window is the only reliable check, and this closes the gap without an `ARRIVED` state or rotating QR.*
+
 ### 8.6 Notifications
 
 **R-24 — Notification types**
-- *User:* queue confirmed, your turn, approaching turn, no-show (sent when staff mark it), queue cancelled, service completed, warning, global announcement.
+- *User:* queue confirmed, your turn, approaching turn, no-show (sent when staff mark it), queue cancelled, service completed, warning, offense revoked, global announcement.
 - *Staff:* queue approaching cutoff, global announcement.
 
 **R-25 — Everything appears in-app; only "your turn" is pushed**
@@ -397,6 +423,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 | Edit office location and operating hours | Assigned staff, or super administrator |
 | Open/close a queue | Assigned staff, or super administrator |
 | Call, override, verify, mark no-show, complete | Assigned staff, or super administrator |
+| Mark an `IN_SERVICE` ticket no-show (R-23a) | Assigned staff, or super administrator |
 | Office-level queue cancellation | Assigned staff, or super administrator |
 | Capacity-cutoff override | Assigned staff, or super administrator |
 | Offense revocation | Assigned staff (own office only), or super administrator (any) |
@@ -404,7 +431,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 Office codes appear inside every ticket number, which is why changing them is privileged.
 
 **R-28 — Every privileged action is recorded with its actor**
-- Overrides, no-show markings, cancellations, closures, cutoff overrides, and revocations each produce a log entry naming who did it and, where relevant, why.
+- Overrides, no-show markings (reversals of verified arrivals always carry a reason), cancellations, closures, cutoff overrides, and revocations each produce a log entry naming who did it and, where relevant, why.
 - *Why: accountability for actions that affect other people's place in line.*
 
 ---
@@ -413,7 +440,7 @@ Office codes appear inside every ticket number, which is why changing them is pr
 
 **R-29 — No retention or deletion policy in V1.** All records are kept indefinitely.
 
-**R-30 — Security follows standard practice.** Encrypted transport, server-side session and authorization checks on every privileged action, no client-supplied identity, secrets in configuration.
+**R-30 — Security follows standard practice.** Encrypted transport, server-side session and authorization checks on every privileged action, no client-supplied identity, secrets in configuration. Clients never write authoritative state (ticket status, offenses, strikes, bans, sequence numbers) directly; every such change runs on the server.
 
 **R-31 — Accessibility targets** are specified in the UI/UX document: adequate contrast, legible type, status conveyed by icon and label rather than color alone, large touch targets, plain-language errors, and a non-QR path to verification.
 
@@ -448,12 +475,14 @@ V1 is complete when each of the following can be demonstrated end to end.
 | 21 | Home shows `WAITING`, `CALLED` (with countdown), and `IN_SERVICE` tickets with their current state | R-08b |
 | 22 | A student edits their student ID and program in Profile | R-01 |
 | 23 | After one minute a scan or manual code is rejected as expired; the ticket stays called until staff mark it no-show | R-12, R-23 |
+| 24 | Staff mark an `IN_SERVICE` ticket `NO_SHOW` with a reason; an offense is recorded, the user is notified, and the action is logged | R-23a, R-28 |
+| 25 | Revoking an offense notifies the user | R-15, R-24 |
 
 ---
 
 ## 11. Known Limitations
 
-1. **Guests can evade bans** by clearing app data for a fresh device token and guest ID. Closing this needs verified identity, which V1 does not have.
+1. **Guests can evade bans** by clearing app data or reinstalling, which creates a fresh anonymous account and guest ID. Closing this needs verified identity, which V1 does not have.
 2. **Guest profiles are unverified** and may be false. They inform staff; they do not authenticate.
 3. **Student IDs and programs are self-entered and unverified.** Staff ID verification confirms only that the person matches what the account states.
 4. **No grace for legitimate lateness.** Someone crossing campus who misses the one-minute window takes the same strike as someone who never left. Two strikes is the whole budget.
@@ -461,6 +490,7 @@ V1 is complete when each of the following can be demonstrated end to end.
 6. **Simultaneous calls at two offices** have no defined presentation in V1 (R-09).
 7. **No analytics.** Service duration is measured for the capacity formula only.
 8. **No super-admin interface.** Office and staff setup requires database access.
+9. **A static QR can be scanned without being present** (e.g. a photo of the display). Only staff notice, and the remedy is manual (R-23a).
 
 ---
 
@@ -468,11 +498,12 @@ V1 is complete when each of the following can be demonstrated end to end.
 
 | Question | Status |
 |---|---|
-| Backend and API specification | Backend undecided (Firebase/NoSQL under consideration); TDD sections tied to Express/Postgres, including the lazy no-show sweep, superseded pending the decision |
+| Backend and API specification | Decided: full Firebase (Auth, Firestore, Cloud Functions), no Express. TDD v2.0 superseded in full; rewrite pending, with the API specification as a section of it |
+| Manual code format and its relation to the QR payload | Not defined; the QR encodes the office code only |
 | Source of the program list | Not defined |
 | UI placement of the cancel action | To be settled in the UI/UX document |
 | Behavior when a user is called at two offices at once | Deferred to V2 |
-| `QAMPUS_UIUX.md` | Exists; to be imported and reconciled with v1.2 |
+| `QAMPUS_UIUX.md` | v1.1; to be reconciled with v1.3 (no-show control on in-service tickets, offense-revoked notification, guest types) |
 
 ---
 
@@ -486,11 +517,11 @@ V1 is complete when each of the following can be demonstrated end to end.
 | **Capacity guardrail** | The pre-join check that the office can still serve one more person today |
 | **Expired ticket** | A `CALLED` ticket whose grace period has lapsed; scans are rejected until staff mark it a no-show |
 | **Grace period** | The one minute a called user has to arrive and verify |
-| **Guest** | A non-student user identified by device token, a self-declared profile, and a generated guest ID |
-| **Guest ID** | System-generated identifier (`G-` plus six digits) shown in the guest profile; the guest equivalent of a student ID |
+| **Guest** | A non-student user identified by a device-bound anonymous account, a self-declared profile, and a generated guest ID |
+| **Guest ID** | System-generated identifier (`G` plus six digits, no dash) shown in the guest profile; the guest equivalent of a student ID |
 | **Institutional ID** | The student ID or guest ID staff use to look a person up |
 | **Office code** | A short identifier (`R`) that appears in every ticket number |
-| **Offense** | A permanent record of an abandoned called ticket (cancelled after call, or marked no-show) |
+| **Offense** | A permanent record of an abandoned called ticket (cancelled after call, or marked no-show after the grace period or after an unfollowed verification) |
 | **Program** | The student's academic program, chosen from a searchable list at first sign-in |
 | **Public display** | The unauthenticated "Now Serving" screen shown at the office |
 | **Short ticket number** | `CODE-SEQ`, the client-facing form of the ticket number |
@@ -498,7 +529,7 @@ V1 is complete when each of the following can be demonstrated end to end.
 | **Student ID** | A 7-digit number entered by the student at first sign-in, editable in Profile |
 | **Terminal state** | `COMPLETED`, `CANCELLED`, or `NO_SHOW` — a ticket at rest; shown in history |
 | **Ticket** | One person's place in one queue on one day |
-| **Verification** | Confirming physical arrival: QR scan, manual code, or staff ID-number entry |
+| **Verification** | Confirming physical arrival: QR scan, manual code, or staff ID-number entry; reversible by staff to a no-show (R-23a) |
 
 ---
 
