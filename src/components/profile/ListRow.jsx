@@ -2,26 +2,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { theme } from '../../theme/theme';
 import { HistoryStatus, ListRowTone, ListRowType, OffenseState } from '../../theme/types';
 
-// Props contract
-//
-// <ListRow
-//   type         ListRowType.MENU | NOTIFICATION | OFFENSE | HISTORY   default MENU
-//   title        string    menu label · notification title · offense kind · office name
-//   subtitle     string    notification body · "date · ticket" (offense) · "ticket · time" (history)
-//   meta         string    notification time · "Waited 14m · location" (history)
-//   icon         string    Ionicons name (menu, notification, history)
-//   tone         ListRowTone — notification icon tint                  default HIGHLIGHT
-//   status       HistoryStatus (history) | OffenseState (offense)
-//   pill         string    menu count badge, e.g. "1 Warning"
-//   unread       bool      notification unread dot
-//   destructive  bool      menu Log out row
-//   onPress      func      row is tappable only when set
-//   style
-// />
-//
-// Every color, size and spacing comes from theme.js. Figma one-off colors are
-// expressed as tints of theme colors so the rows match the other components.
-
 const ICON_CIRCLE = 36; // icon disc diameter — theme.js has no size tokens
 const DOT = theme.spacing.sm;
 
