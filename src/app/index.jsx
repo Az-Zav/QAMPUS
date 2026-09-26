@@ -1,11 +1,19 @@
+<<<<<<< Updated upstream
 import { ScrollView, StyleSheet } from "react-native";
+=======
+>>>>>>> Stashed changes
 import { useState } from "react";
+import { StyleSheet, View } from "react-native";
 import Button from "../components/primitives/Button";
-import Toggle from "../components/primitives/Toggle";
 import Input from "../components/primitives/Input";
 import SearchInput from "../components/primitives/SearchInput";
+<<<<<<< Updated upstream
 import Picker from "../components/primitives/Picker";
 import { ButtonType, ToggleType, InputType } from '../theme/types';
+=======
+import Toggle from "../components/primitives/Toggle";
+import { ButtonType, InputType, ToggleType } from '../theme/types';
+>>>>>>> Stashed changes
 
 export default function Index() {
 const [pushEnabled, setPushEnabled] = useState(true);
