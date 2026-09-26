@@ -1,5 +1,6 @@
 import { Pressable, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme/theme';
+import { ButtonType } from '../../theme/types';
 
 const VARIANTS = {
   primary:     { bg: theme.colors.gold,         border: null,                   text: theme.colors.ink },
@@ -8,10 +9,10 @@ const VARIANTS = {
   disabled:    { bg: theme.colors.disabledBg,   border: null,                   text: theme.colors.slate },
 };
 
-export default function Button({label, onPress, kind = 'primary', style}) {
+export default function Button({label, onPress, type = ButtonType.PRIMARY, style}) {
     
-    const variant = VARIANTS[kind];
-    const isDisabled = kind === 'disabled';
+    const variant = VARIANTS[type];
+    const isDisabled = type === ButtonType.DISABLED;
 
     return (
         <Pressable

@@ -33,7 +33,7 @@ export const statusBadge = {
   noShow: { bg: withOpacity(colors.error, 0.1), border: null, text: colors.error },
 };
 
-// Confirmed identical across all 9 modal frames (M01–M09) in Figma
+// Identical across all 9 modal frames (M01–M09) in Figma
 export const overlay = {
   scrim: withOpacity(colors.ink, 0.7),
 };
