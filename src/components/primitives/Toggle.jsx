@@ -1,22 +1,36 @@
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { theme } from '../../theme/theme';
+import { ToggleType } from '../../theme/types';
 
 function Switch({ toggled }) {
     return (
         <View
-            style = {(
+            style = {[
                 styles.track,
                 { backgroundColor: toggled ? theme.colors.gold : theme.withOpacity(theme.colors.ink, 0.2) },
                 { justifyContent: toggled ? 'flex-end' : 'flex-start' }
-            )}
+            ]}
         >
             <View style={styles.knob} />
         </View>
     )
 }
 
-function Toggle({ title, subtitle, toggled, onToggleChange, type = ToggleType.FUNCTIONAL }) {
+export default function Toggle({ title, subtitle, toggled, onToggleChange, type = ToggleType.FUNCTIONAL }) {
     const isDisabled = type === ToggleType.DISABLED;
+    return (
+        <Pressable
+            onPress = {isDisabled ? undefined : () => onToggleChange(!toggled)}
+            disabled = {isDisabled}
+            style = {[styles.row, isDisabled && styles.disabled]}
+        >
+            <View style={styles.labels}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.subtitle}>{subtitle}</Text>
+            </View>
+            <Switch toggled={toggled} />
+        </Pressable>
+    )
 }
 
 const styles = StyleSheet.create({
@@ -29,7 +43,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.md,
   },
-  inert: { opacity: 0.55 },
+  disabled: { opacity: 0.55 },
   labels: { flex: 1, gap: theme.spacing.xxxs },
   title: {
     fontFamily: theme.typography.fontFamily.bold,
