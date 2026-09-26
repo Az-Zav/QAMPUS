@@ -1,13 +1,14 @@
 import { View, StyleSheet } from "react-native";
 import Button from "../components/primitives/Button";
+import { ButtonType } from '../theme/types';
 
 export default function Index() {
   return (
     <View style={styles.container}>
-      <Button kind="primary" label="Confirm" onPress={() => {}} />
-      <Button kind="secondary" label="Cancel" onPress={() => {}} />
-      <Button kind="destructive" label="Cancel ticket" onPress={() => {}} />
-      <Button kind="disabled" label="Join" onPress={() => {}} />
+      <Button type={ButtonType.PRIMARY} label="Confirm" onPress={() => {}} />
+      <Button type={ButtonType.SECONDARY} label="Cancel" onPress={() => {}} />
+      <Button type={ButtonType.DESTRUCTIVE} label="Cancel ticket" onPress={() => {}} />
+      <Button type={ButtonType.DISABLED} label="Join" onPress={() => {}} />
     </View>
   );
 }
