@@ -14,6 +14,9 @@ export const colors = {
   slate: '#6E6B63',
   error: '#B3261E',
   success: '#2E7D4F',
+  border: '#D9D6CF',
+  disabledBg: '#E8E5E0',  
+  white: '#FFFFFF'
 };
 
 export const withOpacity = (hex, alpha) =>
@@ -40,7 +43,11 @@ export const overlay = {
 // ---------------------------------------------------------------------------
 
 export const typography = {
-  fontFamily: 'DM Sans',
+  fontFamily: {
+    regular: 'DMSans_400Regular',
+    medium: 'DMSans_500Medium',
+    bold: 'DMSans_700Bold',
+  },
   weight: { regular: '400', medium: '500', bold: '700' },
   size: { xs: 11, sm: 12, base: 14, md: 15, lg: 18, xl: 22, xxl: 28, display: 32 },
   lineHeight: { tight: 1.2, normal: 1.4, relaxed: 1.5 },
