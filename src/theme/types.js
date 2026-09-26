@@ -13,3 +13,9 @@ export const ToggleType = Object.freeze({
   FUNCTIONAL: 'functional',
   DISABLED: 'disabled',
 });
+
+export const InputType = Object.freeze({
+  DEFAULT: 'default',
+  ERROR: 'error',
+  DISABLED: 'disabled',
+});

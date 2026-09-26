@@ -2,10 +2,14 @@ import { View, StyleSheet } from "react-native";
 import { useState } from "react";
 import Button from "../components/primitives/Button";
 import Toggle from "../components/primitives/Toggle";
-import { ButtonType, ToggleType } from '../theme/types';
+import Input from "../components/primitives/Input";
+import SearchInput from "../components/primitives/SearchInput";
+import { ButtonType, ToggleType, InputType } from '../theme/types';
 
 export default function Index() {
 const [pushEnabled, setPushEnabled] = useState(true);
+const [studentId, setStudentId] = useState("");
+const [search, setSearch] = useState("");
 
   return (
     <View style={styles.container}>
@@ -24,6 +28,17 @@ const [pushEnabled, setPushEnabled] = useState(true);
         subtitle="Not available in this version."
         type= {ToggleType.DISABLED}
         toggled={false}
+      />
+      <Input
+        value={studentId}
+        onChangeText={setStudentId}
+        placeholder="Student ID"
+        type={InputType.DEFAULT}
+      />
+      <SearchInput
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Search..."
       />
     </View>
   );
