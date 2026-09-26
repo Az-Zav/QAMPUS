@@ -19,3 +19,42 @@ export const InputType = Object.freeze({
   ERROR: 'error',
   DISABLED: 'disabled',
 });
+export const InfoCardType = Object.freeze({
+  OFFICE_HOURS: 'officeHours',
+  BAN_BANNER: 'banBanner',
+  STRIKE_METER: 'strikeMeter',
+  POLICY: 'policy',
+  FAQ: 'faq',
+});
+
+export const ListRowType = Object.freeze({
+  MENU: 'menu',
+  NOTIFICATION: 'notification',
+  OFFENSE: 'offense',
+  HISTORY: 'history',
+});
+
+export const ListRowTone = Object.freeze({
+  NEUTRAL: 'neutral',
+  HIGHLIGHT: 'highlight',
+  SUCCESS: 'success',
+  ERROR: 'error',
+});
+
+export const HistoryStatus = Object.freeze({
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  NO_SHOW: 'NO_SHOW',
+  CANCELLED_BY_OFFICE: 'CANCELLED_BY_OFFICE',
+});
+
+export const OffenseState = Object.freeze({
+  ACTIVE: 'active',
+  REVOKED: 'revoked',
+  CAUSED_BAN: 'causedBan',
+});
+
+export const ConfirmModalType = Object.freeze({
+  DEFAULT: 'default',         // M03, M09 — consequential action in ink
+  DESTRUCTIVE: 'destructive', // M04 — consequential action in danger red
+});
