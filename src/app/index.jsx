@@ -1,4 +1,4 @@
-import { View, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import { useState } from "react";
 import Button from "../components/primitives/Button";
 import Toggle from "../components/primitives/Toggle";
@@ -15,7 +15,8 @@ const [program, setProgram] = useState(null);
 const [guestType, setGuestType] = useState(null);
 
   return (
-    <View style={styles.container}>
+
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Button type={ButtonType.PRIMARY} label="Confirm" onPress={() => {}} />
       <Button type={ButtonType.SECONDARY} label="Cancel" onPress={() => {}} />
       <Button type={ButtonType.DESTRUCTIVE} label="Cancel ticket" onPress={() => {}} />
@@ -51,21 +52,23 @@ const [guestType, setGuestType] = useState(null);
         value={program}
         onSelect={setProgram}
       />
-      
+
       <Picker
         placeholder="Select guest type"
         options={['Parent or Guardian', 'Relative', 'Representative', 'Alumni', 'Other']}
         value={guestType}
         onSelect={setGuestType}
       />
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
+  },
+  content: {
+    justifyContent: 'center',
     gap: 16,
     paddingHorizontal: 20,
   },
