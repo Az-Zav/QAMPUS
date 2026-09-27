@@ -1,154 +1,121 @@
 import Badge from '@/components/shell/Badge';
 import theme from '@/theme/theme';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-const CORNER_RADIUS = theme.radii.hero; // 44
-const NOTCH_RADIUS = 12;
-
-function buildTicketPath(width, height, r, notchR, notchY) {
-  return `
-    M ${r},0
-    H ${width - r}
-    A ${r},${r} 0 0 1 ${width},${r}
-    V ${notchY - notchR}
-    A ${notchR},${notchR} 0 0 0 ${width},${notchY + notchR}
-    V ${height - r}
-    A ${r},${r} 0 0 1 ${width - r},${height}
-    H ${r}
-    A ${r},${r} 0 0 1 0,${height - r}
-    V ${notchY + notchR}
-    A ${notchR},${notchR} 0 0 0 0,${notchY - notchR}
-    V ${r}
-    A ${r},${r} 0 0 1 ${r},0
-    Z
-  `;
-}
-
-const STATE_STYLES = {
-  waiting: { fill: theme.colors.paper, border: theme.colors.border, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
-  yourTurn: { fill: theme.colors.ink, border: theme.colors.border, textPrimary: theme.colors.paper, textSecondary: theme.colors.slate },
-  expired: { fill: theme.colors.paper, border: theme.colors.error, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
-  inService: { fill: theme.colors.paper, border: theme.colors.border, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
+const STATE_IMAGES = {
+  waiting: require('../../../assets/images/TicketStub.png'),
+  yourTurn: require('../../../assets/images/TicketStub-Inverted.png'),
+  expired: require('../../../assets/images/TicketStub-Expired.png'),
+  inService: require('../../../assets/images/TicketStub.png'),
 };
 
-export default function TicketStubCard({ ticket, nextUp, onPress, onOpenScanner }) {
-  const { shortNumber, nowServing, officeName, location, status, estimatedWaitMinutes } = ticket;
-  const style = STATE_STYLES[status] || STATE_STYLES.waiting;
-  const isInService = status === 'inService';
+const TEXT_COLORS = {
+  waiting: theme.colors.ink,
+  yourTurn: theme.colors.paper,
+  expired: theme.colors.ink,
+  inService: theme.colors.ink,
+};
+
+const TOP_LABELS = {
+  waiting: 'NEXT UP',
+  expired: 'WAITING FOR STAFF',
+};
+
+function getTimeLabel({ status, estimatedWaitMinutes, remainingSeconds }) {
+  if (status === 'waiting') {
+    return typeof estimatedWaitMinutes === 'number' ? `${estimatedWaitMinutes} mins` : null;
+  }
+  if ((status === 'yourTurn' || status === 'expired') && typeof remainingSeconds === 'number') {
+    const m = Math.floor(remainingSeconds / 60);
+    const s = remainingSeconds % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  }
+  return null;
+}
+
+export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
+  const { shortNumber, nowServing, officeName, location, status } = ticket;
   const isCalled = status === 'yourTurn';
-  const isExpired = status === 'expired';
-
-  const CardWrapper = isInService ? View : Pressable;
-
-  // Determine standard height and notch midpoint with comfortable margins
-  const cardHeight = 220;
-  const notchY = 100;
+  const textColor = TEXT_COLORS[status] ?? theme.colors.ink;
+  const mutedText = theme.withOpacity(textColor, 0.6);
+  const topLabel = TOP_LABELS[status];
+  const timeLabel = getTimeLabel(ticket);
 
   return (
-    <View style={styles.shadowWrapper}>
-      <CardWrapper onPress={!isInService ? onPress : undefined} style={[styles.cardTouchArea, { height: cardHeight }]}>
-        {/* SVG background shape */}
-        <Svg
-          width="100%"
-          height={cardHeight}
-          viewBox={`0 0 350 ${cardHeight}`}
-          style={StyleSheet.absoluteFill}
-        >
-          <Path
-            d={buildTicketPath(350, cardHeight, CORNER_RADIUS, NOTCH_RADIUS, notchY)}
-            fill={style.fill}
-            stroke={style.border ?? 'none'}
-            strokeWidth={style.border ? 1.5 : 0}
-          />
-        </Svg>
+    <Pressable onPress={onPress} style={styles.card}>
+      <Image source={STATE_IMAGES[status]} style={styles.image} resizeMode="cover" />
 
-        {/* Content Flow */}
-        <View style={[styles.content, { height: cardHeight }]}>
-          {/* Top Half */}
-          <View style={[styles.topSection, { height: notchY }]}>
-            <View style={styles.topRow}>
-              <Text style={[styles.officeName, { color: style.textPrimary }]}>{officeName}</Text>
-              {!isInService && (
-                <Text style={[styles.timeText, { color: isExpired ? theme.colors.error : style.textPrimary }]}>
-                  {isCalled || isExpired ? '1:00' : `${estimatedWaitMinutes} mins`}
-                </Text>
-              )}
-            </View>
-
-            <View style={styles.subRow}>
-              {nextUp && !isCalled && !isExpired && (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>NEXT UP</Text>
-                </View>
-              )}
-              {isExpired && (
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>WAITING FOR STAFF</Text>
-                </View>
-              )}
-              <Text style={[styles.location, { color: style.textSecondary }]}>{location}</Text>
-            </View>
+      <View style={styles.content}>
+        {/* Everything here sits above the printed perforation line,
+            because topHalf/bottomHalf are exact 50/50 splits of the
+            padded content box — whose center always equals the card's
+            vertical center, which is where the asset's line lives. */}
+        <View style={styles.topHalf}>
+          <View style={styles.headerRow}>
+            <Text style={[styles.officeName, { color: textColor }]}>{officeName}</Text>
+            {timeLabel && <Text style={[styles.timeLabel, { color: mutedText }]}>{timeLabel}</Text>}
           </View>
 
-          {/* Dashed Separator Line */}
-          <View
-            style={[
-              styles.dashedLine,
-              { borderColor: isCalled ? theme.withOpacity(theme.colors.paper, 0.25) : theme.colors.border },
-            ]}
-          />
-
-          {/* Bottom Half */}
-          <View style={styles.bottomSection}>
-            <View style={styles.bottomRow}>
-              <View style={styles.ticketBlock}>
-                <Text style={[styles.label, { color: style.textSecondary }]}>NOW</Text>
-                <Text style={[styles.ticketNum, { color: style.textPrimary }]}>{nowServing}</Text>
-              </View>
-              <View style={styles.divider} />
-              <View style={styles.ticketBlock}>
-                <Text style={[styles.label, { color: style.textSecondary }]}>YOURS</Text>
-                <Text style={[styles.ticketNum, { color: isCalled ? theme.colors.gold : style.textPrimary }]}>
-                  {shortNumber}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.actionRow}>
-              <Badge status={status} size="sm" />
-              {isCalled && (
-                <Badge icon="qr-code" label="Open scanner" onPress={onOpenScanner} />
+          {(topLabel || location) && (
+            <View style={styles.metaRow}>
+              {topLabel && (
+                <View style={styles.topPill}>
+                  <Text style={styles.topPillText}>{topLabel}</Text>
+                </View>
               )}
+              {location && <Text style={[styles.locationText, { color: mutedText }]}>{location}</Text>}
             </View>
+          )}
+        </View>
+
+        <View style={styles.bottomHalf}>
+          <View style={styles.numsRow}>
+            <Text style={[styles.numLabel, { color: textColor }]}>
+              NOW <Text style={styles.numValue}>{nowServing}</Text>
+            </Text>
+            <Text style={[styles.numLabel, styles.separator, { color: mutedText }]}>|</Text>
+            <Text style={[styles.numLabel, { color: textColor }]}>
+              YOURS{' '}
+              <Text style={[styles.numValue, isCalled && { color: theme.colors.gold }]}>
+                {shortNumber}
+              </Text>
+            </Text>
+          </View>
+
+          <View style={styles.footer}>
+            <Badge status={status} size="sm" />
+            {isCalled && <Badge icon="qr-code" label="Open scanner" onPress={onOpenScanner} />}
           </View>
         </View>
-      </CardWrapper>
-    </View>
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  shadowWrapper: {
-    borderRadius: CORNER_RADIUS,
-    marginBottom: theme.spacing.lg,
-    ...theme.elevation.md,
-  },
-  cardTouchArea: {
+  card: {
     width: '100%',
-    overflow: 'hidden',
+    height: 180,
+    marginBottom: theme.spacing.lg,
+  },
+  image: {
+    ...StyleSheet.absoluteFillObject,
   },
   content: {
-    flexDirection: 'column',
+    flex: 1,
+    padding: theme.spacing.lg,
+  },
+  topHalf: {
+    height: '50%',
     justifyContent: 'space-between',
+    paddingBottom: theme.spacing.xxs,
   },
-  topSection: {
-    paddingHorizontal: theme.spacing.xl, // 24px inner margin from notch edge
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.sm,
-    justifyContent: 'center',
+  bottomHalf: {
+    height: '50%',
+    justifyContent: 'space-between',
+    paddingTop: theme.spacing.xxs,
   },
-  topRow: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -158,75 +125,48 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
   },
-  timeText: {
-    fontSize: theme.typography.size.md,
-    fontWeight: theme.typography.weight.bold,
-    fontFamily: theme.typography.fontFamily.bold,
+  timeLabel: {
+    fontSize: theme.typography.size.sm,
+    fontFamily: theme.typography.fontFamily.regular,
   },
-  subRow: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    marginTop: theme.spacing.xs,
   },
-  tag: {
+  topPill: {
     backgroundColor: theme.colors.gold,
-    borderRadius: theme.radii.sm,
-    paddingHorizontal: theme.spacing.xs,
-    paddingVertical: 3,
+    borderRadius: theme.radii.full,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xxxs,
   },
-  tagText: {
+  topPillText: {
     fontSize: theme.typography.size.xs,
     fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.ink,
   },
-  location: {
-    fontSize: theme.typography.size.base,
+  locationText: {
+    fontSize: theme.typography.size.sm,
     fontFamily: theme.typography.fontFamily.regular,
   },
-  dashedLine: {
-    marginHorizontal: theme.spacing.xl, // Retained inside notch cutouts
-    borderTopWidth: 1.5,
-    borderStyle: 'dashed',
-  },
-  bottomSection: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.lg,
-    justifyContent: 'space-between',
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: theme.spacing.xs,
-  },
-  ticketBlock: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: theme.spacing.sm,
-  },
-  label: {
-    fontSize: theme.typography.size.xs,
-    fontWeight: theme.typography.weight.medium,
+  numsRow: {
+  flexDirection: 'row',
+  alignItems: 'baseline',
+  justifyContent: 'space-between',   // ← added
+},
+  numLabel: {
+    fontSize: theme.typography.size.sm,
     fontFamily: theme.typography.fontFamily.medium,
   },
-  ticketNum: {
-    fontSize: theme.typography.size.xl,
+  numValue: {
+    fontSize: theme.typography.size.lg,
     fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
   },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: theme.withOpacity(theme.colors.slate, 0.25),
-    marginHorizontal: theme.spacing.lg,
-  },
-  actionRow: {
+  footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: theme.spacing.xs,
   },
 });

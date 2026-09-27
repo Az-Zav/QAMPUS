@@ -1,5 +1,6 @@
 import Button from '@/components/primitives/Button';
 import Badge from '@/components/shell/Badge';
+import DetailRow from '@/components/shell/DetailRow';
 import ModalShell from '@/components/shell/ModalShell';
 import theme from '@/theme/theme';
 import { ButtonType, TicketStatus } from '@/theme/types';
@@ -20,7 +21,11 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
       <Text style={styles.number}>{shortNumber}</Text>
       <Text style={styles.office}>{officeName}</Text>
 
-      <Badge status={status} size="base" />
+      
+
+     <View style={styles.badgeWrapper}>
+    <Badge status={status} size="base" />
+    </View>
 
       {isWaiting && (
         <View style={styles.detailsBlock}>
@@ -31,12 +36,25 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
         </View>
       )}
 
-      {isCalled && <Text style={styles.countdown}>1:00</Text>}
+      {isCalled && (
+        <>
+          <Text style={styles.countdown}>1:00</Text>
+          <View style={styles.detailsBlock}>
+            <DetailRow label="Now serving" value={nowServing} />
+          </View>
+        </>
+      )}
 
       {isExpired && (
-        <Text style={styles.expiredWarning}>
-          Your time to check in has passed. Staff will update your ticket.
-        </Text>
+        <>
+          <Text style={styles.countdownExpired}>0:00</Text>
+          <Text style={styles.expiredWarning}>
+            Your time to check in has passed. Staff will update your ticket.
+          </Text>
+          <View style={styles.detailsBlock}>
+            <DetailRow label="Now serving" value={nowServing} />
+          </View>
+        </>
       )}
 
       {isCalled && (
@@ -47,15 +65,6 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
         <Button type={ButtonType.SECONDARY} label="Cancel ticket" onPress={onCancel} />
       )}
     </ModalShell>
-  );
-}
-
-function DetailRow({ label, value }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
-    </View>
   );
 }
 
@@ -75,34 +84,32 @@ const styles = StyleSheet.create({
   },
   detailsBlock: {
     marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
     gap: theme.spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  rowLabel: {
-    color: theme.colors.slate,
-    fontSize: theme.typography.size.base,
-    fontFamily: theme.typography.fontFamily.regular,
-  },
-  rowValue: {
-    color: theme.colors.ink,
-    fontSize: theme.typography.size.base,
-    fontFamily: theme.typography.fontFamily.medium,
   },
   countdown: {
     fontSize: theme.typography.size.xxl,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.gold,
     textAlign: 'center',
-    marginVertical: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+  },
+  countdownExpired: {
+    fontSize: theme.typography.size.xxl,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.error,
+    textAlign: 'center',
+    marginTop: theme.spacing.lg,
   },
   expiredWarning: {
     color: theme.colors.error,
     fontSize: theme.typography.size.sm,
     fontFamily: theme.typography.fontFamily.regular,
     textAlign: 'center',
-    marginVertical: theme.spacing.lg,
+    marginTop: theme.spacing.xs,
   },
+  badgeWrapper: {
+  alignItems: 'center',
+  marginBottom: theme.spacing.sm,
+},
 });
