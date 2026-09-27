@@ -1,4 +1,4 @@
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, Text, StyleSheet, View } from 'react-native';
 import theme from '@/theme/theme';
 import { ButtonType } from '@/theme/types';
 
@@ -56,7 +56,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    pressed: { opacity: 0.85 },
+    pressed: { 
+        opacity: 0.65,
+        transform: [{ scale: 0.98 }],
+    },
     label: {
         fontFamily: theme.typography.fontFamily.bold,
     },
@@ -65,5 +68,7 @@ const styles = StyleSheet.create({
         alignItems: 'center', 
         justifyContent: 'center' 
     },
-    iconWrapper: { marginRight: 8 },
+    iconWrapper: {
+    marginRight: theme.spacing.sm,
+  },
 });

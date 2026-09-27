@@ -7,7 +7,7 @@ import theme from '@/theme/theme';
 import { ButtonType, InputType, ToggleType } from '@/theme/types';
 import { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import Home from "@/app/(tabs)/home";
+import Login from "@/app/login";
 
 export default function Index() {
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -17,7 +17,7 @@ export default function Index() {
   const [guestType, setGuestType] = useState(null);
 
   return (
-    <Home />
+    <Login />
   );
 }
 
