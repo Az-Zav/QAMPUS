@@ -1,27 +1,67 @@
-import Badge from '@/components/shell/Badge';
 import Header from '@/components/shell/Header';
-import ModalShell from '@/components/shell/ModalShell';
-import { useState } from 'react';
-import { Text } from 'react-native';
+import TicketStubCard from '@/components/tickets/TicketStubCard';
+import theme from '@/theme/theme';
+import { ScrollView, StyleSheet } from 'react-native';
 
 export default function Home() {
-  const [modalVisible, setModalVisible] = useState(false);
-
   return (
-    <>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Header title="HOME" hasNotification onBellPress={() => {}} onAvatarPress={() => {}} />
 
-      <Badge status="waiting" />
-      <Badge status="yourTurn" />
-      <Badge status="expired" />
-      <Badge status="inService" />
-      <Badge status="completed" />
-      <Badge status="cancelled" />
-      <Badge status="noShow" />
+      <TicketStubCard
+        ticket={{
+          shortNumber: 'R-006',
+          nowServing: 'R-002',
+          officeName: 'University Registrar',
+          location: 'Main Bldg, 3rd Flr',
+          status: 'waiting',
+          estimatedWaitMinutes: 8,
+        }}
+        nextUp
+        onPress={() => console.log('open ticket modal')}
+      />
 
-      <ModalShell visible={modalVisible} onClose={() => setModalVisible(false)}>
-        <Text>Modal test content</Text>
-      </ModalShell>
-    </>
+      <TicketStubCard
+        ticket={{
+          shortNumber: 'R-006',
+          nowServing: 'R-002',
+          officeName: 'University Registrar',
+          location: 'Main Bldg, 3rd Flr',
+          status: 'yourTurn',
+        }}
+        onOpenScanner={() => console.log('open scanner')}
+      />
+
+      <TicketStubCard
+        ticket={{
+          shortNumber: 'R-006',
+          nowServing: 'R-002',
+          officeName: 'University Registrar',
+          location: 'Main Bldg, 3rd Flr',
+          status: 'expired',
+        }}
+      />
+
+      <TicketStubCard
+        ticket={{
+          shortNumber: 'R-006',
+          nowServing: 'R-002',
+          officeName: 'University Registrar',
+          location: 'Main Bldg, 3rd Flr',
+          status: 'inService',
+        }}
+      />
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.paper,
+  },
+  content: {
+    padding: theme.spacing.lg,
+    paddingBottom: 120, // extra space so last card isn't hidden under BottomNav
+  },
+});
