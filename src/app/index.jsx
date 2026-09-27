@@ -1,29 +1,21 @@
-<<<<<<< Updated upstream
-import { ScrollView, StyleSheet } from "react-native";
-=======
->>>>>>> Stashed changes
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 import Button from "../components/primitives/Button";
 import Input from "../components/primitives/Input";
-import SearchInput from "../components/primitives/SearchInput";
-<<<<<<< Updated upstream
 import Picker from "../components/primitives/Picker";
-import { ButtonType, ToggleType, InputType } from '../theme/types';
-=======
+import SearchInput from "../components/primitives/SearchInput";
 import Toggle from "../components/primitives/Toggle";
+import theme from '../theme/theme';
 import { ButtonType, InputType, ToggleType } from '../theme/types';
->>>>>>> Stashed changes
 
 export default function Index() {
-const [pushEnabled, setPushEnabled] = useState(true);
-const [studentId, setStudentId] = useState("");
-const [search, setSearch] = useState("");
-const [program, setProgram] = useState(null);
-const [guestType, setGuestType] = useState(null);
+  const [pushEnabled, setPushEnabled] = useState(true);
+  const [studentId, setStudentId] = useState("");
+  const [search, setSearch] = useState("");
+  const [program, setProgram] = useState(null);
+  const [guestType, setGuestType] = useState(null);
 
   return (
-
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Button type={ButtonType.PRIMARY} label="Confirm" onPress={() => {}} />
       <Button type={ButtonType.SECONDARY} label="Cancel" onPress={() => {}} />
@@ -38,7 +30,7 @@ const [guestType, setGuestType] = useState(null);
       <Toggle
         title="Biometric login"
         subtitle="Not available in this version."
-        type= {ToggleType.DISABLED}
+        type={ToggleType.DISABLED}
         toggled={false}
       />
       <Input
@@ -74,6 +66,7 @@ const [guestType, setGuestType] = useState(null);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.paper,
   },
   content: {
     justifyContent: 'center',
