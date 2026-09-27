@@ -1,18 +1,19 @@
 import theme from '@/theme/theme';
+import { AppTab } from '@/theme/types';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-const TAB_ICONS = { home: 'home', scan: 'qr-code', queue: 'ticket' };
+const TAB_ICONS = { [AppTab.HOME]: 'home', [AppTab.SCAN]: 'qr-code', [AppTab.QUEUE]: 'ticket' };
 
 export default function BottomNav({ active, onNavigate }) {
   return (
     <View style={styles.wrapper}>
       <View style={styles.bar}>
-        <NavItem tab="home" label="Home" active={active === 'home'} onPress={() => onNavigate('home')} />
+        <NavItem tab={AppTab.HOME} label="Home" active={active === AppTab.HOME} onPress={() => onNavigate(AppTab.HOME)} />
         <View style={styles.centerSpacer} />
-        <NavItem tab="queue" label="Queue" active={active === 'queue'} onPress={() => onNavigate('queue')} />
+        <NavItem tab={AppTab.QUEUE} label="Queue" active={active === AppTab.QUEUE} onPress={() => onNavigate(AppTab.QUEUE)} />
       </View>
-      <Pressable style={styles.scanButton} onPress={() => onNavigate('scan')} accessibilityLabel="Scan">
-        <theme.IconSet name={TAB_ICONS.scan} color={theme.colors.ink} size={26} />
+      <Pressable style={styles.scanButton} onPress={() => onNavigate(AppTab.SCAN)} accessibilityLabel="Scan">
+        <theme.IconSet name={TAB_ICONS[AppTab.SCAN]} color={theme.colors.ink} size={26} />
       </Pressable>
     </View>
   );
@@ -38,7 +39,7 @@ const styles = StyleSheet.create({
   },
   navItem: { alignItems: 'center', gap: theme.spacing.xxxs, minWidth: 64 },
   centerSpacer: { width: 64 },
-  label: { fontSize: theme.typography.size.xs, fontWeight: theme.typography.weight.medium, fontFamily: theme.typography.fontFamily.medium },
+  label: { fontSize: theme.typography.size.xs, fontFamily: theme.typography.fontFamily.medium },
   scanButton: {
     position: 'absolute', top: -24, alignSelf: 'center',
     width: 56, height: 56, borderRadius: theme.radii.full,

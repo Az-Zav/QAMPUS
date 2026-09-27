@@ -2,7 +2,7 @@ import Button from '@/components/primitives/Button';
 import Badge from '@/components/shell/Badge';
 import ModalShell from '@/components/shell/ModalShell';
 import theme from '@/theme/theme';
-import { ButtonType } from '@/theme/types';
+import { ButtonType, TicketStatus } from '@/theme/types';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function TicketModal({ visible, ticket, onClose, onCancel, onOpenScanner }) {
@@ -10,10 +10,10 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
 
   const { shortNumber, officeName, status, position, peopleAhead, nowServing, estimatedWaitMinutes } = ticket;
 
-  const isWaiting = status === 'waiting';
-  const isCalled = status === 'yourTurn';
-  const isExpired = status === 'expired';
-  const isInService = status === 'inService';
+  const isWaiting = status === TicketStatus.WAITING;
+  const isCalled = status === TicketStatus.YOUR_TURN;
+  const isExpired = status === TicketStatus.EXPIRED;
+  const isInService = status === TicketStatus.IN_SERVICE;
 
   return (
     <ModalShell visible={visible} onClose={onClose} showClose>
@@ -62,7 +62,6 @@ function DetailRow({ label, value }) {
 const styles = StyleSheet.create({
   number: {
     fontSize: theme.typography.size.xxl,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.ink,
     textAlign: 'center',
@@ -90,12 +89,10 @@ const styles = StyleSheet.create({
   rowValue: {
     color: theme.colors.ink,
     fontSize: theme.typography.size.base,
-    fontWeight: theme.typography.weight.medium,
     fontFamily: theme.typography.fontFamily.medium,
   },
   countdown: {
     fontSize: theme.typography.size.xxl,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.gold,
     textAlign: 'center',

@@ -1,14 +1,13 @@
 import { useRef } from 'react';
 import { Pressable, TextInput, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../theme/theme';
+import theme from '@/theme/theme';
 
 export default function SearchInput({ value, onChangeText, placeholder, style, ...rest }) {
   const inputRef = useRef(null);
   
   return (
     <Pressable onPress={() => inputRef.current?.focus()} style={[styles.wrap, style]}>
-      <Ionicons
+      <theme.IconSet
         name="search"
         size={18}
         color={theme.colors.slate}
@@ -45,6 +44,5 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.size.base, // rounded from Figma's 13.5px
     color: theme.colors.ink,
-    outlineStyle: 'none'
   },
 });

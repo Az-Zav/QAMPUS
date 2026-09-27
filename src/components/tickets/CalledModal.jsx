@@ -35,7 +35,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: theme.typography.size.xl,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.ink,
     textAlign: 'center',
@@ -50,14 +49,12 @@ const styles = StyleSheet.create({
   },
   number: {
     fontSize: theme.typography.size.xl,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.ink,
     textAlign: 'center',
   },
   countdown: {
     fontSize: theme.typography.size.xxl,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.gold,
     textAlign: 'center',

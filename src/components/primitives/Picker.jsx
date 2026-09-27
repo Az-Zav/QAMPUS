@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Pressable, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../theme/theme';
+import theme from '@/theme/theme';
 
 export default function Picker({ value, onSelect, options = [], placeholder = 'Select an option', searchable = false, style }) {
     const [open, setOpen] = useState(false); // Whether options are open or collapsed
@@ -20,7 +19,7 @@ export default function Picker({ value, onSelect, options = [], placeholder = 'S
     };
 
     return (
-        <View style={[styles.wrap, open && styles.wrapOpen]}>
+        <View style={[styles.wrap, open && styles.wrapOpen, style]}>
             <Pressable style={styles.field} onPress={toggle}>
                 {searchable && open ? (
                     <TextInput  //rendered if searchable
@@ -37,7 +36,7 @@ export default function Picker({ value, onSelect, options = [], placeholder = 'S
                         {open ? placeholder : value ?? placeholder}
                     </Text>
                 )}
-                <Ionicons
+                <theme.IconSet
                     name="chevron-down"
                     size={16}
                     color={theme.colors.slate}
@@ -107,7 +106,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.size.md,
     color: theme.colors.ink,
     padding: 0,
-    outlineStyle: 'none',
   },
   chevronOpen: {
     transform: [{ rotate: '180deg' }],

@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { theme } from '../../theme/theme';
-import { HistoryStatus, ListRowTone, ListRowType, OffenseState } from '../../theme/types';
+import theme from '@/theme/theme';
+import { HistoryStatus, ListRowTone, ListRowType, OffenseState } from '@/theme/types';
 
 const ICON_CIRCLE = 36; // icon disc diameter — theme.js has no size tokens
 const DOT = theme.spacing.sm;

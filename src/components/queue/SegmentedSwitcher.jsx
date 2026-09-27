@@ -1,7 +1,8 @@
 import theme from '@/theme/theme';
+import { QueueView } from '@/theme/types';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-export default function SegmentedSwitcher({ options = ['Join', 'History'], value, onChange }) {
+export default function SegmentedSwitcher({ options = [QueueView.JOIN, QueueView.HISTORY], value, onChange }) {
   return (
     <View style={styles.container} accessibilityRole="tablist">
       {options.map((option) => {
@@ -27,9 +28,11 @@ export default function SegmentedSwitcher({ options = ['Join', 'History'], value
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.disabledBg,
+    backgroundColor: theme.withOpacity(theme.colors.white, 0.9),
+    borderWidth: 1,
+    borderColor: theme.withOpacity(theme.colors.ink, 0.05),
     borderRadius: theme.radii.full,
-    padding: 3,
+    padding: 4,
   },
   segment: {
     flex: 1,
@@ -48,6 +51,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.size.sm,
   },
   selectedLabel: {
-    color: theme.colors.white,
+    color: theme.colors.gold,
   },
 });

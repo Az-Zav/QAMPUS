@@ -1,16 +1,16 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
-import Button from "../components/primitives/Button";
-import Input from "../components/primitives/Input";
-import SearchInput from "../components/primitives/SearchInput";
-import Picker from "../components/primitives/Picker";
-import Toggle from "../components/primitives/Toggle";
-import { ButtonType, ToggleType, InputType } from '../theme/types';
-import { theme } from '../theme/theme';
-import Badge from "../components/shell/Badge";
-import Header from "../components/shell/Header";
-import BottomNav from "../components/shell/BottomNav";
-import ModalShell from "../components/shell/ModalShell";
+import Button from "@/components/primitives/Button";
+import Input from "@/components/primitives/Input";
+import SearchInput from "@/components/primitives/SearchInput";
+import Picker from "@/components/primitives/Picker";
+import Toggle from "@/components/primitives/Toggle";
+import { ButtonType, ToggleType, InputType } from '@/theme/types';
+import theme from '@/theme/theme';
+import Badge from "@/components/shell/Badge";
+import Header from "@/components/shell/Header";
+import BottomNav from "@/components/shell/BottomNav";
+import ModalShell from "@/components/shell/ModalShell";
 import Queue from './(tabs)/queue';
 
 export default function Index() {

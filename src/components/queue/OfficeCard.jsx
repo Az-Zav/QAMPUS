@@ -1,5 +1,11 @@
+import Button from '@/components/primitives/Button';
 import theme from '@/theme/theme';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ButtonType } from '@/theme/types';
+import { StyleSheet, Text, View } from 'react-native';
+
+// Icon badge width + the gap after it — used to indent the row below the
+// divider so its text lines up with the office name/location above it.
+const TEXT_INDENT = 42 + theme.spacing.sm;
 
 export default function OfficeCard({ office, onJoin }) {
   if (!office) return null;
@@ -41,21 +47,13 @@ export default function OfficeCard({ office, onJoin }) {
           <Text style={styles.waiting}>{office.waiting ?? 0} waiting</Text>
         </View>
 
-        <Pressable
-          onPress={joinDisabled ? undefined : onJoin}
-          disabled={joinDisabled}
-          accessibilityRole="button"
+        <Button
+          label="JOIN"
+          onPress={onJoin}
+          type={joinDisabled ? ButtonType.DISABLED : ButtonType.ACCENT}
+          size="sm"
           accessibilityLabel={`Join ${office.name}`}
-          style={({ pressed }) => [
-            styles.joinButton,
-            joinDisabled && styles.disabledButton,
-            pressed && !joinDisabled && styles.pressed,
-          ]}
-        >
-          <Text style={[styles.joinText, joinDisabled && styles.disabledText]}>
-            JOIN
-          </Text>
-        </Pressable>
+        />
       </View>
 
       {!!office.disabledReason && (
@@ -150,6 +148,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingLeft: TEXT_INDENT,
   },
   queueReadout: {
     flexDirection: 'row',
@@ -181,35 +180,12 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.size.xs,
     marginLeft: 7,
   },
-  joinButton: {
-    minWidth: 58,
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: theme.radii.full,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: theme.spacing.sm,
-  },
-  disabledButton: {
-    backgroundColor: theme.colors.disabledBg,
-  },
-  pressed: {
-    opacity: 0.75,
-  },
-  joinText: {
-    color: theme.colors.white,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xs,
-  },
-  disabledText: {
-    color: theme.colors.slate,
-  },
   disabledReason: {
     color: theme.colors.slate,
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.size.xs,
     lineHeight: 16,
     marginTop: theme.spacing.sm,
+    marginLeft: TEXT_INDENT,
   },
 });
