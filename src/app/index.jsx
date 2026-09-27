@@ -7,7 +7,7 @@ import theme from '@/theme/theme';
 import { ButtonType, InputType, ToggleType } from '@/theme/types';
 import { useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
-import Queue from "@/app/(tabs)/queue";
+import TicketStubCard from "@/components/tickets/TicketStubCard";
 
 export default function Index() {
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -17,7 +17,16 @@ export default function Index() {
   const [guestType, setGuestType] = useState(null);
 
   return (
-    <Queue/>
+    <TicketStubCard
+        ticket={{
+          shortNumber: 'R-006',
+          nowServing: 'R-002',
+          officeName: 'University Registrar',
+          location: 'Main Bldg, 3rd Flr',
+          status: 'yourTurn',
+        }}
+        onOpenScanner={() => console.log('open scanner')}
+      />
   );
 }
 
