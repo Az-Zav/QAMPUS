@@ -9,6 +9,7 @@ export default function Login() {
     return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.paper} />
+      
       <View style={styles.content}>
         {/* Header Section: Logo Image + Text Brand */}
         <View style={styles.headerContainer}>
@@ -22,58 +23,60 @@ export default function Login() {
                 <Text style={styles.brandSubtitle}>Digital Queueing App</Text>
             </View>
         </View>
-        
-        {/* Hero Section: Large Illustration + Main Value Props */}
-        <View style={styles.heroContainer}>
-            <Image
-                source={require('../../assets/images/Hero_Illustration.png')}
-                style={styles.heroIllustration}
-                resizeMode="contain"
-            />
+        {/* Main Body Section (Groups Hero + Actions together) */}
+            <View style={styles.mainContainer}>
+            {/* Hero Section: Large Illustration + Main Value Props */}
+            <View style={styles.heroContainer}>
+                <Image
+                    source={require('../../assets/images/Hero_Illustration.png')}
+                    style={styles.heroIllustration}
+                    resizeMode="contain"
+                />
 
-            <View style={styles.textGroup}>
-                <Text style={styles.title}>
-                Skip the line,{"\n"}not the service
-                </Text>
-                <Text style={styles.subtitle}>
-                Get started and reclaim your time.
+                <View style={styles.textGroup}>
+                    <Text style={styles.title}>
+                    Skip the line,{"\n"}not the service
+                    </Text>
+                    <Text style={styles.subtitle}>
+                    Get started and reclaim your time.
+                    </Text>
+                </View>
+            </View>
+            {/* Action Buttons & Footer */}
+            <View style={styles.actionContainer}>
+                <Button
+                    label="Continue with Google"
+                    type={ButtonType.SECONDARY}
+                    onPress={() => {
+                    // Handle Google Sign-In
+                    }}
+                    style={styles.buttonMargin}
+                    icon={<theme.IconSet name="logo-google" size={20} color={theme.colors.gold} />}
+                />
+
+                <Button
+                    label="Continue as guest"
+                    type={ButtonType.SECONDARY}
+                    onPress={() => {
+                    // Handle Guest Navigation
+                    }}
+                    style={styles.buttonMargin}
+                    icon={<theme.IconSet name="person-outline" size={20} color={theme.colors.ink} />}
+                />
+
+                <Text style={styles.termsText}>
+                        By continuing you agree to our{' '}
+                    <Text style={styles.termsLink} onPress={() => {/* Navigate to Terms */}}>
+                        Terms
+                    </Text>{' '}
+                        &{' '}
+                    <Text style={styles.termsLink} onPress={() => {/* Navigate to Privacy */}}>
+                    Privacy Policy
+                    </Text>
                 </Text>
             </View>
         </View>
-        {/* Step 5: Action Buttons & Footer */}
-        <View style={styles.actionContainer}>
-            <Button
-                label="Continue with Google"
-                type={ButtonType.SECONDARY}
-                onPress={() => {
-                // Handle Google Sign-In
-                }}
-                style={styles.buttonMargin}
-                icon={<theme.IconSet name="logo-google" size={20} color={theme.colors.gold} />}
-            />
-
-            <Button
-                label="Continue as guest"
-                type={ButtonType.SECONDARY}
-                onPress={() => {
-                // Handle Guest Navigation
-                }}
-                style={styles.buttonMargin}
-                icon={<theme.IconSet name="person-outline" size={20} color={theme.colors.ink} />}
-            />
-
-            <Text style={styles.termsText}>
-                By continuing you agree to our{' '}
-                <Text style={styles.termsLink} onPress={() => {/* Navigate to Terms */}}>
-                Terms
-                </Text>{' '}
-                &{' '}
-                <Text style={styles.termsLink} onPress={() => {/* Navigate to Privacy */}}>
-                Privacy Policy
-                </Text>
-            </Text>
-            </View>
-      </View>
+        </View>
     </SafeAreaView>
   );
 }
@@ -87,9 +90,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.xxl,
-    justifyContent: 'space-between',
     paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xxl, // Shorter bottom padding to bring actions higher
+    paddingBottom: theme.spacing.xl,
   },
 
   /* Header */
@@ -97,7 +99,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: theme.spacing.xxxl, // Increased margin to bring header lower
+    marginTop: theme.spacing.xl,
   },
   logoMark: {
     width: 44,
@@ -120,15 +122,23 @@ const styles = StyleSheet.create({
     color: theme.colors.slate,
   },
 
+  /* Main Container — Pulls body content up toward header */
+  mainContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    marginTop: -theme.spacing.lg,
+  },
+
   /* Hero */
   heroContainer: {
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.xl,
   },
   heroIllustration: {
     width: '100%',
-    height: 320, // Enlarged illustration size
-    marginBottom: theme.spacing.md,
+    height: 250,
+    marginBottom: theme.spacing.sm,
   },
   textGroup: {
     alignItems: 'center',
@@ -152,7 +162,8 @@ const styles = StyleSheet.create({
   actionContainer: {
     width: '100%',
     alignItems: 'stretch',
-    marginBottom: theme.spacing.xxxl, // Pulls action buttons & text upward
+    zIndex: 10,
+    elevation: 10,
   },
   googleIcon: {
     width: 20,
