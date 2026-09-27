@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import theme from '@/theme/theme';
 
@@ -20,17 +20,15 @@ export default function Scan() {
         Align the QR code within the frame
       </Text>
 
-      <Pressable
-        style={({ pressed }) => [
-          styles.manualButton,
-          pressed && styles.manualButtonPressed,
-        ]}
-        onPress={() => {}}
-      >
-        <Text style={styles.manualButtonText}>
-          Enter code manually
-        </Text>
-      </Pressable>
+      <TextInput
+  style={styles.codeInput}
+  placeholder="Enter code manually"
+  placeholderTextColor={theme.colors.white}
+  keyboardType="number-pad"
+  autoCapitalize="none"
+  autoCorrect={false}
+  textAlign="center"
+/>
     </View>
   );
 }
@@ -108,24 +106,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  manualButton: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: theme.radii.full,
-    backgroundColor: theme.colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  manualButtonPressed: {
-    opacity: 0.75,
-  },
-
-  manualButtonText: {
-    color: theme.colors.paper,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.sm,
-    fontWeight: theme.typography.weight.bold,
-  },
+ codeInput: {
+  width: '88%',
+  height: 64,
+  marginTop: 28,
+  paddingHorizontal: 24,
+  borderWidth: 1.5,
+  borderColor: theme.colors.white,
+  borderRadius: 32,
+  backgroundColor: theme.colors.ink,
+  color: theme.colors.white,
+  fontFamily: theme.typography.fontFamily.bold,
+  fontSize: 18,
+  textAlign: 'center',
+},
 });
