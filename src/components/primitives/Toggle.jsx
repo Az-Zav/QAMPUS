@@ -1,6 +1,6 @@
 import { Pressable, View, Text, StyleSheet } from 'react-native';
-import { theme } from '../../theme/theme';
-import { ToggleType } from '../../theme/types';
+import theme from '@/theme/theme';
+import { ToggleType } from '@/theme/types';
 
 function Switch({ toggled }) {
     return (

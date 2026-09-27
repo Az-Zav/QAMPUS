@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { theme } from '../../theme/theme';
-import { InfoCardType } from '../../theme/types';
+import theme from '@/theme/theme';
+import { InfoCardType } from '@/theme/types';
 
 
 const lineHeight = (size) => Math.round(size * theme.typography.lineHeight.normal);

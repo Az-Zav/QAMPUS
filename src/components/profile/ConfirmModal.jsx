@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View } from 'react-native';
-import Button from '../primitives/Button';
-import ModalShell from '../shell/ModalShell';
-import { theme } from '../../theme/theme';
-import { ButtonType, ConfirmModalType } from '../../theme/types';
+import Button from '@/components/primitives/Button';
+import ModalShell from '@/components/shell/ModalShell';
+import theme from '@/theme/theme';
+import { ButtonType, ConfirmModalType } from '@/theme/types';
 
 // Props contract
 //

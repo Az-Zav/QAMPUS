@@ -9,6 +9,7 @@ import OfficeCard from '@/components/queue/OfficeCard';
 import SegmentedSwitcher from '@/components/queue/SegmentedSwitcher';
 import Header from '@/components/shell/Header';
 import theme from '@/theme/theme';
+import { HistoryGroup, HistoryStatus, QueueModalKey, QueueView } from '@/theme/types';
 
 const OFFICES = [
   {
@@ -49,44 +50,44 @@ const OFFICES = [
 const HISTORY = [
   {
     id: 'h1',
-    group: 'TODAY',
+    group: HistoryGroup.TODAY,
     ticket: 'R-09-26-014',
     office: 'University Registrar',
     date: 'Sep 26, 2026 · 10:18 AM',
-    status: 'COMPLETED',
+    status: HistoryStatus.COMPLETED,
   },
   {
     id: 'h2',
-    group: 'TODAY',
+    group: HistoryGroup.TODAY,
     ticket: 'S-09-26-008',
     office: 'Student Accounting Office',
     date: 'Sep 26, 2026 · 8:42 AM',
-    status: 'CANCELLED',
+    status: HistoryStatus.CANCELLED,
   },
   {
     id: 'h3',
-    group: 'YESTERDAY',
+    group: HistoryGroup.YESTERDAY,
     ticket: 'M-09-25-031',
     office: 'Medical and Dental Services',
     date: 'Sep 25, 2026 · 2:05 PM',
-    status: 'NO_SHOW',
+    status: HistoryStatus.NO_SHOW,
   },
   {
     id: 'h4',
-    group: 'EARLIER',
+    group: HistoryGroup.EARLIER,
     ticket: 'R-09-22-004',
     office: 'University Registrar',
     date: 'Sep 22, 2026 · 9:11 AM',
-    status: 'CANCELLED_BY_OFFICE',
+    status: HistoryStatus.CANCELLED_BY_OFFICE,
   },
 ];
 
 function HistoryRow({ item }) {
   const statusStyles = {
-    COMPLETED: { bg: '#E8F4EC', text: theme.colors.success, icon: 'checkmark-circle-outline', label: 'Completed' },
-    CANCELLED: { bg: theme.colors.disabledBg, text: theme.colors.slate, icon: 'close-circle-outline', label: 'Cancelled' },
-    NO_SHOW: { bg: '#FCE8E6', text: theme.colors.error, icon: 'person-remove-outline', label: 'No-show' },
-    CANCELLED_BY_OFFICE: { bg: theme.colors.disabledBg, text: theme.colors.slate, icon: 'close-circle-outline', label: 'Cancelled by office' },
+    [HistoryStatus.COMPLETED]: { bg: '#E8F4EC', text: theme.colors.success, icon: 'checkmark-circle-outline', label: 'Completed' },
+    [HistoryStatus.CANCELLED]: { bg: theme.colors.disabledBg, text: theme.colors.slate, icon: 'close-circle-outline', label: 'Cancelled' },
+    [HistoryStatus.NO_SHOW]: { bg: '#FCE8E6', text: theme.colors.error, icon: 'person-remove-outline', label: 'No-show' },
+    [HistoryStatus.CANCELLED_BY_OFFICE]: { bg: theme.colors.disabledBg, text: theme.colors.slate, icon: 'close-circle-outline', label: 'Cancelled by office' },
   }[item.status];
 
   return (
@@ -108,7 +109,7 @@ function HistoryRow({ item }) {
 }
 
 export default function Queue() {
-  const [view, setView] = useState('Join');
+  const [view, setView] = useState(QueueView.JOIN);
   const [search, setSearch] = useState('');
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [modal, setModal] = useState(null);
@@ -122,7 +123,7 @@ export default function Queue() {
   }, [search]);
 
   const groupedHistory = useMemo(() => {
-    return ['TODAY', 'YESTERDAY', 'EARLIER'].map((group) => ({
+    return [HistoryGroup.TODAY, HistoryGroup.YESTERDAY, HistoryGroup.EARLIER].map((group) => ({
       group,
       items: HISTORY.filter((item) => item.group === group),
     }));
@@ -130,11 +131,11 @@ export default function Queue() {
 
   function openJoin(office) {
     setSelectedOffice(office);
-    setModal('join');
+    setModal(QueueModalKey.JOIN_CONFIRM);
   }
 
   function confirmJoin() {
-    setModal('success');
+    setModal(QueueModalKey.SUCCESS);
   }
 
   return (
@@ -146,9 +147,9 @@ export default function Queue() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>{view === 'Join' ? 'AVAILABLE OFFICES' : 'HISTORY'}</Text>
+        <Text style={styles.pageTitle}>{view === QueueView.JOIN ? 'AVAILABLE OFFICES' : 'HISTORY'}</Text>
         <Text style={styles.subtitle}>
-          {view === 'Join' ? 'Pick a line to join' : 'Find a past queue'}
+          {view === QueueView.JOIN ? 'Pick a line to join' : 'Find a past queue'}
         </Text>
 
         <SearchInput
@@ -159,12 +160,12 @@ export default function Queue() {
         />
 
         <SegmentedSwitcher
-          options={['Join', 'History']}
+          options={[QueueView.JOIN, QueueView.HISTORY]}
           value={view}
           onChange={setView}
         />
 
-        {view === 'Join' ? (
+        {view === QueueView.JOIN ? (
           <View style={styles.list}>
             {filteredOffices.length === 0 ? (
               <EmptyState
@@ -202,7 +203,7 @@ export default function Queue() {
       </ScrollView>
 
       <JoinConfirmModal
-        visible={modal === 'join'}
+        visible={modal === QueueModalKey.JOIN_CONFIRM}
         office={selectedOffice}
         estimatedWait={selectedOffice ? `${Math.max(1, Math.ceil((selectedOffice.waiting + 1) * selectedOffice.averageServiceMinutes / 5))} min` : '10 min'}
         onClose={() => setModal(null)}
@@ -210,7 +211,7 @@ export default function Queue() {
       />
 
       <NoticeModal
-        visible={modal === 'success'}
+        visible={modal === QueueModalKey.SUCCESS}
         title="You're in the queue"
         message={`Your ${selectedOffice?.code || ''} queue ticket has been issued. Check Home for your position and updates.`}
         icon="checkmark-circle-outline"

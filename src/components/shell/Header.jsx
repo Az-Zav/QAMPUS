@@ -36,8 +36,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.gold, justifyContent: 'center', alignItems: 'center',
   },
   title: {
-    fontSize: theme.typography.size.md, fontWeight: theme.typography.weight.bold,
-    fontFamily: theme.typography.fontFamily.bold, color: theme.colors.ink,
+    fontSize: theme.typography.size.md,
+    fontFamily: theme.typography.fontFamily.bold,
+    color: theme.colors.ink,
   },
   actions: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md },
   iconButton: { position: 'relative' },

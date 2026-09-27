@@ -1,22 +1,22 @@
 import Button from '@/components/primitives/Button';
 import Badge from '@/components/shell/Badge';
 import theme from '@/theme/theme';
-import { ButtonType } from '@/theme/types';
+import { ButtonType, TicketStatus } from '@/theme/types';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const STATE_STYLES = {
-  waiting: { cardBg: theme.colors.paper, border: null, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
-  yourTurn: { cardBg: theme.colors.ink, border: null, textPrimary: theme.colors.paper, textSecondary: theme.colors.slate },
-  expired: { cardBg: theme.colors.paper, border: theme.colors.error, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
-  inService: { cardBg: theme.colors.paper, border: null, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
+  [TicketStatus.WAITING]: { cardBg: theme.colors.paper, border: null, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
+  [TicketStatus.YOUR_TURN]: { cardBg: theme.colors.ink, border: null, textPrimary: theme.colors.paper, textSecondary: theme.colors.slate },
+  [TicketStatus.EXPIRED]: { cardBg: theme.colors.paper, border: theme.colors.error, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
+  [TicketStatus.IN_SERVICE]: { cardBg: theme.colors.paper, border: null, textPrimary: theme.colors.ink, textSecondary: theme.colors.slate },
 };
 
 export default function TicketStubCard({ ticket, nextUp, onPress, onOpenScanner }) {
   const { shortNumber, nowServing, officeName, location, status, estimatedWaitMinutes } = ticket;
-  const style = STATE_STYLES[status];
-  const isInService = status === 'inService';
-  const isCalled = status === 'yourTurn';
-  const isExpired = status === 'expired';
+  const style = STATE_STYLES[status] || STATE_STYLES[TicketStatus.WAITING];
+  const isInService = status === TicketStatus.IN_SERVICE;
+  const isCalled = status === TicketStatus.YOUR_TURN;
+  const isExpired = status === TicketStatus.EXPIRED;
 
   const CardWrapper = isInService ? View : Pressable;
 
@@ -113,12 +113,10 @@ const styles = StyleSheet.create({
   },
   officeName: {
     fontSize: theme.typography.size.lg,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
   },
   timeText: {
     fontSize: theme.typography.size.md,
-    fontWeight: theme.typography.weight.medium,
     fontFamily: theme.typography.fontFamily.medium,
   },
   subRow: {
@@ -135,7 +133,6 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: theme.typography.size.xs,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
     color: theme.colors.ink,
   },
@@ -183,13 +180,11 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: theme.typography.size.xs,
-    fontWeight: theme.typography.weight.medium,
     fontFamily: theme.typography.fontFamily.medium,
     marginBottom: 4,
   },
   ticketNum: {
     fontSize: theme.typography.size.xl,
-    fontWeight: theme.typography.weight.bold,
     fontFamily: theme.typography.fontFamily.bold,
   },
   divider: {

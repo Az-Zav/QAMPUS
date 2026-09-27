@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TextInput, StyleSheet } from 'react-native';
-import { theme } from '../../theme/theme';
-import { InputType } from '../../theme/types';
+import theme from '@/theme/theme';
+import { InputType } from '@/theme/types';
 
 export default function Input({value, onChangeText, placeholder, type = InputType.DEFAULT, keyboardType = 'default', maxLength, style, ...rest}) {
     const [focused, setFocused] = useState(false);
@@ -40,6 +40,5 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.fontFamily.regular,
     fontSize: theme.typography.size.md,
     color: theme.colors.ink,
-    outlineStyle: 'none'
   },
 });
