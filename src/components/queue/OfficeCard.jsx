@@ -141,6 +141,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.sm,
+    marginLeft: TEXT_INDENT,
   },
   bottomRow: {
     flexDirection: 'row',
