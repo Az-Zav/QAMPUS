@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.base, // rounded from Figma's 13.5px
+    fontSize: theme.typography.size.base,
     color: theme.colors.ink,
   },
 });

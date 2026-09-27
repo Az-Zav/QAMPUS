@@ -140,31 +140,35 @@ export default function Queue() {
 
   return (
     <View style={styles.screen}>
-      <Header title="QUEUE" hasNotification onBellPress={() => {}} onAvatarPress={() => {}} />
+      <View style={styles.yellowHero}>
+        <Header title="QUEUE" inverted hasNotification onBellPress={() => {}} onAvatarPress={() => {}} />
+
+        <View style={styles.heroContent}>
+          <Text style={styles.pageTitle}>{view === QueueView.JOIN ? 'AVAILABLE OFFICES' : 'HISTORY'}</Text>
+          <Text style={styles.subtitle}>
+            {view === QueueView.JOIN ? 'Pick a line to join' : 'Find a past queue'}
+          </Text>
+
+          <SearchInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Search office or service"
+            style={styles.search}
+          />
+
+          <SegmentedSwitcher
+            options={[QueueView.JOIN, QueueView.HISTORY]}
+            value={view}
+            onChange={setView}
+          />
+        </View>
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.pageTitle}>{view === QueueView.JOIN ? 'AVAILABLE OFFICES' : 'HISTORY'}</Text>
-        <Text style={styles.subtitle}>
-          {view === QueueView.JOIN ? 'Pick a line to join' : 'Find a past queue'}
-        </Text>
-
-        <SearchInput
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search office or service"
-          style={styles.search}
-        />
-
-        <SegmentedSwitcher
-          options={[QueueView.JOIN, QueueView.HISTORY]}
-          value={view}
-          onChange={setView}
-        />
-
         {view === QueueView.JOIN ? (
           <View style={styles.list}>
             {filteredOffices.length === 0 ? (
@@ -226,6 +230,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.paper,
   },
+  yellowHero: {
+    backgroundColor: theme.colors.gold,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    paddingBottom: theme.spacing.lg,
+  },
+  heroContent: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.xs,
+  },
   content: {
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.md,
@@ -234,13 +248,13 @@ const styles = StyleSheet.create({
   pageTitle: {
     color: theme.colors.ink,
     fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xl,
-    letterSpacing: 0.2,
+    fontSize: theme.typography.size.xs,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.sm,
+    color: theme.colors.ink,
+    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: theme.typography.size.xxl,
     marginTop: 2,
     marginBottom: theme.spacing.md,
   },
@@ -248,10 +262,10 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   list: {
-    marginTop: theme.spacing.lg,
+    marginTop: 0,
   },
   historyList: {
-    marginTop: theme.spacing.lg,
+    marginTop: 0,
   },
   sectionLabel: {
     color: theme.colors.slate,

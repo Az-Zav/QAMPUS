@@ -3,8 +3,6 @@ import theme from '@/theme/theme';
 import { ButtonType } from '@/theme/types';
 import { StyleSheet, Text, View } from 'react-native';
 
-// Icon badge width + the gap after it — used to indent the row below the
-// divider so its text lines up with the office name/location above it.
 const TEXT_INDENT = 42 + theme.spacing.sm;
 
 export default function OfficeCard({ office, onJoin }) {

@@ -1,53 +1,48 @@
+import ModalShell from '@/components/shell/ModalShell';
+import Button from '@/components/primitives/Button';
 import theme from '@/theme/theme';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ButtonType } from '@/theme/types';
+import { StyleSheet, Text, View } from 'react-native';
 
-export default function SegmentedSwitcher({ options = ['Join', 'History'], value, onChange }) {
+export default function JoinConfirmModal({ visible, office, estimatedWait, onClose, onConfirm }) {
+  if (!office) return null;
+
   return (
-    <View style={styles.container} accessibilityRole="tablist">
-      {options.map((option) => {
-        const selected = option === value;
-        return (
-          <Pressable
-            key={option}
-            onPress={() => onChange?.(option)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            style={[styles.segment, selected && styles.selected]}
-          >
-            <Text style={[styles.label, selected && styles.selectedLabel]}>
-              {option}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <ModalShell visible={visible} onClose={onClose}>
+      <Text style={styles.title}>Join Queue</Text>
+      <Text style={styles.subtitle}>Confirm joining line for {office.name}</Text>
+      <Text style={styles.wait}>Estimated wait: {estimatedWait}</Text>
+
+      <View style={styles.actions}>
+        <Button label="Cancel" type={ButtonType.GHOST} onPress={onClose} />
+        <Button label="Confirm" type={ButtonType.ACCENT} onPress={onConfirm} />
+      </View>
+    </ModalShell>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    backgroundColor: theme.colors.disabledBg,
-    borderRadius: theme.radii.full,
-    padding: 3,
-  },
-  segment: {
-    flex: 1,
-    minHeight: 40,
-    borderRadius: theme.radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing.md,
-  },
-  selected: {
-    backgroundColor: theme.colors.ink,
-  },
-  label: {
-    color: theme.colors.slate,
+  title: {
     fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.sm,
+    fontSize: theme.typography.size.xl,
+    color: theme.colors.ink,
   },
-  selectedLabel: {
-    color: theme.colors.white,
+  subtitle: {
+    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.slate,
+    marginTop: theme.spacing.xs,
+  },
+  wait: {
+    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: theme.typography.size.sm,
+    color: theme.colors.ink,
+    marginTop: theme.spacing.md,
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.lg,
   },
 });
