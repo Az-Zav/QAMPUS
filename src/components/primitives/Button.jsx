@@ -17,7 +17,7 @@ const SIZES = {
   sm: { height: 32, paddingHorizontal: theme.spacing.md, fontSize: theme.typography.size.xs },
 };
 
-export default function Button({label, onPress, type = ButtonType.PRIMARY, size = 'md', accessibilityLabel, style}) {
+export default function Button({label, onPress, type = ButtonType.PRIMARY, size = 'md', accessibilityLabel, style, icon,}) {
 
     const variant = VARIANTS[type];
     const sizing = SIZES[size] || SIZES.md;
@@ -42,7 +42,10 @@ export default function Button({label, onPress, type = ButtonType.PRIMARY, size 
                 style
             ]}
         >
-            <Text style={[styles.label, { color: variant.text, fontSize: sizing.fontSize }]}>{label}</Text>
+            <View style={styles.contentRow}>
+                {icon && <View style={styles.iconWrapper}>{icon}</View>}
+                <Text style={[styles.label, { color: variant.text, fontSize: sizing.fontSize }]}>{label}</Text>
+            </View>
         </Pressable>
     );
 }
@@ -57,4 +60,10 @@ const styles = StyleSheet.create({
     label: {
         fontFamily: theme.typography.fontFamily.bold,
     },
-    });
+    contentRow: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center' 
+    },
+    iconWrapper: { marginRight: 8 },
+});
