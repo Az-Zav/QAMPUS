@@ -1,6 +1,6 @@
-import { Pressable, Text, StyleSheet, View } from 'react-native';
 import theme from '@/theme/theme';
 import { ButtonType } from '@/theme/types';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const VARIANTS = {
   primary:     { bg: theme.colors.gold,         border: null,                   text: theme.colors.ink },

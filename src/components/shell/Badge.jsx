@@ -32,7 +32,6 @@ export default function Badge({ status, size = 'sm', onPress, icon, label }) {
     <Wrapper
       onPress={onPress}
       style={{
-        alignSelf: 'flex-start',
         backgroundColor: bg,
         borderWidth: border ? 1 : 0,
         borderColor: border ?? 'transparent',
