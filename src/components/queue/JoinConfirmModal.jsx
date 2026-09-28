@@ -1,17 +1,8 @@
 import Button from '@/components/primitives/Button';
+import DetailRow from '@/components/shell/DetailRow';
 import ModalShell from '@/components/shell/ModalShell';
-import theme from '@/theme/theme';
-import { ButtonType } from '@/theme/types';
+import { ButtonType, COLORS, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
 import { StyleSheet, Text, View } from 'react-native';
-
-function DetailRow({ label, value }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
-    </View>
-  );
-}
 
 export default function JoinConfirmModal({ visible, office, estimatedWait, peopleWaiting, onClose, onConfirm }) {
   if (!office) return null;
@@ -19,7 +10,7 @@ export default function JoinConfirmModal({ visible, office, estimatedWait, peopl
   return (
     <ModalShell visible={visible} onClose={onClose} showClose>
       <View style={styles.iconWrapper}>
-        <theme.IconSet name="ticket-outline" color={theme.colors.gold} size={28} />
+        <IconSet name="ticket-outline" color={COLORS.gold} size={28} />
       </View>
 
       <Text style={styles.title}>Join this queue?</Text>
@@ -39,40 +30,29 @@ export default function JoinConfirmModal({ visible, office, estimatedWait, peopl
 }
 
 const styles = StyleSheet.create({
-  iconWrapper: { alignSelf: 'center', marginBottom: theme.spacing.sm },
+  iconWrapper: {
+    alignSelf: 'center',
+    marginBottom: SPACING.sm,
+  },
   title: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xl,
-    color: theme.colors.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xl,
+    color: COLORS.ink,
     textAlign: 'center',
   },
   subtitle: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.sm,
-    color: theme.colors.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.sm,
+    color: COLORS.slate,
     textAlign: 'center',
-    marginTop: theme.spacing.xxs,
-    marginBottom: theme.spacing.lg,
+    marginTop: SPACING.xxs,
+    marginBottom: SPACING.lg,
   },
   rowsBlock: {
-    marginBottom: theme.spacing.xl,
-    gap: theme.spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  rowLabel: {
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.slate,
-  },
-  rowValue: {
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.ink,
+    marginBottom: SPACING.xl,
+    gap: SPACING.xs,
   },
   actions: {
-    gap: theme.spacing.sm,
+    gap: SPACING.sm,
   },
 });

@@ -1,110 +1,117 @@
+import { COLORS, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { useState } from 'react';
-import { View, Pressable, Text, TextInput, ScrollView, StyleSheet } from 'react-native';
-import theme from '@/theme/theme';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function Picker({ value, onSelect, options = [], placeholder = 'Select an option', searchable = false, style }) {
-    const [open, setOpen] = useState(false); // Whether options are open or collapsed
-    const [search, setSearch] = useState(''); // Search input value
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
 
-    const select = (option) => {
-        onSelect(option);
-        setOpen(false);
-    };
+  const select = (option) => {
+    onSelect?.(option);
+    setOpen(false);
+  };
 
-    const visible = searchable && search.trim() ? options.filter((option) => option.toLowerCase().includes(search.trim().toLowerCase())) : options; //search filtering function
+  const visible = searchable && search.trim()
+    ? options.filter((option) => option.toLowerCase().includes(search.trim().toLowerCase()))
+    : options;
 
-    const toggle = () => {
-        if (open) setSearch('');
-        setOpen((prev) => !prev);
-    };
+  const toggle = () => {
+    if (open) setSearch('');
+    setOpen((prev) => !prev);
+  };
 
-    return (
-        <View style={[styles.wrap, open && styles.wrapOpen, style]}>
-            <Pressable style={styles.field} onPress={toggle}>
-                {searchable && open ? (
-                    <TextInput  //rendered if searchable
-                        autoFocus
-                        value={search}
-                        onChangeText={setSearch}
-                        placeholder={placeholder}
-                        placeholderTextColor={theme.colors.slate}
-                        style={styles.searchInput}
-                    />
-                ) : (
-                    <Text style={[styles.value, (open || !value) && styles.valueOpen]} //rendered if not searchable
-                        numberOfLines={1}>
-                        {open ? placeholder : value ?? placeholder}
-                    </Text>
-                )}
-                <theme.IconSet
-                    name="chevron-down"
-                    size={16}
-                    color={theme.colors.slate}
-                    style={open && styles.chevronOpen}
-                />
-            </Pressable>
-
-            {open && (
-                <ScrollView style={styles.options} nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                    {visible.map((option) => {
-                        const isSelected = option === value;
-
-                        return (
-                            <Pressable
-                                key={option}
-                                style={[styles.option, isSelected && styles.optionSelected]}
-                                onPress={() => select(option)}
-                            >
-                                <Text style={[styles.optionText, isSelected && styles.optionTextSelected]} numberOfLines={1}>
-                                    {option}
-                                </Text>
-                            </Pressable>
-                        );
-                    })}
-                    {visible.length === 0 && (
-                        <View style={styles.option}>
-                            <Text style={styles.optionText}>No matches</Text>
-                        </View>
-                    )}
-                </ScrollView>
+  return (
+    <View style={[styles.wrap, open && styles.wrapOpen, style]}>
+      <Pressable style={styles.field} onPress={toggle}>
+        {searchable && open ? (
+          <TextInput
+            autoFocus
+            value={search}
+            onChangeText={setSearch}
+            placeholder={placeholder}
+            placeholderTextColor={COLORS.slate}
+            style={styles.searchInput}
+          />
+        ) : (
+          <Text
+            style={[styles.value, (open || !value) && styles.valueOpen]}
+            numberOfLines={1}
+          >
+            {open ? placeholder : value ?? placeholder}
+          </Text>
         )}
-        </View>
+        <IconSet
+          name="chevron-down"
+          size={16}
+          color={COLORS.slate}
+          style={open && styles.chevronOpen}
+        />
+      </Pressable>
+
+      {open && (
+        <ScrollView style={styles.options} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+          {visible.map((option) => {
+            const isSelected = option === value;
+
+            return (
+              <Pressable
+                key={option}
+                style={[styles.option, isSelected && styles.optionSelected]}
+                onPress={() => select(option)}
+              >
+                <Text
+                  style={[styles.optionText, isSelected && styles.optionTextSelected]}
+                  numberOfLines={1}
+                >
+                  {option}
+                </Text>
+              </Pressable>
+            );
+          })}
+          {visible.length === 0 && (
+            <View style={styles.option}>
+              <Text style={styles.optionText}>No matches</Text>
+            </View>
+          )}
+        </ScrollView>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    borderRadius: theme.radii.lg,
+    borderRadius: RADII.lg,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.white,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
     overflow: 'hidden',
   },
   wrapOpen: {
     borderWidth: 2,
-    borderColor: theme.colors.gold,
+    borderColor: COLORS.gold,
   },
   field: {
     height: 46,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    gap: theme.spacing.sm,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
   },
   value: {
     flex: 1,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.md,
-    color: theme.colors.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.md,
+    color: COLORS.ink,
   },
   valueOpen: {
-    color: theme.colors.slate,
+    color: COLORS.slate,
   },
   searchInput: {
     flex: 1,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.md,
-    color: theme.colors.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.md,
+    color: COLORS.ink,
     padding: 0,
   },
   chevronOpen: {
@@ -116,17 +123,17 @@ const styles = StyleSheet.create({
   option: {
     height: 42,
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: SPACING.lg,
   },
   optionSelected: {
-    backgroundColor: theme.withOpacity(theme.colors.gold, 0.18),
+    backgroundColor: withOpacity(COLORS.gold, 0.18),
   },
   optionText: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.base,
-    color: theme.colors.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.base,
+    color: COLORS.slate,
   },
   optionTextSelected: {
-    color: theme.colors.ink,
+    color: COLORS.ink,
   },
 });

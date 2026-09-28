@@ -3,110 +3,14 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import SearchInput from '@/components/primitives/SearchInput';
 import EmptyState from '@/components/queue/EmptyState';
+import HistoryRow from '@/components/queue/HistoryRow';
 import JoinConfirmModal from '@/components/queue/JoinConfirmModal';
 import NoticeModal from '@/components/queue/NoticeModal';
 import OfficeCard from '@/components/queue/OfficeCard';
 import SegmentedSwitcher from '@/components/queue/SegmentedSwitcher';
 import Header from '@/components/shell/Header';
-import theme from '@/theme/theme';
-import { HistoryGroup, HistoryStatus, QueueModalKey, QueueView } from '@/theme/types';
-
-const OFFICES = [
-  {
-    id: 'R',
-    code: 'R',
-    name: 'University Registrar',
-    location: 'Main Bldg, 1F',
-    nowServing: 'R-002',
-    waiting: 18,
-    averageServiceMinutes: 3,
-    icon: 'school-outline',
-    open: true,
-  },
-  {
-    id: 'S',
-    code: 'S',
-    name: 'Student Accounting Office',
-    location: 'Admin Bldg, 2F',
-    nowServing: 'S-014',
-    waiting: 32,
-    averageServiceMinutes: 4,
-    icon: 'wallet-outline',
-    open: true,
-  },
-  {
-    id: 'M',
-    code: 'M',
-    name: 'Medical and Dental Services',
-    location: 'Clinic Bldg, G/F',
-    nowServing: 'M-038',
-    waiting: 9,
-    averageServiceMinutes: 5,
-    icon: 'medkit-outline',
-    open: true,
-  },
-];
-
-const HISTORY = [
-  {
-    id: 'h1',
-    group: HistoryGroup.TODAY,
-    ticket: 'R-09-26-014',
-    office: 'University Registrar',
-    date: 'Sep 26, 2026 · 10:18 AM',
-    status: HistoryStatus.COMPLETED,
-  },
-  {
-    id: 'h2',
-    group: HistoryGroup.TODAY,
-    ticket: 'S-09-26-008',
-    office: 'Student Accounting Office',
-    date: 'Sep 26, 2026 · 8:42 AM',
-    status: HistoryStatus.CANCELLED,
-  },
-  {
-    id: 'h3',
-    group: HistoryGroup.YESTERDAY,
-    ticket: 'M-09-25-031',
-    office: 'Medical and Dental Services',
-    date: 'Sep 25, 2026 · 2:05 PM',
-    status: HistoryStatus.NO_SHOW,
-  },
-  {
-    id: 'h4',
-    group: HistoryGroup.EARLIER,
-    ticket: 'R-09-22-004',
-    office: 'University Registrar',
-    date: 'Sep 22, 2026 · 9:11 AM',
-    status: HistoryStatus.CANCELLED_BY_OFFICE,
-  },
-];
-
-function HistoryRow({ item }) {
-  const statusStyles = {
-    [HistoryStatus.COMPLETED]: { bg: '#E8F4EC', text: theme.colors.success, icon: 'checkmark-circle-outline', label: 'Completed' },
-    [HistoryStatus.CANCELLED]: { bg: theme.colors.disabledBg, text: theme.colors.slate, icon: 'close-circle-outline', label: 'Cancelled' },
-    [HistoryStatus.NO_SHOW]: { bg: '#FCE8E6', text: theme.colors.error, icon: 'person-remove-outline', label: 'No-show' },
-    [HistoryStatus.CANCELLED_BY_OFFICE]: { bg: theme.colors.disabledBg, text: theme.colors.slate, icon: 'close-circle-outline', label: 'Cancelled by office' },
-  }[item.status];
-
-  return (
-    <View style={styles.historyRow}>
-      <View style={styles.historyIcon}>
-        <theme.IconSet name="ticket-outline" size={18} color={theme.colors.ink} />
-      </View>
-      <View style={styles.historyInfo}>
-        <Text style={styles.historyTicket}>{item.ticket}</Text>
-        <Text style={styles.historyOffice}>{item.office}</Text>
-        <Text style={styles.historyDate}>{item.date}</Text>
-      </View>
-      <View style={[styles.historyStatus, { backgroundColor: statusStyles.bg }]}>
-        <theme.IconSet name={statusStyles.icon} size={12} color={statusStyles.text} />
-        <Text style={[styles.historyStatusText, { color: statusStyles.text }]}>{statusStyles.label}</Text>
-      </View>
-    </View>
-  );
-}
+import { COLORS, HistoryGroup, QueueModalKey, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
+import { MOCK_HISTORY_TICKETS, MOCK_OFFICES } from '@/data/mock';
 
 export default function Queue() {
   const [view, setView] = useState(QueueView.JOIN);
@@ -114,20 +18,26 @@ export default function Queue() {
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [modal, setModal] = useState(null);
 
+  const offices = MOCK_OFFICES;
+  const history = MOCK_HISTORY_TICKETS;
+
   const filteredOffices = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return OFFICES;
-    return OFFICES.filter((office) =>
-      [office.name, office.location, office.code].some((value) => value.toLowerCase().includes(query)),
+    if (!query) return offices;
+    return offices.filter((office) =>
+      [office.name, office.location, office.code].some((value) =>
+        value.toLowerCase().includes(query),
+      ),
     );
-  }, [search]);
+  }, [search, offices]);
 
   const groupedHistory = useMemo(() => {
-    return [HistoryGroup.TODAY, HistoryGroup.YESTERDAY, HistoryGroup.EARLIER].map((group) => ({
-      group,
-      items: HISTORY.filter((item) => item.group === group),
-    }));
-  }, []);
+    return [
+      { group: HistoryGroup.TODAY, items: history.filter((_, idx) => idx === 0) },
+      { group: HistoryGroup.YESTERDAY, items: history.filter((_, idx) => idx === 1) },
+      { group: HistoryGroup.EARLIER, items: history.filter((_, idx) => idx >= 2) },
+    ].filter((g) => g.items.length > 0);
+  }, [history]);
 
   function openJoin(office) {
     setSelectedOffice(office);
@@ -141,10 +51,18 @@ export default function Queue() {
   return (
     <View style={styles.screen}>
       <View style={styles.yellowHero}>
-        <Header title="QUEUE" inverted hasNotification onBellPress={() => {}} onAvatarPress={() => {}} />
+        <Header
+          title="QUEUE"
+          inverted
+          hasNotification
+          onBellPress={() => {}}
+          onAvatarPress={() => {}}
+        />
 
         <View style={styles.heroContent}>
-          <Text style={styles.pageTitle}>{view === QueueView.JOIN ? 'AVAILABLE OFFICES' : 'HISTORY'}</Text>
+          <Text style={styles.pageTitle}>
+            {view === QueueView.JOIN ? 'AVAILABLE OFFICES' : 'HISTORY'}
+          </Text>
           <Text style={styles.subtitle}>
             {view === QueueView.JOIN ? 'Pick a line to join' : 'Find a past queue'}
           </Text>
@@ -181,7 +99,16 @@ export default function Queue() {
               filteredOffices.map((office) => (
                 <OfficeCard
                   key={office.id}
-                  office={office}
+                  office={{
+                    id: office.id,
+                    code: office.code,
+                    name: office.name,
+                    location: office.location,
+                    nowServing: office.queue?.current_ticket_number ?? '—',
+                    waiting: office.queue?.waiting_count ?? 0,
+                    averageServiceMinutes: office.default_service_minutes,
+                    open: office.queue?.status === 'OPEN',
+                  }}
                   onJoin={() => openJoin(office)}
                 />
               ))
@@ -189,7 +116,7 @@ export default function Queue() {
           </View>
         ) : (
           <View style={styles.historyList}>
-            {HISTORY.length === 0 ? (
+            {history.length === 0 ? (
               <EmptyState
                 title="No queue history"
                 message="Completed, cancelled, and no-show tickets will appear here."
@@ -198,7 +125,9 @@ export default function Queue() {
               groupedHistory.map(({ group, items }) => (
                 <View key={group}>
                   <Text style={styles.sectionLabel}>{group}</Text>
-                  {items.map((item) => <HistoryRow key={item.id} item={item} />)}
+                  {items.map((item) => (
+                    <HistoryRow key={item.id} item={item} />
+                  ))}
                 </View>
               ))
             )}
@@ -209,7 +138,19 @@ export default function Queue() {
       <JoinConfirmModal
         visible={modal === QueueModalKey.JOIN_CONFIRM}
         office={selectedOffice}
-        estimatedWait={selectedOffice ? `${Math.max(1, Math.ceil((selectedOffice.waiting + 1) * selectedOffice.averageServiceMinutes / 5))} min` : '10 min'}
+        estimatedWait={
+          selectedOffice
+            ? `${Math.max(
+                1,
+                Math.ceil(
+                  (((selectedOffice.queue?.waiting_count ?? 0) + 1) *
+                    selectedOffice.default_service_minutes) /
+                    5,
+                ),
+              )} min`
+            : '10 min'
+        }
+        peopleWaiting={selectedOffice?.queue?.waiting_count ?? 0}
         onClose={() => setModal(null)}
         onConfirm={confirmJoin}
       />
@@ -228,38 +169,38 @@ export default function Queue() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.paper,
+    backgroundColor: COLORS.paper,
   },
   yellowHero: {
-    backgroundColor: theme.colors.gold,
+    backgroundColor: COLORS.gold,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    paddingBottom: theme.spacing.lg,
+    paddingBottom: SPACING.lg,
   },
   heroContent: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.xs,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xs,
   },
   content: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.md,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
     paddingBottom: 112,
   },
   pageTitle: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xs,
+    color: COLORS.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xs,
     letterSpacing: 0.5,
   },
   subtitle: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xxl,
+    color: COLORS.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xxl,
     marginTop: 2,
-    marginBottom: theme.spacing.md,
+    marginBottom: SPACING.md,
   },
   search: {
-    marginBottom: theme.spacing.md,
+    marginBottom: SPACING.md,
   },
   list: {
     marginTop: 0,
@@ -268,64 +209,11 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   sectionLabel: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xs,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xs,
     letterSpacing: 1,
-    marginBottom: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
-  },
-  historyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.white,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-  },
-  historyIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#FFF4CF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: theme.spacing.sm,
-  },
-  historyInfo: {
-    flex: 1,
-    minWidth: 0,
-  },
-  historyTicket: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.base,
-  },
-  historyOffice: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.xs,
-    marginTop: 2,
-  },
-  historyDate: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: 10,
-    marginTop: 2,
-  },
-  historyStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: theme.radii.full,
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    marginLeft: theme.spacing.xs,
-  },
-  historyStatusText: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: 9,
-    marginLeft: 3,
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.sm,
   },
 });

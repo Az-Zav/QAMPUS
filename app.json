@@ -4,37 +4,28 @@
     "slug": "Qampus",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Qampus-Logo.png",
     "scheme": "qampus",
     "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FAF7F0",
+        "foregroundImage": "./assets/images/Qampus-Logo.png"
       },
       "predictiveBackGestureEnabled": false,
-      "androidStatusBar": {
-        "backgroundColor": "#00000000",
-        "translucent": true,
-        "barStyle": "dark-content"
-      }
+      "package": "com.qampus.app"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/Qampus-Logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
+          "backgroundColor": "#FAF7F0",
+          "image": "./assets/images/Qampus-Logo.png",
           "imageWidth": 76
         }
       ],
@@ -44,7 +35,5 @@
       "typedRoutes": true,
       "reactCompiler": true
     }
-
-    
   }
 }

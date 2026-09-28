@@ -1,7 +1,6 @@
 import Button from '@/components/primitives/Button';
 import ModalShell from '@/components/shell/ModalShell';
-import theme from '@/theme/theme';
-import { ButtonType } from '@/theme/types';
+import { ButtonType, COLORS, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function CalledModal({ visible, ticket, onClose, onOpenScanner }) {
@@ -12,7 +11,7 @@ export default function CalledModal({ visible, ticket, onClose, onOpenScanner })
   return (
     <ModalShell visible={visible} onClose={onClose} showClose>
       <View style={styles.iconWrapper}>
-        <theme.IconSet name="notifications" color={theme.colors.gold} size={28} />
+        <IconSet name="notifications" color={COLORS.gold} size={28} />
       </View>
 
       <Text style={styles.title}>It's your turn</Text>
@@ -31,33 +30,33 @@ export default function CalledModal({ visible, ticket, onClose, onOpenScanner })
 const styles = StyleSheet.create({
   iconWrapper: {
     alignSelf: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: SPACING.sm,
   },
   title: {
-    fontSize: theme.typography.size.xl,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.ink,
+    fontSize: TYPOGRAPHY.size.xl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.ink,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.slate,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.slate,
     textAlign: 'center',
-    marginTop: theme.spacing.xxs,
-    marginBottom: theme.spacing.lg,
+    marginTop: SPACING.xxs,
+    marginBottom: SPACING.lg,
   },
   number: {
-    fontSize: theme.typography.size.xl,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.ink,
+    fontSize: TYPOGRAPHY.size.xl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.ink,
     textAlign: 'center',
   },
   countdown: {
-    fontSize: theme.typography.size.xxl,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.gold,
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.gold,
     textAlign: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: SPACING.lg,
   },
 });

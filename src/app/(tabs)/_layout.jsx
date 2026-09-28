@@ -1,5 +1,5 @@
 import BottomNav from '@/components/shell/BottomNav';
-import theme from '@/theme/theme';
+import { AppTab, COLORS } from '@/constants';
 import { Slot, usePathname, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -8,10 +8,10 @@ export default function TabsLayout() {
   const pathname = usePathname();
 
   const active = pathname.includes('queue')
-    ? 'queue'
+    ? AppTab.QUEUE
     : pathname.includes('scan')
-    ? 'scan'
-    : 'home';
+    ? AppTab.SCAN
+    : AppTab.HOME;
 
   return (
     <View style={styles.container}>
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: theme.colors.paper,
+    backgroundColor: COLORS.paper,
   },
   content: {
     flex: 1,

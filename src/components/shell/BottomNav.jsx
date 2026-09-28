@@ -1,5 +1,4 @@
-import theme from '@/theme/theme';
-import { AppTab } from '@/theme/types';
+import { AppTab, COLORS, ELEVATION, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const TAB_ICONS = { [AppTab.HOME]: 'home', [AppTab.SCAN]: 'qr-code', [AppTab.QUEUE]: 'ticket' };
@@ -13,38 +12,65 @@ export default function BottomNav({ active, onNavigate }) {
         <NavItem tab={AppTab.QUEUE} label="Queue" active={active === AppTab.QUEUE} onPress={() => onNavigate(AppTab.QUEUE)} />
       </View>
       <Pressable style={styles.scanButton} onPress={() => onNavigate(AppTab.SCAN)} accessibilityLabel="Scan">
-        <theme.IconSet name={TAB_ICONS[AppTab.SCAN]} color={theme.colors.ink} size={26} />
+        <IconSet name={TAB_ICONS[AppTab.SCAN]} color={COLORS.ink} size={26} />
       </Pressable>
     </View>
   );
 }
 
 function NavItem({ tab, label, active, onPress }) {
-  const color = active ? theme.colors.gold : theme.colors.paper;
+  const color = active ? COLORS.gold : COLORS.paper;
   return (
     <Pressable style={styles.navItem} onPress={onPress}>
-      <theme.IconSet name={TAB_ICONS[tab]} color={color} size={22} />
+      <IconSet name={TAB_ICONS[tab]} color={color} size={22} />
       <Text style={[styles.label, { color }]}>{label.toUpperCase()}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: { position: 'absolute', bottom: 0, left: 0, right: 0, alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12 },
-  bar: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: theme.colors.ink, borderRadius: theme.radii.full,
-    paddingHorizontal: theme.spacing.xl + theme.spacing.lg, // 20 + 16 = 36 (was just xl/20)
-    paddingVertical: theme.spacing.md,                       // 12 (was sm/8)
-    width: '100%', ...theme.elevation.sm,
+  wrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.md,
   },
-  navItem: { alignItems: 'center', gap: theme.spacing.xxxs, minWidth: 64 },
-  centerSpacer: { width: 64 },
-  label: { fontSize: theme.typography.size.xs, fontFamily: theme.typography.fontFamily.medium },
+  bar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.ink,
+    borderRadius: RADII.full,
+    paddingHorizontal: SPACING.xl + SPACING.lg,
+    paddingVertical: SPACING.md,
+    width: '100%',
+    ...ELEVATION.sm,
+  },
+  navItem: {
+    alignItems: 'center',
+    gap: SPACING.xxxs,
+    minWidth: 64,
+  },
+  centerSpacer: {
+    width: 64,
+  },
+  label: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
   scanButton: {
-    position: 'absolute', top: -24, alignSelf: 'center',
-    width: 56, height: 56, borderRadius: theme.radii.full,
-    backgroundColor: theme.colors.gold, justifyContent: 'center', alignItems: 'center',
-    ...theme.elevation.md,
+    position: 'absolute',
+    top: -24,
+    alignSelf: 'center',
+    width: 56,
+    height: 56,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.gold,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...ELEVATION.md,
   },
 });

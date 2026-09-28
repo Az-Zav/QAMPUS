@@ -1,60 +1,67 @@
-import theme from '@/theme/theme';
-import { Pressable, Text, View } from 'react-native';
-
-function statusLabel(status) {
-  const labels = {
-    waiting: 'Waiting',
-    yourTurn: 'Your turn',
-    expired: 'Expired',
-    inService: 'In service',
-    completed: 'Completed',
-    cancelled: 'Cancelled',
-    noShow: 'No-show',
-  };
-  return labels[status] ?? status;
-}
+import { COLORS, IconSet, RADII, SPACING, STATUS_THEME, TYPOGRAPHY } from '@/constants';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function Badge({ status, size = 'sm', onPress, icon, label }) {
   const isActionable = typeof onPress === 'function';
   const Wrapper = isActionable ? Pressable : View;
 
-  // If a status is given, pull its style from the theme. Otherwise (custom badge,
-  // like the scanner action), fall back to gold/ink — matching the "yourTurn" look.
-  const { bg, border, text } = status
-    ? theme.statusBadge[status]
-    : { bg: theme.colors.gold, border: null, text: theme.colors.ink };
+  const currentTheme = STATUS_THEME[status] ?? {
+    bg: COLORS.gold,
+    border: null,
+    text: COLORS.ink,
+    icon: 'notifications',
+    label: status ?? 'Status',
+  };
 
-  const fontSize = size === 'sm' ? theme.typography.size.sm : theme.typography.size.base;
-  const iconName = icon ?? theme.statusIcon[status];
-  const displayLabel = label ?? statusLabel(status);
+  const fontSize = size === 'sm' ? TYPOGRAPHY.size.sm : TYPOGRAPHY.size.base;
+  const iconName = icon ?? currentTheme.icon;
+  const displayLabel = label ?? currentTheme.label;
 
   return (
     <Wrapper
       onPress={onPress}
-      style={{
-        backgroundColor: bg,
-        borderWidth: border ? 1 : 0,
-        borderColor: border ?? 'transparent',
-        borderRadius: theme.radii.full,
-        paddingHorizontal: theme.spacing.md,
-        paddingVertical: theme.spacing.xs,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: theme.spacing.xs,
-      }}
+      style={({ pressed }) => [
+        styles.badge,
+        {
+          backgroundColor: currentTheme.bg,
+          borderColor: currentTheme.border ?? 'transparent',
+          borderWidth: currentTheme.border ? 1 : 0,
+        },
+        isActionable && pressed && styles.pressed,
+      ]}
+      accessibilityRole={isActionable ? 'button' : undefined}
     >
-      {iconName && <theme.IconSet name={iconName} color={text} size={fontSize + 2} />}
+      {iconName && <IconSet name={iconName} color={currentTheme.text} size={fontSize + 2} />}
       <Text
-        style={{
-          color: text,
-          fontSize,
-          lineHeight: fontSize * 1.2,
-          fontFamily: theme.typography.fontFamily.medium,
-        }}
+        style={[
+          styles.text,
+          {
+            color: currentTheme.text,
+            fontSize,
+            lineHeight: fontSize * 1.2,
+          },
+        ]}
       >
         {displayLabel}
       </Text>
     </Wrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    borderRadius: RADII.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+  },
+  pressed: {
+    opacity: 0.8,
+  },
+  text: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+});

@@ -1,4 +1,4 @@
-import EmptyState from './EmptyState';
+import EmptyState from '@/components/queue/EmptyState';
 
 export default function OfflineState({
   title = 'Temporarily unavailable',
@@ -7,6 +7,7 @@ export default function OfflineState({
 }) {
   return (
     <EmptyState
+      icon="wifi-off"
       showIconCircle={showIconCircle}
       title={title}
       message={message}

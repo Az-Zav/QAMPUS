@@ -1,15 +1,15 @@
+import { COLORS } from '@/constants';
+import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold, useFonts } from '@expo-google-fonts/dm-sans';
 import { Slot } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { StyleSheet, View, Platform, StatusBar as RNStatusBar } from 'react-native';
-import { useFonts, DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
-import theme from '@/theme/theme';
+import { Platform, StatusBar as RNStatusBar, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function TabsLayout() {
+export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
@@ -31,20 +31,18 @@ export default function TabsLayout() {
   }
 
   return (
-    <>
-      <SafeAreaProvider style={{ flex:1}}>
-        <StatusBar style="dark" translucent backgroundColor="transparent"  />
-        <View style={styles.shell}>
-          <Slot />
-        </View>
-      </SafeAreaProvider>
-    </>
+    <SafeAreaProvider style={{ flex: 1 }}>
+      <StatusBar style="dark" translucent backgroundColor="transparent" />
+      <View style={styles.shell}>
+        <Slot />
+      </View>
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
   shell: {
     flex: 1,
-    backgroundColor: theme.colors.paper,
+    backgroundColor: COLORS.paper,
   },
 });

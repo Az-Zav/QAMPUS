@@ -1,5 +1,4 @@
-import theme from '@/theme/theme';
-import { QueueView } from '@/theme/types';
+import { COLORS, QueueView, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function SegmentedSwitcher({ options = [QueueView.JOIN, QueueView.HISTORY], value, onChange }) {
@@ -28,29 +27,29 @@ export default function SegmentedSwitcher({ options = [QueueView.JOIN, QueueView
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: theme.withOpacity(theme.colors.white, 0.9),
+    backgroundColor: withOpacity(COLORS.white, 0.9),
     borderWidth: 1,
-    borderColor: theme.withOpacity(theme.colors.ink, 0.05),
-    borderRadius: theme.radii.full,
+    borderColor: withOpacity(COLORS.ink, 0.05),
+    borderRadius: RADII.full,
     padding: 4,
   },
   segment: {
     flex: 1,
     minHeight: 40,
-    borderRadius: theme.radii.full,
+    borderRadius: RADII.full,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: SPACING.md,
   },
   selected: {
-    backgroundColor: theme.colors.ink,
+    backgroundColor: COLORS.ink,
   },
   label: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.sm,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.sm,
   },
   selectedLabel: {
-    color: theme.colors.gold,
+    color: COLORS.gold,
   },
 });

@@ -1,97 +1,99 @@
-import React from 'react';
-import { StyleSheet, View, Text, Image, StatusBar, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@/components/primitives/Button';
-import theme from '@/theme/theme';
-import { ButtonType } from '@/theme/types';
+import { ButtonType, COLORS, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
-    return (
+  const router = useRouter();
+
+  const handleGoogleLogin = () => {
+    router.replace('/(tabs)/home');
+  };
+
+  const handleGuestLogin = () => {
+    router.replace('/(tabs)/home');
+  };
+
+  return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.paper} />
-      
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+
       <View style={styles.content}>
         {/* Header Section: Logo Image + Text Brand */}
         <View style={styles.headerContainer}>
+          <Image
+            source={require('../../assets/images/Qampus-Logo.png')}
+            style={styles.logoMark}
+            resizeMode="contain"
+          />
+          <View style={styles.brandTextGroup}>
+            <Text style={styles.brandTitle}>QAMPUS</Text>
+            <Text style={styles.brandSubtitle}>Digital Queueing App</Text>
+          </View>
+        </View>
+
+        {/* Main Body Section */}
+        <View style={styles.mainContainer}>
+          {/* Hero Section */}
+          <View style={styles.heroContainer}>
             <Image
-                source={require('../../assets/images/Qampus-Logo.png')}
-                style={styles.logoMark}
-                resizeMode="contain"
+              source={require('../../assets/images/Hero_Illustration.png')}
+              style={styles.heroIllustration}
+              resizeMode="contain"
             />
-            <View style={styles.brandTextGroup}>
-                <Text style={styles.brandTitle}>QAMPUS</Text>
-                <Text style={styles.brandSubtitle}>Digital Queueing App</Text>
-            </View>
-        </View>
-        {/* Main Body Section (Groups Hero + Actions together) */}
-            <View style={styles.mainContainer}>
-            {/* Hero Section: Large Illustration + Main Value Props */}
-            <View style={styles.heroContainer}>
-                <Image
-                    source={require('../../assets/images/Hero_Illustration.png')}
-                    style={styles.heroIllustration}
-                    resizeMode="contain"
-                />
 
-                <View style={styles.textGroup}>
-                    <Text style={styles.title}>
-                    Skip the line,{"\n"}not the service
-                    </Text>
-                    <Text style={styles.subtitle}>
-                    Get started and reclaim your time.
-                    </Text>
-                </View>
+            <View style={styles.textGroup}>
+              <Text style={styles.title}>
+                Skip the line,{'\n'}not the service
+              </Text>
+              <Text style={styles.subtitle}>
+                Get started and reclaim your time.
+              </Text>
             </View>
-            {/* Action Buttons & Footer */}
-            <View style={styles.actionContainer}>
-                <Button
-                    label="Continue with Google"
-                    type={ButtonType.SECONDARY}
-                    onPress={() => {
-                    // Handle Google Sign-In
-                    }}
-                    style={styles.buttonMargin}
-                    icon={<theme.IconSet name="logo-google" size={20} color={theme.colors.gold} />}
-                />
+          </View>
 
-                <Button
-                    label="Continue as guest"
-                    type={ButtonType.SECONDARY}
-                    onPress={() => {
-                    // Handle Guest Navigation
-                    }}
-                    style={styles.buttonMargin}
-                    icon={<theme.IconSet name="person-outline" size={20} color={theme.colors.ink} />}
-                />
+          {/* Action Buttons & Footer */}
+          <View style={styles.actionContainer}>
+            <Button
+              label="Continue with Google"
+              type={ButtonType.SECONDARY}
+              onPress={handleGoogleLogin}
+              style={styles.buttonMargin}
+              icon={<IconSet name="logo-google" size={20} color={COLORS.gold} />}
+            />
 
-                <Text style={styles.termsText}>
-                        By continuing you agree to our{' '}
-                    <Text style={styles.termsLink} onPress={() => {/* Navigate to Terms */}}>
-                        Terms
-                    </Text>{' '}
-                        &{' '}
-                    <Text style={styles.termsLink} onPress={() => {/* Navigate to Privacy */}}>
-                    Privacy Policy
-                    </Text>
-                </Text>
-            </View>
+            <Button
+              label="Continue as guest"
+              type={ButtonType.SECONDARY}
+              onPress={handleGuestLogin}
+              style={styles.buttonMargin}
+              icon={<IconSet name="person-outline" size={20} color={COLORS.ink} />}
+            />
+
+            <Text style={styles.termsText}>
+              By continuing, you agree to our{' '}
+              <Text style={styles.termsLink}>Terms</Text> &{' '}
+              <Text style={styles.termsLink}>Privacy Policy</Text>
+            </Text>
+          </View>
         </View>
-        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.paper,
+    backgroundColor: COLORS.paper,
   },
   content: {
     flex: 1,
-    paddingHorizontal: theme.spacing.xxl,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.xl,
+    paddingHorizontal: SPACING.xxl,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
 
   /* Header */
@@ -99,62 +101,62 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: theme.spacing.xl,
+    marginTop: SPACING.xl,
   },
   logoMark: {
     width: 44,
     height: 44,
-    marginRight: theme.spacing.sm,
+    marginRight: SPACING.sm,
   },
   brandTextGroup: {
     justifyContent: 'center',
   },
   brandTitle: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xl,
-    color: theme.colors.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xl,
+    color: COLORS.ink,
     letterSpacing: 2.5,
-    lineHeight: theme.typography.size.xl * theme.typography.lineHeight.tight,
+    lineHeight: TYPOGRAPHY.size.xl * TYPOGRAPHY.lineHeight.tight,
   },
   brandSubtitle: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.xs,
-    color: theme.colors.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.xs,
+    color: COLORS.slate,
   },
 
-  /* Main Container — Pulls body content up toward header */
+  /* Main Container */
   mainContainer: {
     flex: 1,
     justifyContent: 'center',
-    marginTop: -theme.spacing.lg,
+    marginTop: -SPACING.lg,
   },
 
   /* Hero */
   heroContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: SPACING.xl,
   },
   heroIllustration: {
     width: '100%',
     height: 250,
-    marginBottom: theme.spacing.sm,
+    marginBottom: SPACING.sm,
   },
   textGroup: {
     alignItems: 'center',
   },
   title: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xxl,
-    lineHeight: theme.typography.size.xxl * theme.typography.lineHeight.tight,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xxl,
+    lineHeight: TYPOGRAPHY.size.xxl * TYPOGRAPHY.lineHeight.tight,
     textAlign: 'center',
-    color: theme.colors.ink,
-    marginBottom: theme.spacing.xs,
+    color: COLORS.ink,
+    marginBottom: SPACING.xs,
   },
   subtitle: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.base,
-    color: theme.colors.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.base,
+    color: COLORS.slate,
     textAlign: 'center',
   },
 
@@ -165,24 +167,19 @@ const styles = StyleSheet.create({
     zIndex: 10,
     elevation: 10,
   },
-  googleIcon: {
-    width: 20,
-    height: 20,
-    resizeMode: 'contain',
-  },
   buttonMargin: {
-    marginBottom: theme.spacing.md,
+    marginBottom: SPACING.md,
   },
   termsText: {
-    marginTop: theme.spacing.sm,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.sm,
-    color: theme.colors.slate,
+    marginTop: SPACING.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.sm,
+    color: COLORS.slate,
     textAlign: 'center',
-    lineHeight: theme.typography.size.sm * theme.typography.lineHeight.relaxed,
+    lineHeight: TYPOGRAPHY.size.sm * TYPOGRAPHY.lineHeight.relaxed,
   },
   termsLink: {
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.ink,
   },
 });

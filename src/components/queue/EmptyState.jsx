@@ -1,9 +1,6 @@
-import { Feather } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
-
 import Button from '@/components/primitives/Button';
-import theme from '@/theme/theme';
-import { ButtonType } from '@/theme/types';
+import { ButtonType, COLORS, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function EmptyState({
   title = 'Nothing here yet',
@@ -22,12 +19,11 @@ export default function EmptyState({
     <View style={styles.container}>
       {showIconCircle ? (
         <View style={styles.iconCircle}>
-          <theme.IconSet name={icon} size={24} color={theme.colors.ink} />
+          <IconSet name={icon} size={24} color={COLORS.ink} />
         </View>
       ) : (
         <View style={styles.rawIconContainer}>
-          {/* Renders the actual slashed wifi icon */}
-          <Feather name="wifi-off" size={36} color={theme.colors.slate} />
+          <IconSet name={icon === 'wifi-off' ? 'cloud-offline-outline' : icon} size={36} color={COLORS.slate} />
         </View>
       )}
 
@@ -45,40 +41,40 @@ export default function EmptyState({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justify: 'center',
+    justifyContent: 'center',
     paddingVertical: 44,
-    paddingHorizontal: 28,
+    paddingHorizontal: SPACING.xxxl,
   },
   iconCircle: {
     width: 52,
     height: 52,
-    borderRadius: 26,
-    backgroundColor: theme.colors.gold,
+    borderRadius: RADII.xxl,
+    backgroundColor: COLORS.gold,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: SPACING.md,
   },
   rawIconContainer: {
-    marginBottom: theme.spacing.md,
+    marginBottom: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.md,
+    color: COLORS.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.md,
     textAlign: 'center',
   },
   message: {
-    marginTop: theme.spacing.xs,
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.sm,
+    marginTop: SPACING.xs,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.sm,
     lineHeight: 18,
     textAlign: 'center',
   },
   action: {
-    marginTop: theme.spacing.lg,
+    marginTop: SPACING.lg,
     alignSelf: 'stretch',
   },
 });

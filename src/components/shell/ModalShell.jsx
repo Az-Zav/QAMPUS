@@ -1,4 +1,5 @@
-import { Modal, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { COLORS, OVERLAY, RADII, SPACING, TYPOGRAPHY } from '@/constants';
 
 export default function ModalShell({ visible, onClose, showClose = true, children }) {
   return (
@@ -6,13 +7,18 @@ export default function ModalShell({ visible, onClose, showClose = true, childre
       <View style={styles.overlay}>
         <View style={styles.card}>
           {showClose && (
-            <TouchableOpacity
-              style={styles.closeButton}
+            <Pressable
+              style={({ pressed }) => [
+                styles.closeButton,
+                pressed && styles.closeButtonPressed,
+              ]}
               onPress={onClose}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close modal"
             >
               <Text style={styles.closeText}>✕</Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
           {children}
         </View>
@@ -24,26 +30,44 @@ export default function ModalShell({ visible, onClose, showClose = true, childre
 const styles = StyleSheet.create({
   overlay: {
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: OVERLAY.scrim,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.xxl,
     zIndex: 999,
   },
   card: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#F7F5F0',
-    borderRadius: 20,
-    padding: 24,
+    backgroundColor: COLORS.paper,
+    borderRadius: RADII.xxl,
+    padding: SPACING.xxl,
     position: 'relative',
   },
   closeButton: {
-    position: 'absolute', top: 14, right: 14,
-    width: 28, height: 28, borderRadius: 14,
-    borderWidth: 1, borderColor: '#00000020',
-    justifyContent: 'center', alignItems: 'center', zIndex: 10,
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+    width: 28,
+    height: 28,
+    borderRadius: RADII.full,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    backgroundColor: COLORS.surface,
   },
-  closeText: { fontSize: 14, color: '#333' },
+  closeButtonPressed: {
+    opacity: 0.7,
+  },
+  closeText: {
+    fontSize: TYPOGRAPHY.size.base,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: COLORS.textPrimary,
+  },
 });

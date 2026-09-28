@@ -1,9 +1,8 @@
 import Button from '@/components/primitives/Button';
-import theme from '@/theme/theme';
-import { ButtonType } from '@/theme/types';
+import { ButtonType, COLORS, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { StyleSheet, Text, View } from 'react-native';
 
-const TEXT_INDENT = 42 + theme.spacing.sm;
+const TEXT_INDENT = 42 + SPACING.sm;
 
 export default function OfficeCard({ office, onJoin }) {
   if (!office) return null;
@@ -15,13 +14,13 @@ export default function OfficeCard({ office, onJoin }) {
     <View style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.officeIcon}>
-          <theme.IconSet name={office.icon || 'business-outline'} size={22} color={theme.colors.ink} />
+          <IconSet name={office.icon || 'business-outline'} size={22} color={COLORS.ink} />
         </View>
 
         <View style={styles.info}>
           <Text numberOfLines={2} style={styles.name}>{office.name}</Text>
           <View style={styles.locationRow}>
-            <theme.IconSet name="location-outline" size={13} color={theme.colors.slate} />
+            <IconSet name="location-outline" size={13} color={COLORS.slate} />
             <Text numberOfLines={1} style={styles.location}>{office.location || 'Location not listed'}</Text>
           </View>
         </View>
@@ -63,12 +62,12 @@ export default function OfficeCard({ office, onJoin }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: theme.colors.white,
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    borderRadius: theme.radii.lg,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    borderColor: COLORS.border,
+    borderRadius: RADII.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   topRow: {
     flexDirection: 'row',
@@ -78,19 +77,19 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#FFF4CF',
+    backgroundColor: COLORS.goldLight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.sm,
+    marginRight: SPACING.sm,
   },
   info: {
     flex: 1,
     minWidth: 0,
   },
   name: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.base,
+    color: COLORS.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.base,
     lineHeight: 18,
   },
   locationRow: {
@@ -101,46 +100,46 @@ const styles = StyleSheet.create({
   location: {
     flex: 1,
     marginLeft: 4,
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.xs,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.xs,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F4EC',
-    borderRadius: theme.radii.full,
+    backgroundColor: withOpacity(COLORS.success, 0.12),
+    borderRadius: RADII.full,
     paddingHorizontal: 7,
     paddingVertical: 4,
-    marginLeft: theme.spacing.xs,
+    marginLeft: SPACING.xs,
   },
   closedPill: {
-    backgroundColor: theme.colors.disabledBg,
+    backgroundColor: COLORS.disabledBg,
   },
   statusDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: theme.colors.success,
+    backgroundColor: COLORS.success,
     marginRight: 4,
   },
   closedDot: {
-    backgroundColor: theme.colors.slate,
+    backgroundColor: COLORS.slate,
   },
   statusText: {
-    color: theme.colors.success,
-    fontFamily: theme.typography.fontFamily.bold,
+    color: COLORS.success,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: 9,
     letterSpacing: 0.5,
   },
   closedText: {
-    color: theme.colors.slate,
+    color: COLORS.slate,
   },
   divider: {
     height: 1,
-    backgroundColor: theme.colors.border,
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
+    backgroundColor: COLORS.border,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
     marginLeft: TEXT_INDENT,
   },
   bottomRow: {
@@ -156,35 +155,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nowLabel: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.bold,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: 9,
     letterSpacing: 0.7,
     marginRight: 6,
   },
   ticketBadge: {
-    backgroundColor: theme.colors.gold,
-    borderRadius: theme.radii.sm,
+    backgroundColor: COLORS.gold,
+    borderRadius: RADII.sm,
     paddingHorizontal: 7,
     paddingVertical: 4,
   },
   ticketText: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xs,
+    color: COLORS.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xs,
   },
   waiting: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.xs,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.xs,
     marginLeft: 7,
   },
   disabledReason: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.xs,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.xs,
     lineHeight: 16,
-    marginTop: theme.spacing.sm,
+    marginTop: SPACING.sm,
     marginLeft: TEXT_INDENT,
   },
 });

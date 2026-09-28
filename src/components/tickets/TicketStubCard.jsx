@@ -1,19 +1,21 @@
 import Badge from '@/components/shell/Badge';
-import theme from '@/theme/theme';
+import { COLORS, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const STATE_IMAGES = {
   waiting: require('../../../assets/images/TicketStub.png'),
   yourTurn: require('../../../assets/images/TicketStub-Inverted.png'),
+  called: require('../../../assets/images/TicketStub-Inverted.png'),
   expired: require('../../../assets/images/TicketStub-Expired.png'),
   inService: require('../../../assets/images/TicketStub.png'),
 };
 
 const TEXT_COLORS = {
-  waiting: theme.colors.ink,
-  yourTurn: theme.colors.paper,
-  expired: theme.colors.ink,
-  inService: theme.colors.ink,
+  waiting: COLORS.ink,
+  yourTurn: COLORS.paper,
+  called: COLORS.paper,
+  expired: COLORS.ink,
+  inService: COLORS.ink,
 };
 
 const TOP_LABELS = {
@@ -25,7 +27,7 @@ function getTimeLabel({ status, estimatedWaitMinutes, remainingSeconds }) {
   if (status === 'waiting') {
     return typeof estimatedWaitMinutes === 'number' ? `${estimatedWaitMinutes} mins` : null;
   }
-  if ((status === 'yourTurn' || status === 'expired') && typeof remainingSeconds === 'number') {
+  if ((status === 'yourTurn' || status === 'called' || status === 'expired') && typeof remainingSeconds === 'number') {
     const m = Math.floor(remainingSeconds / 60);
     const s = remainingSeconds % 60;
     return `${m}:${String(s).padStart(2, '0')}`;
@@ -35,24 +37,22 @@ function getTimeLabel({ status, estimatedWaitMinutes, remainingSeconds }) {
 
 export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
   const { shortNumber, nowServing, officeName, location, status } = ticket;
-  const isCalled = status === 'yourTurn';
-  const textColor = TEXT_COLORS[status] ?? theme.colors.ink;
-  const mutedText = theme.withOpacity(textColor, 0.6);
+  const isCalled = status === 'yourTurn' || status === 'called';
+  const textColor = TEXT_COLORS[status] ?? COLORS.ink;
+  const mutedText = withOpacity(textColor, 0.6);
   const topLabel = TOP_LABELS[status];
   const timeLabel = getTimeLabel(ticket);
 
   return (
     <Pressable onPress={onPress} style={styles.card}>
-      <Image source={STATE_IMAGES[status]} style={styles.image} resizeMode="cover" />
+      <Image source={STATE_IMAGES[status] ?? STATE_IMAGES.waiting} style={styles.image} resizeMode="cover" />
 
       <View style={styles.content}>
-        {/* Everything here sits above the printed perforation line,
-            because topHalf/bottomHalf are exact 50/50 splits of the
-            padded content box — whose center always equals the card's
-            vertical center, which is where the asset's line lives. */}
         <View style={styles.topHalf}>
           <View style={styles.headerRow}>
-            <Text style={[styles.officeName, { color: textColor }]}>{officeName}</Text>
+            <Text style={[styles.officeName, { color: textColor }]} numberOfLines={1}>
+              {officeName}
+            </Text>
             {timeLabel && <Text style={[styles.timeLabel, { color: mutedText }]}>{timeLabel}</Text>}
           </View>
 
@@ -63,7 +63,11 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
                   <Text style={styles.topPillText}>{topLabel}</Text>
                 </View>
               )}
-              {location && <Text style={[styles.locationText, { color: mutedText }]}>{location}</Text>}
+              {location && (
+                <Text style={[styles.locationText, { color: mutedText }]} numberOfLines={1}>
+                  {location}
+                </Text>
+              )}
             </View>
           )}
         </View>
@@ -76,7 +80,7 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
             <Text style={[styles.numLabel, styles.separator, { color: mutedText }]}>|</Text>
             <Text style={[styles.numLabel, { color: textColor }]}>
               YOURS{' '}
-              <Text style={[styles.numValue, isCalled && { color: theme.colors.gold }]}>
+              <Text style={[styles.numValue, isCalled && { color: COLORS.gold }]}>
                 {shortNumber}
               </Text>
             </Text>
@@ -96,24 +100,24 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     height: 180,
-    marginBottom: theme.spacing.lg,
+    marginBottom: SPACING.lg,
   },
   image: {
     ...StyleSheet.absoluteFillObject,
   },
   content: {
     flex: 1,
-    padding: theme.spacing.lg,
+    padding: SPACING.lg,
   },
   topHalf: {
     height: '50%',
     justifyContent: 'space-between',
-    paddingBottom: theme.spacing.xxs,
+    paddingBottom: SPACING.xxs,
   },
   bottomHalf: {
     height: '50%',
     justifyContent: 'space-between',
-    paddingTop: theme.spacing.xxs,
+    paddingTop: SPACING.xxs,
   },
   headerRow: {
     flexDirection: 'row',
@@ -121,48 +125,51 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   officeName: {
-    fontSize: theme.typography.size.lg,
-    fontWeight: theme.typography.weight.bold,
-    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    flex: 1,
+    marginRight: SPACING.sm,
   },
   timeLabel: {
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: SPACING.sm,
   },
   topPill: {
-    backgroundColor: theme.colors.gold,
-    borderRadius: theme.radii.full,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xxxs,
+    backgroundColor: COLORS.gold,
+    borderRadius: RADII.full,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xxxs,
   },
   topPillText: {
-    fontSize: theme.typography.size.xs,
-    fontWeight: theme.typography.weight.bold,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.ink,
+    fontSize: TYPOGRAPHY.size.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.ink,
   },
   locationText: {
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    flex: 1,
   },
   numsRow: {
-  flexDirection: 'row',
-  alignItems: 'baseline',
-  justifyContent: 'space-between',   // ← added
-},
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
   numLabel: {
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.medium,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+  separator: {
+    marginHorizontal: SPACING.xs,
   },
   numValue: {
-    fontSize: theme.typography.size.lg,
-    fontWeight: theme.typography.weight.bold,
-    fontFamily: theme.typography.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   footer: {
     flexDirection: 'row',

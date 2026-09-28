@@ -2,8 +2,7 @@ import Button from '@/components/primitives/Button';
 import Badge from '@/components/shell/Badge';
 import DetailRow from '@/components/shell/DetailRow';
 import ModalShell from '@/components/shell/ModalShell';
-import theme from '@/theme/theme';
-import { ButtonType, TicketStatus } from '@/theme/types';
+import { ButtonType, COLORS, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function TicketModal({ visible, ticket, onClose, onCancel, onOpenScanner }) {
@@ -12,7 +11,7 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
   const { shortNumber, officeName, status, position, peopleAhead, nowServing, estimatedWaitMinutes } = ticket;
 
   const isWaiting = status === TicketStatus.WAITING;
-  const isCalled = status === TicketStatus.YOUR_TURN;
+  const isCalled = status === TicketStatus.YOUR_TURN || status === 'called';
   const isExpired = status === TicketStatus.EXPIRED;
   const isInService = status === TicketStatus.IN_SERVICE;
 
@@ -21,11 +20,9 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
       <Text style={styles.number}>{shortNumber}</Text>
       <Text style={styles.office}>{officeName}</Text>
 
-      
-
-     <View style={styles.badgeWrapper}>
-    <Badge status={status} size="base" />
-    </View>
+      <View style={styles.badgeWrapper}>
+        <Badge status={status} size="base" />
+      </View>
 
       {isWaiting && (
         <View style={styles.detailsBlock}>
@@ -70,46 +67,46 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
 
 const styles = StyleSheet.create({
   number: {
-    fontSize: theme.typography.size.xxl,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.ink,
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.ink,
     textAlign: 'center',
   },
   office: {
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.regular,
-    color: theme.colors.slate,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.slate,
     textAlign: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: SPACING.sm,
   },
   detailsBlock: {
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    gap: theme.spacing.xs,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.lg,
+    gap: SPACING.xs,
   },
   countdown: {
-    fontSize: theme.typography.size.xxl,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.gold,
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.gold,
     textAlign: 'center',
-    marginTop: theme.spacing.lg,
+    marginTop: SPACING.lg,
   },
   countdownExpired: {
-    fontSize: theme.typography.size.xxl,
-    fontFamily: theme.typography.fontFamily.bold,
-    color: theme.colors.error,
+    fontSize: TYPOGRAPHY.size.xxl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.error,
     textAlign: 'center',
-    marginTop: theme.spacing.lg,
+    marginTop: SPACING.lg,
   },
   expiredWarning: {
-    color: theme.colors.error,
-    fontSize: theme.typography.size.sm,
-    fontFamily: theme.typography.fontFamily.regular,
+    color: COLORS.error,
+    fontSize: TYPOGRAPHY.size.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
-    marginTop: theme.spacing.xs,
+    marginTop: SPACING.xs,
   },
   badgeWrapper: {
-  alignItems: 'center',
-  marginBottom: theme.spacing.sm,
-},
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
 });

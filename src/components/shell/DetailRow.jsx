@@ -1,4 +1,4 @@
-import theme from '@/theme/theme';
+import { COLORS, SPACING, TYPOGRAPHY } from '@/constants';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function DetailRow({ label, value }) {
@@ -11,7 +11,20 @@ export default function DetailRow({ label, value }) {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
-  rowLabel: { color: theme.colors.slate, fontSize: theme.typography.size.base, fontFamily: theme.typography.fontFamily.regular },
-  rowValue: { color: theme.colors.ink, fontSize: theme.typography.size.base, fontFamily: theme.typography.fontFamily.medium },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.xxs,
+  },
+  rowLabel: {
+    color: COLORS.slate,
+    fontSize: TYPOGRAPHY.size.base,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  rowValue: {
+    color: COLORS.ink,
+    fontSize: TYPOGRAPHY.size.base,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
 });

@@ -1,14 +1,15 @@
+import Button from '@/components/primitives/Button';
 import DetailRow from '@/components/shell/DetailRow';
 import ModalShell from '@/components/shell/ModalShell';
-import theme from '@/theme/theme';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ButtonType, COLORS, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { StyleSheet, Text, View } from 'react-native';
 
 export default function NoticeModal({
   visible,
   title,
   message,
-  rows,             // optional [{ label, value }]
-  buttonLabel,      // omit to render no button (M06)
+  rows, // optional [{ label, value }]
+  buttonLabel, // omit to render no button (M06)
   icon = 'information-circle-outline',
   destructive = false,
   onClose,
@@ -16,10 +17,10 @@ export default function NoticeModal({
   return (
     <ModalShell visible={visible} onClose={onClose}>
       <View style={[styles.iconCircle, destructive && styles.destructiveCircle]}>
-        <theme.IconSet
+        <IconSet
           name={icon}
           size={25}
-          color={destructive ? theme.colors.error : theme.colors.ink}
+          color={destructive ? COLORS.error : COLORS.ink}
         />
       </View>
       <Text style={styles.title}>{title}</Text>
@@ -34,14 +35,13 @@ export default function NoticeModal({
       )}
 
       {buttonLabel && (
-        <Pressable
-          onPress={onClose}
-          style={[styles.button, destructive && styles.destructiveButton]}
-        >
-          <Text style={[styles.buttonText, destructive && styles.destructiveText]}>
-            {buttonLabel}
-          </Text>
-        </Pressable>
+        <View style={styles.buttonWrapper}>
+          <Button
+            label={buttonLabel}
+            type={destructive ? ButtonType.DESTRUCTIVE : ButtonType.PRIMARY}
+            onPress={onClose}
+          />
+        </View>
       )}
     </ModalShell>
   );
@@ -51,52 +51,37 @@ const styles = StyleSheet.create({
   iconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: theme.colors.gold,
+    borderRadius: RADII.xxl,
+    backgroundColor: COLORS.gold,
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    marginBottom: theme.spacing.md,
+    marginBottom: SPACING.md,
   },
   destructiveCircle: {
-    backgroundColor: '#FCE8E6',
+    backgroundColor: withOpacity(COLORS.error, 0.15),
   },
   title: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xl,
+    color: COLORS.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xl,
+    textAlign: 'center',
   },
   message: {
-    color: theme.colors.slate,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.sm,
+    color: COLORS.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.sm,
     lineHeight: 20,
-    marginTop: theme.spacing.sm,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
   },
   rowsBlock: {
-    marginTop: theme.spacing.lg,
-    gap: theme.spacing.xs,
+    marginTop: SPACING.lg,
+    gap: SPACING.xs,
     alignSelf: 'stretch',
   },
-  button: {
-    minHeight: 48,
-    backgroundColor: theme.colors.gold,
-    borderRadius: theme.radii.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: theme.spacing.xl,
-  },
-  destructiveButton: {
-    backgroundColor: theme.colors.white,
-    borderWidth: 1,
-    borderColor: theme.colors.error,
-  },
-  buttonText: {
-    color: theme.colors.ink,
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.sm,
-  },
-  destructiveText: {
-    color: theme.colors.error,
+  buttonWrapper: {
+    marginTop: SPACING.xl,
+    alignSelf: 'stretch',
   },
 });

@@ -1,23 +1,24 @@
+import { COLORS, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { useRef } from 'react';
-import { Pressable, TextInput, StyleSheet } from 'react-native';
-import theme from '@/theme/theme';
+import { Pressable, StyleSheet, TextInput } from 'react-native';
 
 export default function SearchInput({ value, onChangeText, placeholder, style, ...rest }) {
   const inputRef = useRef(null);
-  
+
   return (
     <Pressable onPress={() => inputRef.current?.focus()} style={[styles.wrap, style]}>
-      <theme.IconSet
+      <IconSet
         name="search"
         size={18}
-        color={theme.colors.slate}
+        color={COLORS.slate}
         style={styles.icon}
       />
       <TextInput
+        ref={inputRef}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={theme.colors.slate}
+        placeholderTextColor={COLORS.slate}
         style={styles.input}
         {...rest}
       />
@@ -28,21 +29,21 @@ export default function SearchInput({ value, onChangeText, placeholder, style, .
 const styles = StyleSheet.create({
   wrap: {
     height: 38,
-    borderRadius: theme.radii.full,
-    backgroundColor: theme.colors.white,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: theme.withOpacity(theme.colors.ink, 0.05),
+    borderColor: withOpacity(COLORS.ink, 0.05),
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: SPACING.md,
   },
   icon: {
-    marginRight: theme.spacing.sm,
+    marginRight: SPACING.sm,
   },
   input: {
     flex: 1,
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.base,
-    color: theme.colors.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.base,
+    color: COLORS.ink,
   },
 });

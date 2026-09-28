@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -8,84 +9,31 @@ import OfflineState from '@/components/queue/OfflineState';
 import Header from '@/components/shell/Header';
 import TicketStubCard from '@/components/tickets/TicketStubCard';
 
-import theme from '@/theme/theme';
-import { InfoCardType } from '@/theme/types';
+import { COLORS, IconSet, InfoCardType, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { MOCK_ACTIVE_TICKETS, MOCK_OFFICES, MOCK_USER_STUDENT } from '@/data/mock';
 
-const USER_NAME = 'Nina';
-
-// Mock active tickets for Populated state
-const MOCK_TICKETS = [
-  {
-    id: 't1',
-    officeName: 'University Registrar',
-    location: 'Main Bldg, 3rd Flr',
-    nowServing: 'R-002',
-    shortNumber: 'R-006',
-    status: 'yourTurn',
-    remainingSeconds: 60,
-  },
-  {
-    id: 't2',
-    officeName: 'University Registrar',
-    location: 'Main Bldg, 3rd Flr',
-    nowServing: 'R-002',
-    shortNumber: 'R-006',
-    status: 'waiting',
-    estimatedWaitMinutes: 8,
-  },
-  {
-    id: 't3',
-    officeName: 'University Registrar',
-    location: 'Main Bldg, 3rd Flr',
-    nowServing: 'R-002',
-    shortNumber: 'R-006',
-    status: 'inService',
-  },
-];
-
-// Operating offices data array
-const OPERATING_OFFICES = [
-  {
-    id: 'o1',
-    title: 'University Registrar',
-    subtitle: 'Ground Floor, Admin Building',
-    hours: '08:00 - 17:00',
-    open: true,
-    estimatedWait: '12 min',
-  },
-  {
-    id: 'o2',
-    title: 'Medical and Dental Services',
-    subtitle: '2nd Floor, Student Center',
-    hours: '08:00 - 16:00',
-    open: true,
-    estimatedWait: '15 min',
-  },
-  {
-    id: 'o3',
-    title: 'Student Accounting Office',
-    subtitle: 'Ground Floor, Finance Wing',
-    hours: '08:00 - 15:00',
-    open: false,
-    estimatedWait: '0 min',
-  },
-];
-
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
+  const router = useRouter();
   // Screen state switcher: 'populated' | 'empty' | 'offline'
   const [screenState, setScreenState] = useState('populated');
   const [selectedOffice, setSelectedOffice] = useState(null);
 
+  const user = MOCK_USER_STUDENT;
+  const activeTickets = MOCK_ACTIVE_TICKETS;
+  const offices = MOCK_OFFICES;
+
   const handleJoinOffice = (office) => {
-    if (office.open) {
+    if (office.queue?.status === 'OPEN') {
       setSelectedOffice(office);
     }
   };
 
   const handleNavigateToQueue = () => {
-    if (navigation) {
-      navigation.navigate('queue');
-    }
+    router.push('/(tabs)/queue');
+  };
+
+  const handleOpenScanner = () => {
+    router.push('/(tabs)/scan');
   };
 
   // Render active queues section dynamically
@@ -100,7 +48,7 @@ export default function HomeScreen({ navigation }) {
       );
     }
 
-    if (screenState === 'empty') {
+    if (screenState === 'empty' || activeTickets.length === 0) {
       return (
         <EmptyState
           icon="ticket-outline"
@@ -114,12 +62,21 @@ export default function HomeScreen({ navigation }) {
 
     return (
       <View style={styles.ticketList}>
-        {MOCK_TICKETS.map((ticket) => (
+        {activeTickets.map((ticket) => (
           <TicketStubCard
             key={ticket.id}
-            ticket={ticket}
+            ticket={{
+              id: ticket.id,
+              shortNumber: ticket.short_ticket_number,
+              nowServing: 'R-012',
+              officeName: ticket.office_name,
+              location: 'Room 101',
+              status: ticket.status.toLowerCase() === 'called' ? 'yourTurn' : ticket.status.toLowerCase(),
+              remainingSeconds: ticket.status === 'CALLED' ? 40 : undefined,
+              estimatedWaitMinutes: ticket.estimated_wait_minutes,
+            }}
             onPress={() => {}}
-            onOpenScanner={() => {}}
+            onOpenScanner={handleOpenScanner}
           />
         ))}
       </View>
@@ -156,7 +113,7 @@ export default function HomeScreen({ navigation }) {
 
         {/* Greeting */}
         <Text style={styles.greeting}>
-          Good Afternoon, <Text style={styles.userName}>{USER_NAME}</Text>
+          Good Afternoon, <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
         </Text>
 
         {/* Active Queues Header */}
@@ -167,20 +124,20 @@ export default function HomeScreen({ navigation }) {
 
         {/* Operating Hours Header */}
         <View style={styles.operatingHeader}>
-          <theme.IconSet name="time-outline" size={16} color={theme.colors.slate} />
+          <IconSet name="time-outline" size={16} color={COLORS.slate} />
           <Text style={styles.operatingTitle}>OPERATING HOURS</Text>
         </View>
 
         {/* Calling InfoCard with InfoCardType.OFFICE_HOURS */}
         <View style={styles.officeList}>
-          {OPERATING_OFFICES.map((office) => (
+          {offices.map((office) => (
             <InfoCard
               key={office.id}
               type={InfoCardType.OFFICE_HOURS}
-              title={office.title}
-              subtitle={office.subtitle}
-              hours={office.hours}
-              open={office.open}
+              title={office.name}
+              subtitle={office.location}
+              hours={`${office.operating_hours.open_time.slice(0, 5)} - ${office.operating_hours.close_time.slice(0, 5)}`}
+              open={office.queue?.status === 'OPEN'}
               onPress={() => handleJoinOffice(office)}
             />
           ))}
@@ -190,8 +147,9 @@ export default function HomeScreen({ navigation }) {
       {/* Join Confirmation Modal */}
       <JoinConfirmModal
         visible={!!selectedOffice}
-        office={selectedOffice ? { name: selectedOffice.title } : null}
-        estimatedWait={selectedOffice?.estimatedWait}
+        office={selectedOffice}
+        estimatedWait={`${selectedOffice?.queue?.estimated_wait_minutes ?? 10} min`}
+        peopleWaiting={selectedOffice?.queue?.waiting_count ?? 0}
         onClose={() => setSelectedOffice(null)}
         onConfirm={() => setSelectedOffice(null)}
       />
@@ -202,83 +160,83 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: theme.colors.paper,
+    backgroundColor: COLORS.paper,
   },
   container: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.sm,
-    paddingBottom: theme.spacing.xxl * 2,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xxl * 2,
   },
   testToolbar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justify: 'space-between',
-    backgroundColor: theme.colors.white,
-    padding: theme.spacing.xs,
-    borderRadius: theme.radii.md,
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.white,
+    padding: SPACING.xs,
+    borderRadius: RADII.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginBottom: theme.spacing.md,
+    borderColor: COLORS.border,
+    marginBottom: SPACING.md,
   },
   testLabel: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xs,
-    color: theme.colors.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xs,
+    color: COLORS.slate,
   },
   pillsContainer: {
     flexDirection: 'row',
-    gap: theme.spacing.xxs,
+    gap: SPACING.xxs,
   },
   pill: {
-    paddingHorizontal: theme.spacing.xs,
-    paddingVertical: theme.spacing.xxxs,
-    borderRadius: theme.radii.full,
-    backgroundColor: theme.colors.disabledBg,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xxxs,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.disabledBg,
   },
   activePill: {
-    backgroundColor: theme.colors.ink,
+    backgroundColor: COLORS.ink,
   },
   pillText: {
-    fontFamily: theme.typography.fontFamily.medium,
-    fontSize: theme.typography.size.xs,
-    color: theme.colors.ink,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontSize: TYPOGRAPHY.size.xs,
+    color: COLORS.ink,
     textTransform: 'capitalize',
   },
   activePillText: {
-    color: theme.colors.paper,
+    color: COLORS.paper,
   },
   greeting: {
-    fontFamily: theme.typography.fontFamily.regular,
-    fontSize: theme.typography.size.xl,
-    color: theme.colors.ink,
-    marginBottom: theme.spacing.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.xl,
+    color: COLORS.ink,
+    marginBottom: SPACING.lg,
   },
   userName: {
-    fontFamily: theme.typography.fontFamily.bold,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   sectionTitle: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.md,
-    color: theme.colors.ink,
-    marginBottom: theme.spacing.md,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.md,
+    color: COLORS.ink,
+    marginBottom: SPACING.md,
   },
   ticketList: {
-    marginBottom: theme.spacing.md,
+    marginBottom: SPACING.md,
   },
   operatingHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xxs,
-    marginTop: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
+    gap: SPACING.xxs,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
   operatingTitle: {
-    fontFamily: theme.typography.fontFamily.bold,
-    fontSize: theme.typography.size.xs,
-    color: theme.colors.slate,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xs,
+    color: COLORS.slate,
     letterSpacing: 0.8,
   },
   officeList: {
-    gap: theme.spacing.xs,
+    gap: SPACING.xs,
   },
 });
