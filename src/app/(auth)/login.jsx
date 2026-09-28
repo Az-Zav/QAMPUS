@@ -24,7 +24,7 @@ export default function Login() {
         {/* Header Section: Logo Image + Text Brand */}
         <View style={styles.headerContainer}>
           <Image
-            source={require('../../assets/images/Qampus-Logo.png')}
+            source={require('../../../assets/images/Qampus-Logo.png')}
             style={styles.logoMark}
             resizeMode="contain"
           />
@@ -39,7 +39,7 @@ export default function Login() {
           {/* Hero Section */}
           <View style={styles.heroContainer}>
             <Image
-              source={require('../../assets/images/Hero_Illustration.png')}
+              source={require('../../../assets/images/Hero_Illustration.png')}
               style={styles.heroIllustration}
               resizeMode="contain"
             />
