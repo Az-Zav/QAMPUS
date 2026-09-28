@@ -13,6 +13,7 @@ import { InfoCardType } from '@/theme/types';
 
 const USER_NAME = 'Nina';
 
+// Mock active tickets for Populated state
 const MOCK_TICKETS = [
   {
     id: 't1',
@@ -42,6 +43,7 @@ const MOCK_TICKETS = [
   },
 ];
 
+// Operating offices data array
 const OPERATING_OFFICES = [
   {
     id: 'o1',
@@ -70,6 +72,7 @@ const OPERATING_OFFICES = [
 ];
 
 export default function HomeScreen({ navigation }) {
+  // Screen state switcher: 'populated' | 'empty' | 'offline'
   const [screenState, setScreenState] = useState('populated');
   const [selectedOffice, setSelectedOffice] = useState(null);
 
@@ -85,11 +88,11 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  // Render active queues section dynamically
   const renderActiveQueuesSection = () => {
     if (screenState === 'offline') {
       return (
         <OfflineState
-          icon="cloud-offline-outline"
           showIconCircle={false}
           title="Temporarily unavailable"
           message="Please wait — this clears on its own."
@@ -133,7 +136,7 @@ export default function HomeScreen({ navigation }) {
       />
 
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Test toolbar to preview all 3 states */}
+        {/* State Toggle Toolbar */}
         <View style={styles.testToolbar}>
           <Text style={styles.testLabel}>Preview state:</Text>
           <View style={styles.pillsContainer}>
@@ -162,12 +165,13 @@ export default function HomeScreen({ navigation }) {
         {/* Dynamic Section Content */}
         {renderActiveQueuesSection()}
 
-        {/* Operating Hours Section */}
+        {/* Operating Hours Header */}
         <View style={styles.operatingHeader}>
           <theme.IconSet name="time-outline" size={16} color={theme.colors.slate} />
           <Text style={styles.operatingTitle}>OPERATING HOURS</Text>
         </View>
 
+        {/* Calling InfoCard with InfoCardType.OFFICE_HOURS */}
         <View style={styles.officeList}>
           {OPERATING_OFFICES.map((office) => (
             <InfoCard
