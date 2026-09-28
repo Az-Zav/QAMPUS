@@ -1,3 +1,4 @@
+import DetailRow from '@/components/shell/DetailRow';
 import ModalShell from '@/components/shell/ModalShell';
 import theme from '@/theme/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -6,7 +7,8 @@ export default function NoticeModal({
   visible,
   title,
   message,
-  buttonLabel = 'OK',
+  rows,             // optional [{ label, value }]
+  buttonLabel,      // omit to render no button (M06)
   icon = 'information-circle-outline',
   destructive = false,
   onClose,
@@ -22,14 +24,25 @@ export default function NoticeModal({
       </View>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.message}>{message}</Text>
-      <Pressable
-        onPress={onClose}
-        style={[styles.button, destructive && styles.destructiveButton]}
-      >
-        <Text style={[styles.buttonText, destructive && styles.destructiveText]}>
-          {buttonLabel}
-        </Text>
-      </Pressable>
+
+      {rows && (
+        <View style={styles.rowsBlock}>
+          {rows.map((r) => (
+            <DetailRow key={r.label} label={r.label} value={r.value} />
+          ))}
+        </View>
+      )}
+
+      {buttonLabel && (
+        <Pressable
+          onPress={onClose}
+          style={[styles.button, destructive && styles.destructiveButton]}
+        >
+          <Text style={[styles.buttonText, destructive && styles.destructiveText]}>
+            {buttonLabel}
+          </Text>
+        </Pressable>
+      )}
     </ModalShell>
   );
 }
@@ -42,6 +55,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
     marginBottom: theme.spacing.md,
   },
   destructiveCircle: {
@@ -58,6 +72,11 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.size.sm,
     lineHeight: 20,
     marginTop: theme.spacing.sm,
+  },
+  rowsBlock: {
+    marginTop: theme.spacing.lg,
+    gap: theme.spacing.xs,
+    alignSelf: 'stretch',
   },
   button: {
     minHeight: 48,

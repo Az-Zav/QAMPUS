@@ -34,7 +34,8 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     backgroundColor: theme.colors.ink, borderRadius: theme.radii.full,
-    paddingHorizontal: theme.spacing.xl, paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.xl + theme.spacing.lg, // 20 + 16 = 36 (was just xl/20)
+    paddingVertical: theme.spacing.md,                       // 12 (was sm/8)
     width: '100%', ...theme.elevation.sm,
   },
   navItem: { alignItems: 'center', gap: theme.spacing.xxxs, minWidth: 64 },

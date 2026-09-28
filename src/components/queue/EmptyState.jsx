@@ -1,14 +1,43 @@
-import theme from '@/theme/theme';
+import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
-export default function EmptyState({ title = 'Nothing here yet', message, icon = 'ticket-outline' }) {
+import Button from '@/components/primitives/Button';
+import theme from '@/theme/theme';
+import { ButtonType } from '@/theme/types';
+
+export default function EmptyState({
+  title = 'Nothing here yet',
+  message,
+  icon = 'ticket-outline',
+  showIconCircle = true,
+  actionLabel,
+  buttonLabel,
+  onAction,
+  onButtonPress,
+}) {
+  const label = actionLabel || buttonLabel;
+  const onPress = onAction || onButtonPress;
+
   return (
     <View style={styles.container}>
-      <View style={styles.iconCircle}>
-        <theme.IconSet name={icon} size={24} color={theme.colors.ink} />
-      </View>
+      {showIconCircle ? (
+        <View style={styles.iconCircle}>
+          <theme.IconSet name={icon} size={24} color={theme.colors.ink} />
+        </View>
+      ) : (
+        <View style={styles.rawIconContainer}>
+          {/* Renders the actual slashed wifi icon */}
+          <Feather name="wifi-off" size={36} color={theme.colors.slate} />
+        </View>
+      )}
+
       <Text style={styles.title}>{title}</Text>
       {!!message && <Text style={styles.message}>{message}</Text>}
+      {!!label && (
+        <View style={styles.action}>
+          <Button label={label} type={ButtonType.PRIMARY} onPress={onPress} />
+        </View>
+      )}
     </View>
   );
 }
@@ -16,7 +45,7 @@ export default function EmptyState({ title = 'Nothing here yet', message, icon =
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    justifyContent: 'center',
+    justify: 'center',
     paddingVertical: 44,
     paddingHorizontal: 28,
   },
@@ -28,6 +57,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: theme.spacing.md,
+  },
+  rawIconContainer: {
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     color: theme.colors.ink,
@@ -42,5 +76,9 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.size.sm,
     lineHeight: 18,
     textAlign: 'center',
+  },
+  action: {
+    marginTop: theme.spacing.lg,
+    alignSelf: 'stretch',
   },
 });
