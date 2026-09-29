@@ -1,37 +1,59 @@
 // Centralized Mock Data Store for QAMPUS
-// Matches PRD v1.3 and TDD v2.0 Data Models
+// Matches PRD v1.3 and QAMPUS Client Guide Part 2 specifications.
+// Seed timestamps are built when the service starts (not at static import).
+
+import {
+  GUEST_TYPE,
+  NOTIFICATION_TYPE,
+  OFFENSE_TYPE,
+  QUEUE_STATUS,
+  TICKET_STATUS,
+  USER_ROLE,
+} from '@/constants/domain';
+
+// ---------------------------------------------------------------------------
+// 1. Users
+// ---------------------------------------------------------------------------
 
 export const MOCK_USER_STUDENT = Object.freeze({
   id: 'usr_std_001',
-  role: 'STUDENT',
+  role: USER_ROLE.STUDENT,
   name: 'Victor Jazz',
   email: 'victor.jazz@university.edu',
-  institutional_id: '2140123',
+  institutionalId: '2140123',
   program: 'BS Computer Science',
-  guest_type: null,
-  device_token: null,
-  push_token: 'ExponentPushToken[mock_token_123]',
-  push_enabled: true,
-  strike_count: 0,
-  banned_until: null,
-  created_at: '2026-09-01T08:00:00Z',
+  guestType: null,
 });
 
 export const MOCK_USER_GUEST = Object.freeze({
   id: 'usr_gst_002',
-  role: 'GUEST',
+  role: USER_ROLE.GUEST,
   name: 'Maria Santos',
   email: null,
-  institutional_id: 'G104728',
+  institutionalId: 'G104728',
   program: null,
-  guest_type: 'PARENT_GUARDIAN',
-  device_token: 'dev_mock_uuid_456',
-  push_token: null,
-  push_enabled: true,
-  strike_count: 1,
-  banned_until: null,
-  created_at: '2026-09-28T07:30:00Z',
+  guestType: GUEST_TYPE.PARENT_GUARDIAN,
 });
+
+export const MOCK_USER_BANNED = Object.freeze({
+  id: 'usr_bnd_003',
+  role: USER_ROLE.STUDENT,
+  name: 'Alex Rivera',
+  email: 'alex.rivera@university.edu',
+  institutionalId: '2140999',
+  program: 'BS Information Technology',
+  guestType: null,
+});
+
+export const MOCK_USERS = Object.freeze({
+  [MOCK_USER_STUDENT.id]: MOCK_USER_STUDENT,
+  [MOCK_USER_GUEST.id]: MOCK_USER_GUEST,
+  [MOCK_USER_BANNED.id]: MOCK_USER_BANNED,
+});
+
+// ---------------------------------------------------------------------------
+// 2. Offices
+// ---------------------------------------------------------------------------
 
 export const MOCK_OFFICES = Object.freeze([
   {
@@ -39,209 +61,337 @@ export const MOCK_OFFICES = Object.freeze([
     code: 'R',
     name: 'Office of the University Registrar',
     location: 'Administration Building, 1st Floor, Room 101',
-    status: 'ACTIVE',
-    default_service_minutes: 5,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '08:00:00',
-      close_time: '17:00:00',
+    avgServiceMinutes: 5,
+    hours: {
+      MON: { open: '08:00', close: '17:00' },
+      TUE: { open: '08:00', close: '17:00' },
+      WED: { open: '08:00', close: '17:00' },
+      THU: { open: '08:00', close: '17:00' },
+      FRI: { open: '08:00', close: '17:00' },
+      SAT: null,
+      SUN: null,
     },
     queue: {
-      status: 'OPEN',
-      current_ticket_number: 'R-012',
-      waiting_count: 8,
-      estimated_wait_minutes: 25,
+      status: QUEUE_STATUS.OPEN,
+      waitingCount: 8,
+      nowServingSequence: 12,
+      estimatedWaitMinutes: 25,
+      cutoffOverridden: false,
     },
   },
   {
-    id: 'off_csh_002',
-    code: 'C',
-    name: 'Cashier & Student Accounts',
+    id: 'off_med_002',
+    code: 'M',
+    name: 'Medical and Dental Services',
+    location: 'Health Services Building, 1st Floor',
+    avgServiceMinutes: 8,
+    hours: {
+      MON: { open: '08:00', close: '17:00' },
+      TUE: { open: '08:00', close: '17:00' },
+      WED: { open: '08:00', close: '17:00' },
+      THU: { open: '08:00', close: '17:00' },
+      FRI: { open: '08:00', close: '17:00' },
+      SAT: null,
+      SUN: null,
+    },
+    queue: {
+      status: QUEUE_STATUS.OPEN,
+      waitingCount: 3,
+      nowServingSequence: 5,
+      estimatedWaitMinutes: 15,
+      cutoffOverridden: false,
+    },
+  },
+  {
+    id: 'off_acc_003',
+    code: 'S',
+    name: 'Student Accounting Office',
     location: 'Finance Hall, Ground Floor, Windows 1-4',
-    status: 'ACTIVE',
-    default_service_minutes: 3,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '08:00:00',
-      close_time: '16:30:00',
+    avgServiceMinutes: 4,
+    hours: {
+      MON: { open: '09:00', close: '16:00' },
+      TUE: { open: '09:00', close: '16:00' },
+      WED: { open: '09:00', close: '16:00' },
+      THU: { open: '09:00', close: '16:00' },
+      FRI: { open: '09:00', close: '16:00' },
+      SAT: null,
+      SUN: null,
     },
     queue: {
-      status: 'OPEN',
-      current_ticket_number: 'C-045',
-      waiting_count: 14,
-      estimated_wait_minutes: 42,
-    },
-  },
-  {
-    id: 'off_adm_003',
-    code: 'A',
-    name: 'Admissions & Scholarships Office',
-    location: 'Student Center, 2nd Floor, Room 204',
-    status: 'ACTIVE',
-    default_service_minutes: 7,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '09:00:00',
-      close_time: '16:00:00',
-    },
-    queue: {
-      status: 'CLOSED',
-      current_ticket_number: null,
-      waiting_count: 0,
-      estimated_wait_minutes: 0,
-    },
-  },
-  {
-    id: 'off_gdc_004',
-    code: 'G',
-    name: 'Guidance & Counseling Services',
-    location: 'Student Well-being Center, 3rd Floor',
-    status: 'ACTIVE',
-    default_service_minutes: 15,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '08:00:00',
-      close_time: '17:00:00',
-    },
-    queue: {
-      status: 'OPEN',
-      current_ticket_number: 'G-003',
-      waiting_count: 2,
-      estimated_wait_minutes: 30,
+      status: QUEUE_STATUS.CLOSED,
+      waitingCount: 0,
+      nowServingSequence: null,
+      estimatedWaitMinutes: 0,
+      cutoffOverridden: false,
     },
   },
 ]);
 
-export const MOCK_ACTIVE_TICKETS = Object.freeze([
-  {
-    id: 'tkt_act_001',
-    queue_id: 'q_reg_001',
-    office_id: 'off_reg_001',
-    office_code: 'R',
-    office_name: 'Office of the University Registrar',
-    ticket_number: 'R-09-28-015',
-    short_ticket_number: 'R-015',
-    daily_sequence: 15,
-    status: 'CALLED',
-    joined_at: '2026-09-28T09:15:00Z',
-    called_at: new Date(Date.now() - 20000).toISOString(), // called 20s ago
-    service_started_at: null,
-    completed_at: null,
-    cancelled_at: null,
-    no_show_at: null,
-    position_in_queue: 1,
-    estimated_wait_minutes: 0,
-    ahead_count: 0,
-    counter_number: 'Window 2',
-  },
-  {
-    id: 'tkt_act_002',
-    queue_id: 'q_csh_002',
-    office_id: 'off_csh_002',
-    office_code: 'C',
-    office_name: 'Cashier & Student Accounts',
-    ticket_number: 'C-09-28-048',
-    short_ticket_number: 'C-048',
-    daily_sequence: 48,
-    status: 'WAITING',
-    joined_at: '2026-09-28T09:30:00Z',
-    called_at: null,
-    service_started_at: null,
-    completed_at: null,
-    cancelled_at: null,
-    no_show_at: null,
-    position_in_queue: 3,
-    estimated_wait_minutes: 9,
-    ahead_count: 2,
-    counter_number: 'Window 1',
-  },
-]);
+// ---------------------------------------------------------------------------
+// 3. Dynamic Seed Generator (Tickets, Notifications, Bans, Settings)
+// ---------------------------------------------------------------------------
 
-export const MOCK_HISTORY_TICKETS = Object.freeze([
-  {
-    id: 'tkt_hist_001',
-    office_code: 'A',
-    office_name: 'Admissions & Scholarships Office',
-    ticket_number: 'A-09-27-022',
-    short_ticket_number: 'A-022',
-    daily_sequence: 22,
-    status: 'COMPLETED',
-    joined_at: '2026-09-27T10:00:00Z',
-    called_at: '2026-09-27T10:25:00Z',
-    service_started_at: '2026-09-27T10:25:45Z',
-    completed_at: '2026-09-27T10:35:10Z',
-    cancelled_at: null,
-    no_show_at: null,
-  },
-  {
-    id: 'tkt_hist_002',
-    office_code: 'R',
-    office_name: 'Office of the University Registrar',
-    ticket_number: 'R-09-26-009',
-    short_ticket_number: 'R-009',
-    daily_sequence: 9,
-    status: 'CANCELLED',
-    joined_at: '2026-09-26T14:00:00Z',
-    called_at: null,
-    service_started_at: null,
-    completed_at: null,
-    cancelled_at: '2026-09-26T14:12:00Z',
-    no_show_at: null,
-  },
-  {
-    id: 'tkt_hist_003',
-    office_code: 'C',
-    office_name: 'Cashier & Student Accounts',
-    ticket_number: 'C-09-25-031',
-    short_ticket_number: 'C-031',
-    daily_sequence: 31,
-    status: 'NO_SHOW',
-    joined_at: '2026-09-25T11:00:00Z',
-    called_at: '2026-09-25T11:45:00Z',
-    service_started_at: null,
-    completed_at: null,
-    cancelled_at: null,
-    no_show_at: '2026-09-25T11:47:00Z',
-  },
-]);
+/**
+ * Builds initial mock data keyed and timestamped relative to runtime initialization.
+ *
+ * @param {Date} [baseDate=new Date()]
+ */
+export function buildSeedData(baseDate = new Date()) {
+  const baseTime = baseDate.getTime();
 
-export const MOCK_NOTIFICATIONS = Object.freeze([
-  {
-    id: 'notif_001',
-    type: 'YOUR_TURN',
-    title: 'Your Turn at Registrar!',
-    message: 'Ticket R-015 has been called. Please proceed to Room 101 and scan the QR code within 1 minute.',
-    is_read: false,
-    created_at: new Date(Date.now() - 20000).toISOString(),
-  },
-  {
-    id: 'notif_002',
-    type: 'APPROACHING_TURN',
-    title: 'Almost Your Turn (Cashier)',
-    message: 'You are now 3rd in line for Cashier & Student Accounts. Please head towards Finance Hall.',
-    is_read: false,
-    created_at: new Date(Date.now() - 300000).toISOString(),
-  },
-  {
-    id: 'notif_003',
-    type: 'QUEUE_CONFIRMED',
-    title: 'Queue Joined',
-    message: 'You joined the queue for Cashier & Student Accounts as Ticket C-048.',
-    is_read: true,
-    created_at: new Date(Date.now() - 1800000).toISOString(),
-  },
-]);
+  const tickets = [
+    // Live Ticket 1: CALLED (recently called, within 60s grace period)
+    {
+      id: 'tkt_001',
+      userId: MOCK_USER_STUDENT.id,
+      officeId: 'off_reg_001',
+      officeCode: 'R',
+      officeName: 'Office of the University Registrar',
+      ticketNumber: 'R-09-29-015',
+      dailySequence: 15,
+      status: TICKET_STATUS.CALLED,
+      joinedAt: new Date(baseTime - 15 * 60000).toISOString(),
+      calledAt: new Date(baseTime - 25000).toISOString(), // 25s ago
+      serviceStartedAt: null,
+      completedAt: null,
+      cancelledAt: null,
+      noShowAt: null,
+      cancelledBy: null,
+      counterNumber: 3,
+      positionInQueue: null,
+      aheadCount: 0,
+      estimatedWaitMinutes: null,
+    },
+    // Live Ticket 2: WAITING
+    {
+      id: 'tkt_002',
+      userId: MOCK_USER_STUDENT.id,
+      officeId: 'off_med_002',
+      officeCode: 'M',
+      officeName: 'Medical and Dental Services',
+      ticketNumber: 'M-09-29-006',
+      dailySequence: 6,
+      status: TICKET_STATUS.WAITING,
+      joinedAt: new Date(baseTime - 10 * 60000).toISOString(),
+      calledAt: null,
+      serviceStartedAt: null,
+      completedAt: null,
+      cancelledAt: null,
+      noShowAt: null,
+      cancelledBy: null,
+      counterNumber: null,
+      positionInQueue: 2,
+      aheadCount: 1,
+      estimatedWaitMinutes: 8,
+    },
+    // History 1: COMPLETED (student)
+    {
+      id: 'tkt_hist_001',
+      userId: MOCK_USER_STUDENT.id,
+      officeId: 'off_reg_001',
+      officeCode: 'R',
+      officeName: 'Office of the University Registrar',
+      ticketNumber: 'R-09-29-003',
+      dailySequence: 3,
+      status: TICKET_STATUS.COMPLETED,
+      joinedAt: new Date(baseTime - 120 * 60000).toISOString(),
+      calledAt: new Date(baseTime - 105 * 60000).toISOString(),
+      serviceStartedAt: new Date(baseTime - 104 * 60000).toISOString(),
+      completedAt: new Date(baseTime - 90 * 60000).toISOString(),
+      cancelledAt: null,
+      noShowAt: null,
+      cancelledBy: null,
+      counterNumber: 1,
+      positionInQueue: null,
+      aheadCount: null,
+      estimatedWaitMinutes: null,
+    },
+    // History 2: CANCELLED by USER
+    {
+      id: 'tkt_hist_002',
+      userId: MOCK_USER_STUDENT.id,
+      officeId: 'off_acc_003',
+      officeCode: 'S',
+      officeName: 'Student Accounting Office',
+      ticketNumber: 'S-09-28-018',
+      dailySequence: 18,
+      status: TICKET_STATUS.CANCELLED,
+      joinedAt: new Date(baseTime - 24 * 3600 * 1000).toISOString(),
+      calledAt: null,
+      serviceStartedAt: null,
+      completedAt: null,
+      cancelledAt: new Date(baseTime - 24 * 3600 * 1000 + 12 * 60000).toISOString(),
+      noShowAt: null,
+      cancelledBy: 'USER',
+      counterNumber: null,
+      positionInQueue: null,
+      aheadCount: null,
+      estimatedWaitMinutes: null,
+    },
+    // History 3: belongs to the guest (Client Guide rule)
+    {
+      id: 'tkt_hist_003',
+      userId: MOCK_USER_GUEST.id,
+      officeId: 'off_reg_001',
+      officeCode: 'R',
+      officeName: 'Office of the University Registrar',
+      ticketNumber: 'R-09-28-009',
+      dailySequence: 9,
+      status: TICKET_STATUS.COMPLETED,
+      joinedAt: new Date(baseTime - 25 * 3600 * 1000).toISOString(),
+      calledAt: new Date(baseTime - 25 * 3600 * 1000 + 20 * 60000).toISOString(),
+      serviceStartedAt: new Date(baseTime - 25 * 3600 * 1000 + 21 * 60000).toISOString(),
+      completedAt: new Date(baseTime - 25 * 3600 * 1000 + 35 * 60000).toISOString(),
+      cancelledAt: null,
+      noShowAt: null,
+      cancelledBy: null,
+      counterNumber: 2,
+      positionInQueue: null,
+      aheadCount: null,
+      estimatedWaitMinutes: null,
+    },
+    // History 4: CANCELLED by OFFICE (Client Guide rule)
+    {
+      id: 'tkt_hist_004',
+      userId: MOCK_USER_STUDENT.id,
+      officeId: 'off_med_002',
+      officeCode: 'M',
+      officeName: 'Medical and Dental Services',
+      ticketNumber: 'M-09-27-022',
+      dailySequence: 22,
+      status: TICKET_STATUS.CANCELLED,
+      joinedAt: new Date(baseTime - 48 * 3600 * 1000).toISOString(),
+      calledAt: null,
+      serviceStartedAt: null,
+      completedAt: null,
+      cancelledAt: new Date(baseTime - 48 * 3600 * 1000 + 15 * 60000).toISOString(),
+      noShowAt: null,
+      cancelledBy: 'OFFICE',
+      counterNumber: null,
+      positionInQueue: null,
+      aheadCount: null,
+      estimatedWaitMinutes: null,
+    },
+    // History 5: NO_SHOW
+    {
+      id: 'tkt_hist_005',
+      userId: MOCK_USER_STUDENT.id,
+      officeId: 'off_acc_003',
+      officeCode: 'S',
+      officeName: 'Student Accounting Office',
+      ticketNumber: 'S-09-26-004',
+      dailySequence: 4,
+      status: TICKET_STATUS.NO_SHOW,
+      joinedAt: new Date(baseTime - 72 * 3600 * 1000).toISOString(),
+      calledAt: new Date(baseTime - 72 * 3600 * 1000 + 10 * 60000).toISOString(),
+      serviceStartedAt: null,
+      completedAt: null,
+      cancelledAt: null,
+      noShowAt: new Date(baseTime - 72 * 3600 * 1000 + 12 * 60000).toISOString(),
+      cancelledBy: null,
+      counterNumber: 4,
+      positionInQueue: null,
+      aheadCount: null,
+      estimatedWaitMinutes: null,
+    },
+  ];
 
-export const MOCK_OFFENSES = Object.freeze([
-  {
-    id: 'offense_001',
-    user_id: 'usr_gst_002',
-    ticket_id: 'tkt_hist_003',
-    office_name: 'Cashier & Student Accounts',
-    ticket_number: 'C-09-25-031',
-    type: 'NO_SHOW',
-    resulted_in_ban: false,
-    revoked_at: null,
-    created_at: '2026-09-25T11:47:00Z',
-  },
-]);
+  const bans = {
+    [MOCK_USER_STUDENT.id]: {
+      offenseCount: 0,
+      ban: null,
+    },
+    [MOCK_USER_GUEST.id]: {
+      offenseCount: 1,
+      ban: null,
+    },
+    [MOCK_USER_BANNED.id]: {
+      offenseCount: 2,
+      ban: {
+        expiresAt: new Date(baseTime + 20 * 3600 * 1000).toISOString(), // 20 hours remaining
+        offenseIds: ['off_001', 'off_002'],
+      },
+    },
+  };
+
+  const offenses = [
+    {
+      id: 'off_001',
+      userId: MOCK_USER_GUEST.id,
+      ticketId: 'tkt_old_901',
+      officeName: 'Office of the University Registrar',
+      ticketNumber: 'R-09-27-010',
+      type: OFFENSE_TYPE.NO_SHOW,
+      causedBan: false,
+      revokedAt: null,
+      createdAt: new Date(baseTime - 24 * 3600 * 1000).toISOString(),
+    },
+    {
+      id: 'off_002',
+      userId: MOCK_USER_BANNED.id,
+      ticketId: 'tkt_old_902',
+      officeName: 'Student Accounting Office',
+      ticketNumber: 'S-09-28-005',
+      type: OFFENSE_TYPE.CANCELLED_AFTER_CALL,
+      causedBan: true,
+      revokedAt: null,
+      createdAt: new Date(baseTime - 4 * 3600 * 1000).toISOString(),
+    },
+  ];
+
+  const notifications = [
+    {
+      id: 'notif_001',
+      userId: MOCK_USER_STUDENT.id,
+      type: NOTIFICATION_TYPE.YOUR_TURN,
+      title: 'Your Turn at Window 3!',
+      message: 'Ticket R-015 called at Office of the University Registrar. Verify arrival within 60s.',
+      isRead: false,
+      createdAt: new Date(baseTime - 25000).toISOString(),
+    },
+    {
+      id: 'notif_002',
+      userId: MOCK_USER_STUDENT.id,
+      type: NOTIFICATION_TYPE.QUEUE_CONFIRMED,
+      title: 'Queue Confirmed',
+      message: 'You joined Medical and Dental Services. Ticket M-006, 1 person ahead.',
+      isRead: true,
+      createdAt: new Date(baseTime - 10 * 60000).toISOString(),
+    },
+    {
+      id: 'notif_003',
+      userId: MOCK_USER_STUDENT.id,
+      type: NOTIFICATION_TYPE.SERVICE_COMPLETED,
+      title: 'Service Completed',
+      message: 'Your transaction at the University Registrar is complete.',
+      isRead: true,
+      createdAt: new Date(baseTime - 90 * 60000).toISOString(),
+    },
+  ];
+
+  const settings = {
+    [MOCK_USER_STUDENT.id]: {
+      theme: 'system',
+      biometricsEnabled: true,
+      pushEnabled: true,
+    },
+    [MOCK_USER_GUEST.id]: {
+      theme: 'system',
+      biometricsEnabled: false,
+      pushEnabled: true,
+    },
+    [MOCK_USER_BANNED.id]: {
+      theme: 'system',
+      biometricsEnabled: false,
+      pushEnabled: false,
+    },
+  };
+
+  return {
+    tickets,
+    bans,
+    offenses,
+    notifications,
+    settings,
+  };
+}

@@ -1,7 +1,7 @@
 // QAMPUS Ticket Utilities
 // Pure helpers for ticket formatting and UI presentation status resolution.
 
-import { GRACE_PERIOD_SECONDS, TICKET_STATUS, TicketStatus } from '@/constants';
+import { GRACE_PERIOD_SECONDS, TICKET_STATUS, TicketStatus } from '@/constants/domain';
 
 /**
  * Formats an office code and sequential number into a 3+ digit ticket code.

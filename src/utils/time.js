@@ -1,7 +1,7 @@
 // QAMPUS Time Utilities
 // Pure date and time formatting helpers for history groupings, relative timestamps, and wait durations.
 
-import { HistoryGroup } from '@/constants';
+import { HistoryGroup } from '@/constants/domain';
 import { formatTime12 } from './hours';
 
 const MONTH_NAMES = [
