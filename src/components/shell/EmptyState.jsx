@@ -1,37 +1,44 @@
 import Button from '@/components/primitives/Button';
-import { ButtonType, COLORS, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, COLORS, EMPTY_COPY, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function EmptyState({
-  title = 'Nothing here yet',
+  type,
+  title,
   message,
-  icon = 'ticket-outline',
+  icon,
   showIconCircle = true,
   actionLabel,
   buttonLabel,
   onAction,
   onButtonPress,
+  style,
 }) {
-  const label = actionLabel || buttonLabel;
-  const onPress = onAction || onButtonPress;
+  const preset = type && EMPTY_COPY[type] ? EMPTY_COPY[type] : null;
+
+  const displayTitle = title ?? preset?.title ?? 'Nothing here yet';
+  const displayMessage = message ?? preset?.message;
+  const displayIcon = icon ?? preset?.icon ?? 'ticket-outline';
+  const displayActionLabel = actionLabel ?? buttonLabel ?? preset?.actionLabel;
+  const handleAction = onAction ?? onButtonPress;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {showIconCircle ? (
         <View style={styles.iconCircle}>
-          <IconSet name={icon} size={24} color={COLORS.ink} />
+          <IconSet name={displayIcon} size={24} color={COLORS.ink} />
         </View>
       ) : (
         <View style={styles.rawIconContainer}>
-          <IconSet name={icon === 'wifi-off' ? 'cloud-offline-outline' : icon} size={36} color={COLORS.slate} />
+          <IconSet name={displayIcon} size={36} color={COLORS.slate} />
         </View>
       )}
 
-      <Text style={styles.title}>{title}</Text>
-      {!!message && <Text style={styles.message}>{message}</Text>}
-      {!!label && (
+      <Text style={styles.title}>{displayTitle}</Text>
+      {!!displayMessage && <Text style={styles.message}>{displayMessage}</Text>}
+      {!!displayActionLabel && !!handleAction && (
         <View style={styles.action}>
-          <Button label={label} type={ButtonType.PRIMARY} onPress={onPress} />
+          <Button label={displayActionLabel} type={ButtonType.PRIMARY} onPress={handleAction} />
         </View>
       )}
     </View>

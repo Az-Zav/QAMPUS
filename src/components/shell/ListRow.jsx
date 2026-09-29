@@ -1,4 +1,4 @@
-import { COLORS, ELEVATION, HistoryStatus, IconSet, ListRowTone, ListRowType, OffenseState, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { BADGE_STYLE, COLORS, ELEVATION, IconSet, ListRowTone, ListRowType, OffenseState, RADII, SPACING, TICKET_STATUS, TYPOGRAPHY, withOpacity } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const ICON_CIRCLE = 36;
@@ -11,13 +11,6 @@ const TONES = {
   highlight: COLORS.gold,
   success: COLORS.success,
   error: COLORS.error,
-};
-
-const HISTORY_STATUS = {
-  [HistoryStatus.COMPLETED]: { label: 'Completed', color: COLORS.success },
-  [HistoryStatus.CANCELLED]: { label: 'Cancelled', color: COLORS.slate },
-  [HistoryStatus.NO_SHOW]: { label: 'No-show', color: COLORS.error },
-  [HistoryStatus.CANCELLED_BY_OFFICE]: { label: 'Cancelled by office', color: COLORS.slate },
 };
 
 const OFFENSE_STATE = {
@@ -85,8 +78,8 @@ function OffenseRow({ title, subtitle, status }) {
   );
 }
 
-function HistoryRow({ title, subtitle, meta, icon = 'school-outline', status }) {
-  const state = HISTORY_STATUS[status] ?? HISTORY_STATUS[HistoryStatus.COMPLETED];
+function TicketHistoryRow({ title, subtitle, meta, icon = 'school-outline', status }) {
+  const badgeInfo = BADGE_STYLE[status] ?? BADGE_STYLE[TICKET_STATUS.COMPLETED];
 
   return (
     <>
@@ -97,7 +90,7 @@ function HistoryRow({ title, subtitle, meta, icon = 'school-outline', status }) 
         <View style={styles.historyHead}>
           <Text style={[styles.title, styles.shrink]} numberOfLines={1}>{title}</Text>
           <View style={[styles.pill, styles.goldTint, styles.goldOutline]}>
-            <Text style={[styles.pillText, { color: state.color }]}>{state.label}</Text>
+            <Text style={styles.pillText}>{badgeInfo.label}</Text>
           </View>
         </View>
         {!!subtitle && <Text style={styles.caption}>{subtitle}</Text>}
@@ -111,7 +104,7 @@ const VARIANTS = {
   menu: { Body: MenuRow, container: 'menu' },
   notification: { Body: NotificationRow, container: 'notification' },
   offense: { Body: OffenseRow, container: 'card' },
-  history: { Body: HistoryRow, container: 'card' },
+  history: { Body: TicketHistoryRow, container: 'card' },
 };
 
 export default function ListRow({

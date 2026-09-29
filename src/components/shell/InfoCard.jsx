@@ -1,19 +1,7 @@
-import { COLORS, IconSet, InfoCardType, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { COLORS, IconSet, INFO_COPY, InfoCardType, RADII, SPACING, TYPOGRAPHY } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const lineHeight = (size) => Math.round(size * TYPOGRAPHY.lineHeight.normal);
-
-const DEFAULT_POLICY = [
-  { icon: 'close-circle-outline', color: COLORS.error, text: "Missing your turn, or cancelling after you've been called, counts as an offense." },
-  { icon: 'ticket-outline', color: COLORS.success, text: "Leaving a queue before you're called is always free and never counted." },
-  { icon: 'ban-outline', color: COLORS.slate, text: 'Two offenses pause joining for 24 hours. Browsing, your tickets and your history stay open.' },
-];
-
-const STRIKE_STATES = {
-  clean: { icon: 'shield-checkmark-outline', iconColor: COLORS.success, title: 'Clean record', body: 'No offenses on your record.' },
-  strike: { icon: 'warning-outline', iconColor: COLORS.error, title: '1 offense on record', body: 'One more offense will pause your ability to join queues for 24 hours.' },
-  banned: { icon: 'ban-outline', iconColor: COLORS.error, title: 'Joining paused', body: 'Your strikes reset once the pause ends.' },
-};
 
 function OfficeHours({ title, subtitle, hours, open = true }) {
   const textColor = open ? COLORS.ink : COLORS.slate;
@@ -70,19 +58,20 @@ function BanBanner({ title, body, items }) {
   );
 }
 
-function StrikeMeter({ title, body, strikes = 0, maxStrikes = 2, banned = false }) {
-  const state = STRIKE_STATES[banned ? 'banned' : strikes > 0 ? 'strike' : 'clean'];
+function OffenseMeter({ title, body, offenses = 0, maxOffenses = 2, banned = false }) {
+  const stateKey = banned ? 'banned' : offenses > 0 ? 'warning' : 'clean';
+  const state = INFO_COPY.banStatus[stateKey];
 
   return (
     <>
       <View style={styles.row}>
-        <IconSet name={state.icon} size={18} color={state.iconColor} />
+        <IconSet name={state.icon} size={18} color={banned || offenses > 0 ? COLORS.error : COLORS.success} />
         <Text style={[styles.title, styles.flex, banned && { color: COLORS.error }]}>{title ?? state.title}</Text>
       </View>
       {!banned && (
-        <View style={styles.meter} accessibilityLabel={`${strikes} of ${maxStrikes} strikes`}>
-          {Array.from({ length: maxStrikes }, (_, i) => (
-            <View key={i} style={[styles.meterSegment, i < strikes ? styles.meterOn : styles.meterOff]} />
+        <View style={styles.meter} accessibilityLabel={`${offenses} of ${maxOffenses} offenses`}>
+          {Array.from({ length: maxOffenses }, (_, i) => (
+            <View key={i} style={[styles.meterSegment, i < offenses ? styles.meterOn : styles.meterOff]} />
           ))}
         </View>
       )}
@@ -91,16 +80,20 @@ function StrikeMeter({ title, body, strikes = 0, maxStrikes = 2, banned = false 
   );
 }
 
-function Policy({ title = 'How offenses work', items = DEFAULT_POLICY }) {
+function Policy({ title = INFO_COPY.policy.title, items = INFO_COPY.policy.rules }) {
   return (
     <>
       <Text style={styles.title}>{title}</Text>
-      {items.map((rule) => (
-        <View key={rule.text} style={[styles.row, styles.alignStart]}>
-          <IconSet name={rule.icon} size={16} color={rule.color} style={styles.ruleIcon} />
-          <Text style={[styles.body, styles.flex]}>{rule.text}</Text>
-        </View>
-      ))}
+      {items.map((rule) => {
+        const iconColor =
+          rule.tone === 'error' ? COLORS.error : rule.tone === 'success' ? COLORS.success : COLORS.slate;
+        return (
+          <View key={rule.text} style={[styles.row, styles.alignStart]}>
+            <IconSet name={rule.icon} size={16} color={iconColor} style={styles.ruleIcon} />
+            <Text style={[styles.body, styles.flex]}>{rule.text}</Text>
+          </View>
+        );
+      })}
     </>
   );
 }
@@ -120,7 +113,7 @@ function Faq({ title, body, expanded }) {
 const VARIANTS = {
   officeHours: { Body: OfficeHours, container: null },
   banBanner: { Body: BanBanner, container: 'danger' },
-  strikeMeter: { Body: StrikeMeter, container: null },
+  strikeMeter: { Body: OffenseMeter, container: null },
   policy: { Body: Policy, container: null },
   faq: { Body: Faq, container: null },
 };
@@ -129,7 +122,7 @@ export default function InfoCard({ type = InfoCardType.POLICY, onPress, style, .
   const variant = VARIANTS[type] ?? VARIANTS.policy;
   const { Body } = variant;
   const isFaq = type === InfoCardType.FAQ;
-  const bannedOutline = type === InfoCardType.STRIKE_METER && props.banned;
+  const bannedOutline = (type === InfoCardType.STRIKE_METER || type === 'offenseMeter') && props.banned;
 
   return (
     <Pressable
