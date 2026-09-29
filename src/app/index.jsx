@@ -1,5 +1,6 @@
-import Login from '@/app/(auth)/login';
+// 🧪 TEMP: redirect to playground — restore Login when done
+import Playground from '@/app/playground';
 
 export default function Index() {
-  return <Login />;
+  return <Playground />;
 }
