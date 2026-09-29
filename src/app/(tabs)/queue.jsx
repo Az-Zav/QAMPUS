@@ -1,52 +1,102 @@
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-
 import SearchInput from '@/components/primitives/SearchInput';
-import EmptyState from '@/components/queue/EmptyState';
-import HistoryRow from '@/components/queue/HistoryRow';
 import JoinConfirmModal from '@/components/queue/JoinConfirmModal';
 import NoticeModal from '@/components/queue/NoticeModal';
 import OfficeCard from '@/components/queue/OfficeCard';
 import SegmentedSwitcher from '@/components/queue/SegmentedSwitcher';
+import EmptyState from '@/components/shell/EmptyState';
 import Header from '@/components/shell/Header';
-import { COLORS, HistoryGroup, QueueModalKey, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
-import { MOCK_HISTORY_TICKETS, MOCK_OFFICES } from '@/data/mock';
+import ListRow from '@/components/shell/ListRow';
+import { COLORS, ListRowType, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
+import { useJoinEligibility } from '@/hooks/useJoinEligibility';
+import { useNow } from '@/hooks/useNow';
+import { useNotifications } from '@/providers/NotificationsProvider';
+import { useOffices } from '@/providers/OfficesProvider';
+import { useTickets } from '@/providers/TicketsProvider';
+import { officeHours } from '@/utils/hours';
+import { formatRelativeTime } from '@/utils/time';
+import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-export default function Queue() {
+export default function QueueScreen() {
+  const router = useRouter();
+  const { offices } = useOffices();
+  const { history, actions: ticketActions } = useTickets();
+  const { unreadCount } = useNotifications();
+  const { checkJoin } = useJoinEligibility();
+  const now = useNow();
+
   const [view, setView] = useState(QueueView.JOIN);
   const [search, setSearch] = useState('');
   const [selectedOffice, setSelectedOffice] = useState(null);
-  const [modal, setModal] = useState(null);
-
-  const offices = MOCK_OFFICES;
-  const history = MOCK_HISTORY_TICKETS;
+  const [notice, setNotice] = useState(null);
 
   const filteredOffices = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return offices;
     return offices.filter((office) =>
-      [office.name, office.location, office.code].some((value) =>
-        value.toLowerCase().includes(query),
+      [office.name, office.location, office.code].some((val) =>
+        val.toLowerCase().includes(query),
       ),
     );
   }, [search, offices]);
 
   const groupedHistory = useMemo(() => {
+    const todayItems = [];
+    const yesterdayItems = [];
+    const earlierItems = [];
+
+    history.forEach((ticket) => {
+      const rel = formatRelativeTime(ticket.createdAt, now);
+      if (rel.includes('min') || rel.includes('hour') || rel === 'just now') {
+        todayItems.push(ticket);
+      } else if (rel.includes('1 day')) {
+        yesterdayItems.push(ticket);
+      } else {
+        earlierItems.push(ticket);
+      }
+    });
+
     return [
-      { group: HistoryGroup.TODAY, items: history.filter((_, idx) => idx === 0) },
-      { group: HistoryGroup.YESTERDAY, items: history.filter((_, idx) => idx === 1) },
-      { group: HistoryGroup.EARLIER, items: history.filter((_, idx) => idx >= 2) },
+      { group: 'TODAY', items: todayItems },
+      { group: 'YESTERDAY', items: yesterdayItems },
+      { group: 'EARLIER', items: earlierItems },
     ].filter((g) => g.items.length > 0);
-  }, [history]);
+  }, [history, now]);
 
-  function openJoin(office) {
+  const handleOpenJoin = (office) => {
+    const eligibility = checkJoin(office);
+    if (!eligibility.eligible) {
+      setNotice({
+        title: 'Cannot Join Queue',
+        message: eligibility.reason,
+        icon: 'alert-circle-outline',
+        destructive: true,
+      });
+      return;
+    }
     setSelectedOffice(office);
-    setModal(QueueModalKey.JOIN_CONFIRM);
-  }
+  };
 
-  function confirmJoin() {
-    setModal(QueueModalKey.SUCCESS);
-  }
+  const handleConfirmJoin = async () => {
+    if (!selectedOffice) return;
+    const res = await ticketActions.joinQueue(selectedOffice.id);
+    setSelectedOffice(null);
+    if (res.ok) {
+      setNotice({
+        title: "You're in the queue!",
+        message: `Your ${selectedOffice.code} ticket has been issued. View status on Home.`,
+        icon: 'checkmark-circle-outline',
+      });
+    } else {
+      setNotice({
+        title: 'Join Failed',
+        message: res.message || 'Unable to join queue.',
+        icon: 'alert-circle-outline',
+        destructive: true,
+      });
+    }
+  };
 
   return (
     <View style={styles.screen}>
@@ -54,9 +104,9 @@ export default function Queue() {
         <Header
           title="QUEUE"
           inverted
-          hasNotification
-          onBellPress={() => {}}
-          onAvatarPress={() => {}}
+          hasNotification={unreadCount > 0}
+          onBellPress={() => router.push('/(profile)/notifications')}
+          onAvatarPress={() => router.push('/(profile)/profile')}
         />
 
         <View style={styles.heroContent}>
@@ -96,37 +146,41 @@ export default function Queue() {
                 message="Try a different office or service name."
               />
             ) : (
-              filteredOffices.map((office) => (
-                <OfficeCard
-                  key={office.id}
-                  office={{
-                    id: office.id,
-                    code: office.code,
-                    name: office.name,
-                    location: office.location,
-                    nowServing: office.queue?.current_ticket_number ?? '—',
-                    waiting: office.queue?.waiting_count ?? 0,
-                    averageServiceMinutes: office.default_service_minutes,
-                    open: office.queue?.status === 'OPEN',
-                  }}
-                  onJoin={() => openJoin(office)}
-                />
-              ))
+              filteredOffices.map((office) => {
+                const hoursInfo = officeHours(office, now);
+                return (
+                  <OfficeCard
+                    key={office.id}
+                    office={{
+                      ...office,
+                      nowServing: office.nowServing || '--',
+                      waiting: office.waitingCount ?? 0,
+                      open: hoursInfo.isOpen,
+                    }}
+                    onJoin={() => handleOpenJoin(office)}
+                  />
+                );
+              })
             )}
           </View>
         ) : (
           <View style={styles.historyList}>
             {history.length === 0 ? (
-              <EmptyState
-                title="No queue history"
-                message="Completed, cancelled, and no-show tickets will appear here."
-              />
+              <EmptyState type="history" />
             ) : (
               groupedHistory.map(({ group, items }) => (
                 <View key={group}>
                   <Text style={styles.sectionLabel}>{group}</Text>
                   {items.map((item) => (
-                    <HistoryRow key={item.id} item={item} />
+                    <ListRow
+                      key={item.id}
+                      type={ListRowType.HISTORY}
+                      title={item.officeName}
+                      subtitle={`Ticket #${item.shortTicketNumber || item.dailySequence}`}
+                      meta={formatRelativeTime(item.completedAt || item.createdAt, now)}
+                      status={item.status}
+                      style={styles.historyCard}
+                    />
                   ))}
                 </View>
               ))
@@ -135,32 +189,29 @@ export default function Queue() {
         )}
       </ScrollView>
 
+      {/* Join Confirmation Modal */}
       <JoinConfirmModal
-        visible={modal === QueueModalKey.JOIN_CONFIRM}
+        visible={!!selectedOffice}
         office={selectedOffice}
         estimatedWait={
           selectedOffice
-            ? `${Math.max(
-                1,
-                Math.ceil(
-                  (((selectedOffice.queue?.waiting_count ?? 0) + 1) *
-                    selectedOffice.default_service_minutes) /
-                    5,
-                ),
-              )} min`
-            : '10 min'
+            ? `about ${Math.max(1, Math.ceil(((selectedOffice.waitingCount ?? 0) + 1) * 5))} min`
+            : '5 min'
         }
-        peopleWaiting={selectedOffice?.queue?.waiting_count ?? 0}
-        onClose={() => setModal(null)}
-        onConfirm={confirmJoin}
+        peopleWaiting={selectedOffice?.waitingCount ?? 0}
+        onClose={() => setSelectedOffice(null)}
+        onConfirm={handleConfirmJoin}
       />
 
+      {/* Notice Modal */}
       <NoticeModal
-        visible={modal === QueueModalKey.SUCCESS}
-        title="You're in the queue"
-        message={`Your ${selectedOffice?.code || ''} queue ticket has been issued. Check Home for your position and updates.`}
-        icon="checkmark-circle-outline"
-        onClose={() => setModal(null)}
+        visible={!!notice}
+        title={notice?.title || ''}
+        message={notice?.message || ''}
+        icon={notice?.icon}
+        destructive={notice?.destructive}
+        onClose={() => setNotice(null)}
+        buttonLabel="OK"
       />
     </View>
   );
@@ -207,6 +258,10 @@ const styles = StyleSheet.create({
   },
   historyList: {
     marginTop: 0,
+    gap: SPACING.sm,
+  },
+  historyCard: {
+    marginBottom: SPACING.xs,
   },
   sectionLabel: {
     color: COLORS.slate,

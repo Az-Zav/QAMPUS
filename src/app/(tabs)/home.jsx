@@ -1,126 +1,124 @@
+import InfoCard from '@/components/shell/InfoCard';
+import EmptyState from '@/components/shell/EmptyState';
+import Header from '@/components/shell/Header';
+import JoinConfirmModal from '@/components/queue/JoinConfirmModal';
+import NoticeModal from '@/components/queue/NoticeModal';
+import TicketModal from '@/components/tickets/TicketModal';
+import TicketStubCard from '@/components/tickets/TicketStubCard';
+import { COLORS, IconSet, InfoCardType, SPACING, TYPOGRAPHY } from '@/constants';
+import { useJoinEligibility } from '@/hooks/useJoinEligibility';
+import { useNow } from '@/hooks/useNow';
+import { useAuth } from '@/providers/AuthProvider';
+import { useNotifications } from '@/providers/NotificationsProvider';
+import { useOffices } from '@/providers/OfficesProvider';
+import { useTickets } from '@/providers/TicketsProvider';
+import { officeHours } from '@/utils/hours';
+import { ticketUiStatus } from '@/utils/ticket';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-
-import InfoCard from '@/components/profile/InfoCard';
-import EmptyState from '@/components/queue/EmptyState';
-import JoinConfirmModal from '@/components/queue/JoinConfirmModal';
-import OfflineState from '@/components/queue/OfflineState';
-import Header from '@/components/shell/Header';
-import TicketStubCard from '@/components/tickets/TicketStubCard';
-
-import { COLORS, IconSet, InfoCardType, RADII, SPACING, TYPOGRAPHY } from '@/constants';
-import { MOCK_ACTIVE_TICKETS, MOCK_OFFICES, MOCK_USER_STUDENT } from '@/data/mock';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
-  // Screen state switcher: 'populated' | 'empty' | 'offline'
-  const [screenState, setScreenState] = useState('populated');
+  const { user } = useAuth();
+  const { active, actions: ticketActions } = useTickets();
+  const { offices } = useOffices();
+  const { unreadCount } = useNotifications();
+  const { checkJoin } = useJoinEligibility();
+  const now = useNow();
+
   const [selectedOffice, setSelectedOffice] = useState(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [notice, setNotice] = useState(null);
 
-  const user = MOCK_USER_STUDENT;
-  const activeTickets = MOCK_ACTIVE_TICKETS;
-  const offices = MOCK_OFFICES;
+  const handleOfficePress = (office) => {
+    const eligibility = checkJoin(office);
+    if (!eligibility.eligible) {
+      setNotice({
+        title: 'Cannot Join Queue',
+        message: eligibility.reason,
+        icon: 'alert-circle-outline',
+        destructive: true,
+      });
+      return;
+    }
+    setSelectedOffice(office);
+  };
 
-  const handleJoinOffice = (office) => {
-    if (office.queue?.status === 'OPEN') {
-      setSelectedOffice(office);
+  const handleConfirmJoin = async () => {
+    if (!selectedOffice) return;
+    const res = await ticketActions.joinQueue(selectedOffice.id);
+    setSelectedOffice(null);
+    if (res.ok) {
+      setNotice({
+        title: "You're in the queue!",
+        message: `Your ${selectedOffice.code} ticket has been issued. Check updates on your home screen.`,
+        icon: 'checkmark-circle-outline',
+      });
+    } else {
+      setNotice({
+        title: 'Failed to Join',
+        message: res.message || 'Something went wrong while joining the queue.',
+        icon: 'alert-circle-outline',
+        destructive: true,
+      });
     }
   };
 
-  const handleNavigateToQueue = () => {
-    router.push('/(tabs)/queue');
-  };
-
-  const handleOpenScanner = () => {
-    router.push('/(tabs)/scan');
-  };
-
-  // Render active queues section dynamically
-  const renderActiveQueuesSection = () => {
-    if (screenState === 'offline') {
-      return (
-        <OfflineState
-          showIconCircle={false}
-          title="Temporarily unavailable"
-          message="Please wait — this clears on its own."
-        />
-      );
+  const handleCancelTicket = async (ticketId) => {
+    setSelectedTicket(null);
+    const res = await ticketActions.cancelTicket(ticketId);
+    if (!res.ok) {
+      setNotice({
+        title: 'Cancel Failed',
+        message: res.message || 'Could not cancel ticket.',
+        icon: 'alert-circle-outline',
+        destructive: true,
+      });
     }
-
-    if (screenState === 'empty' || activeTickets.length === 0) {
-      return (
-        <EmptyState
-          icon="ticket-outline"
-          title="No active tickets"
-          message="Join a queue and your ticket will appear here."
-          actionLabel="Join a Queue"
-          onAction={handleNavigateToQueue}
-        />
-      );
-    }
-
-    return (
-      <View style={styles.ticketList}>
-        {activeTickets.map((ticket) => (
-          <TicketStubCard
-            key={ticket.id}
-            ticket={{
-              id: ticket.id,
-              shortNumber: ticket.short_ticket_number,
-              nowServing: 'R-012',
-              officeName: ticket.office_name,
-              location: 'Room 101',
-              status: ticket.status.toLowerCase() === 'called' ? 'yourTurn' : ticket.status.toLowerCase(),
-              remainingSeconds: ticket.status === 'CALLED' ? 40 : undefined,
-              estimatedWaitMinutes: ticket.estimated_wait_minutes,
-            }}
-            onPress={() => {}}
-            onOpenScanner={handleOpenScanner}
-          />
-        ))}
-      </View>
-    );
   };
+
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
 
   return (
     <View style={styles.screen}>
       <Header
         title="HOME"
-        hasNotification={true}
-        onBellPress={() => {}}
-        onAvatarPress={() => {}}
+        hasNotification={unreadCount > 0}
+        onBellPress={() => router.push('/(profile)/notifications')}
+        onAvatarPress={() => router.push('/(profile)/profile')}
       />
 
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* State Toggle Toolbar */}
-        <View style={styles.testToolbar}>
-          <Text style={styles.testLabel}>Preview state:</Text>
-          <View style={styles.pillsContainer}>
-            {['populated', 'empty', 'offline'].map((st) => (
-              <Pressable
-                key={st}
-                style={[styles.pill, screenState === st && styles.activePill]}
-                onPress={() => setScreenState(st)}
-              >
-                <Text style={[styles.pillText, screenState === st && styles.activePillText]}>
-                  {st}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
         {/* Greeting */}
         <Text style={styles.greeting}>
-          Good Afternoon, <Text style={styles.userName}>{user.name.split(' ')[0]}</Text>
+          Good Day, <Text style={styles.userName}>{firstName}</Text>
         </Text>
 
         {/* Active Queues Header */}
         <Text style={styles.sectionTitle}>Active Queues</Text>
 
-        {/* Dynamic Section Content */}
-        {renderActiveQueuesSection()}
+        {active.length === 0 ? (
+          <EmptyState type="home" onAction={() => router.push('/(tabs)/queue')} />
+        ) : (
+          <View style={styles.ticketList}>
+            {active.map((ticket) => {
+              const uiStatus = ticketUiStatus(ticket, now);
+              return (
+                <TicketStubCard
+                  key={ticket.id}
+                  ticket={{
+                    ...ticket,
+                    status: uiStatus.status,
+                    remainingSeconds: uiStatus.secondsLeft,
+                  }}
+                  onPress={() => setSelectedTicket(ticket)}
+                  onOpenScanner={() => router.push('/(tabs)/scan')}
+                />
+              );
+            })}
+          </View>
+        )}
 
         {/* Operating Hours Header */}
         <View style={styles.operatingHeader}>
@@ -128,30 +126,59 @@ export default function HomeScreen() {
           <Text style={styles.operatingTitle}>OPERATING HOURS</Text>
         </View>
 
-        {/* Calling InfoCard with InfoCardType.OFFICE_HOURS */}
         <View style={styles.officeList}>
-          {offices.map((office) => (
-            <InfoCard
-              key={office.id}
-              type={InfoCardType.OFFICE_HOURS}
-              title={office.name}
-              subtitle={office.location}
-              hours={`${office.operating_hours.open_time.slice(0, 5)} - ${office.operating_hours.close_time.slice(0, 5)}`}
-              open={office.queue?.status === 'OPEN'}
-              onPress={() => handleJoinOffice(office)}
-            />
-          ))}
+          {offices.map((office) => {
+            const hoursInfo = officeHours(office, now);
+            return (
+              <InfoCard
+                key={office.id}
+                type={InfoCardType.OFFICE_HOURS}
+                title={office.name}
+                subtitle={office.location}
+                hours={hoursInfo.label}
+                open={hoursInfo.isOpen}
+                onPress={() => handleOfficePress(office)}
+              />
+            );
+          })}
         </View>
       </ScrollView>
 
-      {/* Join Confirmation Modal */}
+      {/* Join Confirm Modal */}
       <JoinConfirmModal
         visible={!!selectedOffice}
         office={selectedOffice}
-        estimatedWait={`${selectedOffice?.queue?.estimated_wait_minutes ?? 10} min`}
-        peopleWaiting={selectedOffice?.queue?.waiting_count ?? 0}
+        estimatedWait={
+          selectedOffice
+            ? `about ${Math.max(1, Math.ceil(((selectedOffice.waitingCount ?? 0) + 1) * 5))} min`
+            : '5 min'
+        }
+        peopleWaiting={selectedOffice?.waitingCount ?? 0}
         onClose={() => setSelectedOffice(null)}
-        onConfirm={() => setSelectedOffice(null)}
+        onConfirm={handleConfirmJoin}
+      />
+
+      {/* Ticket Detail Modal */}
+      <TicketModal
+        visible={!!selectedTicket}
+        ticket={selectedTicket}
+        onClose={() => setSelectedTicket(null)}
+        onCancel={() => handleCancelTicket(selectedTicket?.id)}
+        onOpenScanner={() => {
+          setSelectedTicket(null);
+          router.push('/(tabs)/scan');
+        }}
+      />
+
+      {/* Notice Modal */}
+      <NoticeModal
+        visible={!!notice}
+        title={notice?.title || ''}
+        message={notice?.message || ''}
+        icon={notice?.icon}
+        destructive={notice?.destructive}
+        onClose={() => setNotice(null)}
+        buttonLabel="OK"
       />
     </View>
   );
@@ -166,44 +193,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.xxl * 2,
-  },
-  testToolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.white,
-    padding: SPACING.xs,
-    borderRadius: RADII.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: SPACING.md,
-  },
-  testLabel: {
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.slate,
-  },
-  pillsContainer: {
-    flexDirection: 'row',
-    gap: SPACING.xxs,
-  },
-  pill: {
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: SPACING.xxxs,
-    borderRadius: RADII.full,
-    backgroundColor: COLORS.disabledBg,
-  },
-  activePill: {
-    backgroundColor: COLORS.ink,
-  },
-  pillText: {
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.ink,
-    textTransform: 'capitalize',
-  },
-  activePillText: {
-    color: COLORS.paper,
   },
   greeting: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,

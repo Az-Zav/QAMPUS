@@ -1,19 +1,28 @@
 import Button from '@/components/primitives/Button';
 import { ButtonType, COLORS, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { useAuth } from '@/providers/AuthProvider';
+import React, { useState } from 'react';
 import { Image, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
-  const router = useRouter();
+  const { actions } = useAuth();
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  const handleGoogleLogin = () => {
-    router.replace('/(tabs)/home');
+  const handleGoogleLogin = async () => {
+    setErrorMsg(null);
+    const res = await actions.signInWithGoogle();
+    if (!res.ok) {
+      setErrorMsg(res.message || 'Failed to sign in with Google');
+    }
   };
 
-  const handleGuestLogin = () => {
-    router.replace('/(tabs)/home');
+  const handleGuestLogin = async () => {
+    setErrorMsg(null);
+    const res = await actions.continueAsGuest();
+    if (!res.ok) {
+      setErrorMsg(res.message || 'Failed to continue as guest');
+    }
   };
 
   return (
@@ -56,6 +65,8 @@ export default function Login() {
 
           {/* Action Buttons & Footer */}
           <View style={styles.actionContainer}>
+            {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+
             <Button
               label="Continue with Google"
               type={ButtonType.SECONDARY}
@@ -169,6 +180,13 @@ const styles = StyleSheet.create({
   },
   buttonMargin: {
     marginBottom: SPACING.md,
+  },
+  errorText: {
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontSize: TYPOGRAPHY.size.xs,
+    color: COLORS.error,
+    textAlign: 'center',
+    marginBottom: SPACING.sm,
   },
   termsText: {
     marginTop: SPACING.sm,
