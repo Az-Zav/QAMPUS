@@ -386,7 +386,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 **R-15 — Authorized staff can revoke offenses**
 
 - Assigned staff may revoke offenses tied to their own office's tickets; a super administrator may revoke any.
-- Revocation removes the offense and lifts any ban it caused.
+- Revocation removes the offense from the count and lifts any ban it caused.
 - The user is notified that the offense was revoked.
 - *Why: the system will sometimes be wrong, and there must be a way to say so.*
 

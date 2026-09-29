@@ -1,5 +1,5 @@
 // QAMPUS Domain Enums & Business Types
-// Authoritative definitions for Domain Entities, States, Navigation, and Lifecycle Enums.
+// Authoritative definitions for Domain Entities, States, Navigation, Error Codes, and Lifecycle Enums.
 
 // ---------------------------------------------------------------------------
 // 1. Navigation & Screen Scope Enums
@@ -64,14 +64,8 @@ export const TicketStatus = Object.freeze({
   IN_SERVICE: 'inService',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+  CANCELLED_BY_OFFICE: 'cancelledByOffice',
   NO_SHOW: 'noShow',
-});
-
-export const HistoryStatus = Object.freeze({
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
-  NO_SHOW: 'NO_SHOW',
-  CANCELLED_BY_OFFICE: 'CANCELLED_BY_OFFICE',
 });
 
 export const QUEUE_STATUS = Object.freeze({
@@ -129,4 +123,157 @@ export const OffenseState = Object.freeze({
   ACTIVE: 'active',
   REVOKED: 'revoked',
   CAUSED_BAN: 'causedBan',
+});
+
+// ---------------------------------------------------------------------------
+// 5. Error Codes & Limits
+// ---------------------------------------------------------------------------
+
+export const ERROR_CODE = Object.freeze({
+  BANNED: 'BANNED',
+  TICKET_LIMIT: 'TICKET_LIMIT',
+  QUEUE_CLOSED: 'QUEUE_CLOSED',
+  CAPACITY_REACHED: 'CAPACITY_REACHED',
+  WRONG_OFFICE: 'WRONG_OFFICE',
+  NO_CALLED_TICKET: 'NO_CALLED_TICKET',
+  EXPIRED: 'EXPIRED',
+  INVALID_DOMAIN: 'INVALID_DOMAIN',
+  SIGN_IN_CANCELLED: 'SIGN_IN_CANCELLED',
+  STUDENT_ID_TAKEN: 'STUDENT_ID_TAKEN',
+  NETWORK: 'NETWORK',
+  UNAUTHENTICATED: 'UNAUTHENTICATED',
+  UNKNOWN: 'UNKNOWN',
+});
+
+export const GRACE_PERIOD_SECONDS = 60;
+export const MAX_ACTIVE_TICKETS = 3;
+
+// ---------------------------------------------------------------------------
+// 6. Component Presentation Registries
+// ---------------------------------------------------------------------------
+
+export const BADGE_STYLE = Object.freeze({
+  [TicketStatus.WAITING]: { label: 'Waiting', tone: 'neutral', icon: 'time-outline' },
+  [TicketStatus.YOUR_TURN]: { label: 'Your turn', tone: 'highlight', icon: 'notifications' },
+  [TicketStatus.EXPIRED]: { label: 'Expired', tone: 'error', icon: 'hourglass-outline' },
+  [TicketStatus.IN_SERVICE]: { label: 'In service', tone: 'success', icon: 'person' },
+  [TicketStatus.COMPLETED]: { label: 'Completed', tone: 'success', icon: 'checkmark-circle' },
+  [TicketStatus.CANCELLED]: { label: 'Cancelled', tone: 'neutral', icon: 'close-circle-outline' },
+  [TicketStatus.CANCELLED_BY_OFFICE]: { label: 'Cancelled by office', tone: 'neutral', icon: 'close-circle-outline' },
+  [TicketStatus.NO_SHOW]: { label: 'No-show', tone: 'error', icon: 'person-remove' },
+  [OffenseState.ACTIVE]: { label: 'Offense recorded', tone: 'neutral', icon: 'alert-circle-outline' },
+  [OffenseState.REVOKED]: { label: 'Revoked', tone: 'success', icon: 'checkmark-circle-outline' },
+  [OffenseState.CAUSED_BAN]: { label: 'Caused 24h ban', tone: 'error', icon: 'ban-outline' },
+});
+
+export const NOTIFICATION_STYLE = Object.freeze({
+  [NOTIFICATION_TYPE.QUEUE_CONFIRMED]: { icon: 'ticket-outline', tone: 'highlight' },
+  [NOTIFICATION_TYPE.YOUR_TURN]: { icon: 'notifications', tone: 'highlight' },
+  [NOTIFICATION_TYPE.APPROACHING_TURN]: { icon: 'time-outline', tone: 'highlight' },
+  [NOTIFICATION_TYPE.NO_SHOW]: { icon: 'person-remove', tone: 'error' },
+  [NOTIFICATION_TYPE.QUEUE_CANCELLED]: { icon: 'close-circle-outline', tone: 'neutral' },
+  [NOTIFICATION_TYPE.SERVICE_COMPLETED]: { icon: 'checkmark-circle', tone: 'success' },
+  [NOTIFICATION_TYPE.WARNING]: { icon: 'warning-outline', tone: 'error' },
+  [NOTIFICATION_TYPE.OFFENSE_REVOKED]: { icon: 'shield-checkmark-outline', tone: 'success' },
+  [NOTIFICATION_TYPE.GLOBAL_ANNOUNCEMENT]: { icon: 'megaphone-outline', tone: 'highlight' },
+});
+
+export const NOTIFICATION_ROUTE = Object.freeze({
+  [NOTIFICATION_TYPE.QUEUE_CONFIRMED]: Screen.HOME,
+  [NOTIFICATION_TYPE.YOUR_TURN]: Screen.SCAN,
+  [NOTIFICATION_TYPE.APPROACHING_TURN]: Screen.HOME,
+  [NOTIFICATION_TYPE.NO_SHOW]: Screen.BANS,
+  [NOTIFICATION_TYPE.QUEUE_CANCELLED]: Screen.HOME,
+  [NOTIFICATION_TYPE.SERVICE_COMPLETED]: Screen.QUEUE,
+  [NOTIFICATION_TYPE.WARNING]: null,
+  [NOTIFICATION_TYPE.OFFENSE_REVOKED]: Screen.BANS,
+  [NOTIFICATION_TYPE.GLOBAL_ANNOUNCEMENT]: null,
+});
+
+export const OFFICE_ICON = Object.freeze({
+  R: 'document-text-outline',
+  M: 'medkit-outline',
+  S: 'card-outline',
+  default: 'business-outline',
+});
+
+export const EMPTY_COPY = Object.freeze({
+  home: {
+    icon: 'ticket-outline',
+    title: 'No active tickets',
+    message: 'Join a queue to get in line for campus services.',
+    actionLabel: 'Join a Queue',
+  },
+  history: {
+    icon: 'time-outline',
+    title: 'No past tickets',
+    message: 'Your completed and cancelled tickets will appear here.',
+  },
+  notifications: {
+    icon: 'notifications-off-outline',
+    title: 'No notifications',
+    message: 'Updates on your tickets and queue status will appear here.',
+  },
+  bans: {
+    icon: 'shield-checkmark-outline',
+    title: 'Clean record',
+    message: 'You have no offenses on your account. Keep up the good work!',
+  },
+  outage: {
+    icon: 'cloud-offline-outline',
+    title: 'Service unavailable',
+    message: 'Unable to connect to Qampus services. Please check your connection or try again later.',
+    actionLabel: 'Retry',
+  },
+});
+
+export const INFO_COPY = Object.freeze({
+  banStatus: {
+    clean: {
+      icon: 'shield-checkmark-outline',
+      title: 'Clean record',
+      body: 'No offenses on your record.',
+    },
+    warning: {
+      icon: 'alert-circle-outline',
+      title: '1 offense on record',
+      body: 'One more offense will pause your ability to join queues for 24 hours.',
+    },
+    banned: {
+      icon: 'ban-outline',
+      title: 'Joining paused',
+      body: 'Your offenses reset once the pause ends.',
+    },
+  },
+  policy: {
+    title: 'How offenses work',
+    rules: [
+      {
+        icon: 'close-circle-outline',
+        tone: 'error',
+        text: "Missing your turn, or cancelling after you've been called, counts as an offense.",
+      },
+      {
+        icon: 'ticket-outline',
+        tone: 'success',
+        text: "Leaving a queue before you're called is always free and never counted.",
+      },
+      {
+        icon: 'ban-outline',
+        tone: 'neutral',
+        text: 'Two offenses pause joining for 24 hours. Browsing, your tickets and your history stay open.',
+      },
+    ],
+  },
+});
+
+/**
+ * @deprecated HistoryStatus is retired per Client Guide R11.
+ * Retained temporarily as an alias to TicketStatus to avoid runtime crashes in unmigrated components until Phase 7.
+ */
+export const HistoryStatus = Object.freeze({
+  COMPLETED: TicketStatus.COMPLETED,
+  CANCELLED: TicketStatus.CANCELLED,
+  NO_SHOW: TicketStatus.NO_SHOW,
+  CANCELLED_BY_OFFICE: TicketStatus.CANCELLED_BY_OFFICE,
 });
