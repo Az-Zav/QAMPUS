@@ -99,7 +99,7 @@ Indicators are qualitative by design. V1 collects no analytics beyond what the c
 * Static per-office QR arrival verification with a manual-code fallback for users and a staff ID-number fallback for students and guests
 * Staff-controlled FIFO with authorized override
 * Staff-marked no-shows, including reversal of a verified arrival the person never followed through
-* A flat two-strike temporary ban for abandoned calls
+* A flat two-offense temporary ban for abandoned calls
 * In-app notifications for all events, push for "your turn"
 * A staff web application with an attached public "Now Serving" display in another tab/window
 * Closing-time capacity guardrail
@@ -211,9 +211,9 @@ flowchart TD
     H --> I[YOUR_TURN notification · CALLED]
     I --> J{Verify within 1 minute?}
     J -->|Scan QR or enter code| K[IN_SERVICE · confirmation shown]
-    J -->|No: scans now invalid| L[Expired · staff marks NO_SHOW · offense · strike]
+    J -->|No: scans now invalid| L[Expired · staff marks NO_SHOW · offense]
     K --> M[Staff completes · COMPLETED]
-    K -->|Never reaches the window| L2[Staff marks NO_SHOW · offense · strike]
+    K -->|Never reaches the window| L2[Staff marks NO_SHOW · offense]
     L2 --> N
     M --> N[Leaves Home · appears in history]
     L --> N
@@ -265,11 +265,11 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 | Situation                                              | What happens                                                                                                   | Rule       |
 | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | ---------- |
 | Cancel while`WAITING`                                  | Confirmed by the user; free. No record beyond the log.                                                         | R-10       |
-| Cancel while`CALLED`                                   | Confirmation states it counts as an offense; offense + strike. This includes an expired ticket not yet marked. | R-11       |
-| Grace period lapses                                    | Ticket is expired; scans are invalid; staff mark`NO_SHOW`; offense + strike.                                   | R-12       |
+| Cancel while`CALLED`                                   | Confirmation states it counts as an offense; offense. This includes an expired ticket not yet marked.           | R-11       |
+| Grace period lapses                                    | Ticket is expired; scans are invalid; staff mark`NO_SHOW`; offense.                                           | R-12       |
 | Scan after the grace period                            | Rejected with an "expired" message; nothing changes; logged only.                                              | R-12, R-23 |
-| Verified but never reaches the window                  | Staff mark the`IN_SERVICE` ticket `NO_SHOW` with a reason; offense + strike.                                   | R-23a      |
-| Second offense                                         | 24-hour ban; strike count resets.                                                                              | R-13       |
+| Verified but never reaches the window                  | Staff mark the`IN_SERVICE` ticket `NO_SHOW` with a reason; offense.                                           | R-23a      |
+| Second offense                                         | 24-hour ban; offense count resets.                                                                              | R-13       |
 | Join attempt while banned                              | Rejected with the expiry time and the offenses behind it.                                                      | R-14       |
 | Fourth active ticket                                   | Rejected, naming the three-ticket limit.                                                                       | R-07       |
 | Office cancels the queue                               | Tickets cancelled, users notified, nobody penalized.                                                           | R-16       |
@@ -355,12 +355,12 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 
 **R-10 — Cancelling while `WAITING` is free**
 
-- No offense, no strike. The user confirms first.
+- No offense. The user confirms first.
 - *Why: leaving a physical line before being served costs nothing.*
 
 **R-11 — Abandoning a called ticket is an offense, however it happens**
 
-- Cancelling a called ticket, being marked a no-show after the grace period, and being marked a no-show after a verification the user never followed through (R-23a) each record an offense and a strike. There is no lighter tier.
+- Cancelling a called ticket, being marked a no-show after the grace period, and being marked a no-show after a verification the user never followed through (R-23a) each record an offense. There is no lighter tier.
 - Cancelling an expired ticket that staff have not yet marked is still a cancellation of a called ticket.
 - Before cancelling a called ticket, the user is told it counts as an offense and confirms.
 - *Why: from the office's side both produce the same wasted call.*
@@ -369,12 +369,12 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 
 - The countdown starts at the call and is shown to the user.
 - At zero the ticket is expired: scans and manual codes are rejected as expired. It stays `CALLED` until staff act.
-- Staff mark it `NO_SHOW`: the offense and strike are recorded and the user is notified. Staff then call the next ticket as a separate action.
+- Staff mark it `NO_SHOW`: the offense is recorded and the user is notified. Staff then call the next ticket as a separate action.
 - *Why: a called-but-absent ticket blocks the window, and staff decide when the queue moves.*
 
 **R-13 — Two offenses produce a flat 24-hour ban**
 
-- The second offense sets the ban and resets the strike count. No escalation.
+- The second offense sets the ban and resets the offense count. No escalation.
 - *Why: deterrence without an escalation ladder nobody will tune.*
 
 **R-14 — A ban blocks joining only**
@@ -386,7 +386,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 **R-15 — Authorized staff can revoke offenses**
 
 - Assigned staff may revoke offenses tied to their own office's tickets; a super administrator may revoke any.
-- Revocation reverses the strike and lifts any ban it caused.
+- Revocation removes the offense and lifts any ban it caused.
 - The user is notified that the offense was revoked.
 - *Why: the system will sometimes be wrong, and there must be a way to say so.*
 
@@ -451,7 +451,7 @@ Staff trigger each step: calling, marking a no-show, and calling the next ticket
 
 - While a ticket is `IN_SERVICE`, assigned staff may mark it `NO_SHOW` when the verified person never reached the window (for example, the static QR was scanned from a photo or from elsewhere).
 - Staff confirm and give a reason. The action is logged with its actor (R-28).
-- The outcome is identical to R-12: offense + strike, `NO_SHOW` notification, revocable under R-15. The ticket leaves Home and appears in history.
+- The outcome is identical to R-12: offense, `NO_SHOW` notification, revocable under R-15. The ticket leaves Home and appears in history.
 - Not available once a ticket is `COMPLETED`. Calling the next ticket remains a separate action.
 - *Why: a static QR proves possession of the code, not presence. The person at the window is the only reliable check, and this closes the gap without an `ARRIVED` state or rotating QR.*
 
@@ -503,7 +503,7 @@ Office codes appear inside every ticket number, which is why changing them is pr
 
 **R-29 — No retention or deletion policy in V1.** All records are kept indefinitely.
 
-**R-30 — Security follows standard practice.** Encrypted transport, server-side session and authorization checks on every privileged action, no client-supplied identity, secrets in configuration. Clients never write authoritative state (ticket status, offenses, strikes, bans, sequence numbers) directly; every such change runs on the server.
+**R-30 — Security follows standard practice.** Encrypted transport, server-side session and authorization checks on every privileged action, no client-supplied identity, secrets in configuration. Clients never write authoritative state (ticket status, offenses, bans, sequence numbers) directly; every such change runs on the server.
 
 **R-31 — Accessibility targets** are specified in the UI/UX document: adequate contrast, legible type, status conveyed by icon and label rather than color alone, large touch targets, plain-language errors, and a non-QR path to verification.
 
@@ -590,8 +590,7 @@ V1 is complete when each of the following can be demonstrated end to end.
 | **Offense**             | A permanent record of an abandoned called ticket (cancelled after call, or marked no-show after the grace period or after an unfollowed verification) |
 | **Program**             | The student's academic program, chosen from a searchable list at first sign-in                                                                        |
 | **Public display**      | The unauthenticated "Now Serving" screen shown at the office                                                                                          |
-| **Short ticket number** | `CODE-SEQ`, the client-facing form of the ticket number                                                                                               |
-| **Strike**              | The count of a user's unresolved offenses; two means a ban                                                                                            |
+| **Short ticket number** | `CODE-SEQ`, the client-facing form of the ticket number                                                                                               | 
 | **Student ID**          | A 7-digit number entered by the student at first sign-in, editable in Profile                                                                         |
 | **Terminal state**      | `COMPLETED`, `CANCELLED`, or `NO_SHOW` — a ticket at rest; shown in history                                                                          |
 | **Ticket**              | One person's place in one queue on one day                                                                                                            |
