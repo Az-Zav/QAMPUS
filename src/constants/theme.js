@@ -2,6 +2,7 @@
 // Authoritative definitions for Colors, Typography, Spacing, Radii, Elevation, and Icons.
 
 import { Ionicons } from '@expo/vector-icons';
+import { Platform } from 'react-native';
 import { TicketStatus } from './domain';
 
 // ---------------------------------------------------------------------------
@@ -104,6 +105,7 @@ export const TYPOGRAPHY = Object.freeze({
     regular: 'DMSans_400Regular',
     medium: 'DMSans_500Medium',
     bold: 'DMSans_700Bold',
+    mono: Platform.select({ ios: 'Menlo', default: 'monospace' }), // IDs (Guest ID)
   },
   weight: {
     regular: '400',

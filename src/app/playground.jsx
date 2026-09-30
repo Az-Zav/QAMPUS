@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import OnboardingSlide from '@/components/onboarding/OnboardingSlide';
 import Button from '@/components/primitives/Button';
+import FormField from '@/components/primitives/FormField';
 import Input from '@/components/primitives/Input';
 import PageDots from '@/components/primitives/PageDots';
 import Picker from '@/components/primitives/Picker';
@@ -127,6 +128,34 @@ function InputDemo() {
       </Variant>
       <Variant label="disabled">
         <Input value="2140123" disabled />
+      </Variant>
+    </>
+  );
+}
+
+function FormFieldDemo() {
+  const [program, setProgram] = useState(null);
+  return (
+    <>
+      <Variant label="label + Input">
+        <FormField label="Full name">
+          <Input placeholder="Maria Santos" />
+        </FormField>
+      </Variant>
+      <Variant label="helper">
+        <FormField label="Student ID" helper="Exactly 7 digits.">
+          <Input placeholder="2512269" keyboardType="number-pad" maxLength={7} />
+        </FormField>
+      </Variant>
+      <Variant label="error (replaces helper)">
+        <FormField label="Student ID" helper="Exactly 7 digits." error="Enter exactly 7 digits.">
+          <Input value="25122" type={InputType.ERROR} />
+        </FormField>
+      </Variant>
+      <Variant label="wrapping a Picker">
+        <FormField label="Program">
+          <Picker value={program} onSelect={setProgram} options={['BS Computer Science', 'BS Architecture']} placeholder="Select your program" />
+        </FormField>
       </Variant>
     </>
   );
@@ -475,6 +504,7 @@ const DEMOS = [
   { name: 'Button', Demo: ButtonDemo },
   { name: 'Badge', Demo: BadgeDemo },
   { name: 'Input', Demo: InputDemo },
+  { name: 'FormField', Demo: FormFieldDemo },
   { name: 'SearchInput', Demo: SearchInputDemo },
   { name: 'Picker', Demo: PickerDemo },
   { name: 'Toggle', Demo: ToggleDemo },

@@ -41,6 +41,18 @@ export const MOCK_USER_GUEST = Object.freeze({
   created_at: '2026-09-28T07:30:00Z',
 });
 
+// Placeholder list; the program source is an open PRD question
+export const MOCK_PROGRAMS = Object.freeze([
+  'BS Computer Science',
+  'BS Information Technology',
+  'BS Computer Engineering',
+  'BS Civil Engineering',
+  'BS Electrical Engineering',
+  'BS Architecture',
+  'BS Accountancy',
+  'BS Psychology',
+]);
+
 export const MOCK_OFFICES = Object.freeze([
   {
     id: 'off_reg_001',

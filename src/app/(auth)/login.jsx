@@ -10,14 +10,15 @@ export default function Login() {
   const router = useRouter();
   const { signInAsStudent, signInAsGuest } = useSession();
 
+  // Mock sign-in is always a first sign-in, so both paths collect a profile (UIUX §4.2)
   const handleGoogleLogin = () => {
     signInAsStudent();
-    router.replace('/home');
+    router.replace('/complete-profile');
   };
 
   const handleGuestLogin = () => {
     signInAsGuest();
-    router.replace('/home');
+    router.replace('/guest-profile');
   };
 
   return (
