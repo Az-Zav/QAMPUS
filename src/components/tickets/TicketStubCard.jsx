@@ -1,21 +1,17 @@
 import Badge from '@/components/shell/Badge';
-import { COLORS, RADII, SPACING, TicketStatus, TYPOGRAPHY, withOpacity } from '@/constants';
+import TicketStubShape, { STUB_ASPECT_RATIO } from '@/components/tickets/TicketStubShape';
+import {
+  COLORS,
+  RADII,
+  SPACING,
+  TICKET_STUB_COPY,
+  TICKET_STUB_THEME,
+  TicketStatus,
+  TYPOGRAPHY,
+  withOpacity,
+} from '@/constants';
 import { formatCountdown } from '@/utils';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-
-const STUB_IMAGES = {
-  default: require('../../../assets/images/TicketStub.png'),
-  inverted: require('../../../assets/images/TicketStub-Inverted.png'),
-  expired: require('../../../assets/images/TicketStub-Expired.png'),
-};
-
-// Per-status look for the three active states shown on Home (R-08b)
-const APPEARANCE = {
-  [TicketStatus.WAITING]: { image: STUB_IMAGES.default, text: COLORS.ink, topLabel: 'NEXT UP' },
-  [TicketStatus.YOUR_TURN]: { image: STUB_IMAGES.inverted, text: COLORS.paper, topLabel: null },
-  [TicketStatus.EXPIRED]: { image: STUB_IMAGES.expired, text: COLORS.ink, topLabel: 'WAITING FOR STAFF' },
-  [TicketStatus.IN_SERVICE]: { image: STUB_IMAGES.default, text: COLORS.ink, topLabel: null },
-};
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 function getTimeLabel({ status, estimatedWaitMinutes, remainingSeconds }) {
   if (status === TicketStatus.WAITING && typeof estimatedWaitMinutes === 'number') {
@@ -30,11 +26,11 @@ function getTimeLabel({ status, estimatedWaitMinutes, remainingSeconds }) {
 // ticket: view from toTicketView()
 export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
   const { shortNumber, nowServing, officeName, location, status } = ticket;
-  const appearance = APPEARANCE[status] ?? APPEARANCE[TicketStatus.WAITING];
+  const theme = TICKET_STUB_THEME[status] ?? TICKET_STUB_THEME[TicketStatus.WAITING];
   const isCalled = status === TicketStatus.YOUR_TURN;
-  const textColor = appearance.text;
+  const textColor = theme.text;
   const mutedText = withOpacity(textColor, 0.6);
-  const topLabel = appearance.topLabel;
+  const topLabel = TICKET_STUB_COPY[status]?.topLabel;
   const timeLabel = getTimeLabel(ticket);
 
   return (
@@ -45,7 +41,7 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
       accessibilityRole="button"
       accessibilityLabel={`Ticket ${shortNumber}, ${officeName}`}
     >
-      <Image source={appearance.image} style={styles.image} resizeMode="cover" />
+      <TicketStubShape status={status} />
 
       <View style={styles.content}>
         <View style={styles.topHalf}>
@@ -53,7 +49,13 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
             <Text style={[styles.officeName, { color: textColor }]} numberOfLines={1}>
               {officeName}
             </Text>
-            {!!timeLabel && <Text style={[styles.timeLabel, { color: mutedText }]}>{timeLabel}</Text>}
+            {!!timeLabel && (
+              <Badge
+                status={status}
+                icon={status === TicketStatus.EXPIRED ? 'hourglass-outline' : 'time-outline'}
+                label={timeLabel}
+              />
+            )}
           </View>
 
           {(!!topLabel || !!location) && (
@@ -99,11 +101,8 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    height: 180,
+    aspectRatio: STUB_ASPECT_RATIO,
     marginBottom: SPACING.lg,
-  },
-  image: {
-    ...StyleSheet.absoluteFillObject,
   },
   content: {
     flex: 1,
@@ -111,7 +110,8 @@ const styles = StyleSheet.create({
   },
   topHalf: {
     height: '50%',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: SPACING.xxs, // title ↔ subtitle spacing — tweak here
     paddingBottom: SPACING.xxs,
   },
   bottomHalf: {
@@ -129,10 +129,6 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     flex: 1,
     marginRight: SPACING.sm,
-  },
-  timeLabel: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   metaRow: {
     flexDirection: 'row',

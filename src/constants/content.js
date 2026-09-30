@@ -2,7 +2,7 @@
 // Copy keyed by domain concepts. Components read it; they never hardcode it.
 // Tones ('error' | 'success' | 'neutral') are mapped to colors by the component.
 
-import { RULES } from './domain';
+import { RULES, TicketStatus } from './domain';
 import { EmptyStateType } from './theme';
 
 // ---------------------------------------------------------------------------
@@ -44,7 +44,16 @@ export const BAN_COPY = Object.freeze({
 });
 
 // ---------------------------------------------------------------------------
-// 2. Help & Support FAQ (S17)
+// 2. Ticket Stub (Home active tickets)
+// ---------------------------------------------------------------------------
+
+export const TICKET_STUB_COPY = Object.freeze({
+  [TicketStatus.WAITING]: { topLabel: 'NEXT UP' },
+  [TicketStatus.EXPIRED]: { topLabel: 'WAITING FOR STAFF' },
+});
+
+// ---------------------------------------------------------------------------
+// 3. Help & Support FAQ (S17)
 // ---------------------------------------------------------------------------
 
 export const FAQ_ITEMS = Object.freeze([
@@ -77,7 +86,7 @@ export const FAQ_ITEMS = Object.freeze([
 ]);
 
 // ---------------------------------------------------------------------------
-// 3. Empty States
+// 4. Empty States
 // ---------------------------------------------------------------------------
 
 export const EMPTY_STATE_COPY = Object.freeze({

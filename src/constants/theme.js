@@ -2,6 +2,7 @@
 // Authoritative definitions for Colors, Typography, Spacing, Radii, Elevation, and Icons.
 
 import { Ionicons } from '@expo/vector-icons';
+import { TicketStatus } from './domain';
 
 // ---------------------------------------------------------------------------
 // 1. Color Palette Tokens
@@ -184,6 +185,27 @@ export const ELEVATION = Object.freeze({
     shadowRadius: 16,
     elevation: 8,
   },
+  // SVG drop shadow for shaped art (tickets/TicketStubShape); traces the outline
+  stub: {
+    dx: 0,
+    dy: 6,
+    blur: 8,
+    color: COLORS.ink,
+    opacity: 0.16,
+  },
+});
+
+// ---------------------------------------------------------------------------
+// 5b. Ticket Stub Themes (tickets/TicketStubCard + TicketStubShape)
+// ---------------------------------------------------------------------------
+
+const PERFORATION = withOpacity('#747878', 0.5);
+
+export const TICKET_STUB_THEME = Object.freeze({
+  [TicketStatus.WAITING]: { fill: COLORS.white, stroke: COLORS.white, text: COLORS.ink, perforation: PERFORATION },
+  [TicketStatus.YOUR_TURN]: { fill: COLORS.ink, stroke: COLORS.ink, text: COLORS.paper, perforation: PERFORATION },
+  [TicketStatus.EXPIRED]: { fill: COLORS.white, stroke: COLORS.error, text: COLORS.ink, perforation: PERFORATION },
+  [TicketStatus.IN_SERVICE]: { fill: COLORS.white, stroke: COLORS.white, text: COLORS.ink, perforation: PERFORATION },
 });
 
 // ---------------------------------------------------------------------------
