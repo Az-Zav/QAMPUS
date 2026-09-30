@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -14,6 +15,7 @@ import { useMyTickets, useNotifications, useOffices } from '@/hooks';
 import { groupHistory, matchesOfficeQuery } from '@/utils';
 
 export default function Queue() {
+  const router = useRouter();
   const { offices } = useOffices();
   const { history, now } = useMyTickets();
   const { unreadCount } = useNotifications();
@@ -47,7 +49,7 @@ export default function Queue() {
   return (
     <View style={styles.screen}>
       <View style={styles.yellowHero}>
-        <Header title="QUEUE" inverted hasNotification={unreadCount > 0} onBellPress={() => {}} onAvatarPress={() => {}} />
+        <Header title="QUEUE" inverted hasNotification={unreadCount > 0} onBellPress={() => router.push('/notifications')} onAvatarPress={() => router.push('/profile')} />
 
         <View style={styles.heroContent}>
           <Text style={styles.pageTitle}>{view === QueueView.JOIN ? 'AVAILABLE OFFICES' : 'HISTORY'}</Text>

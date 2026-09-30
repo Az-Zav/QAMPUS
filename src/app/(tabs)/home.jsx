@@ -75,7 +75,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.screen}>
-      <Header title="HOME" hasNotification={unreadCount > 0} onBellPress={() => {}} onAvatarPress={() => {}} />
+      <Header title="HOME" hasNotification={unreadCount > 0} onBellPress={() => router.push('/notifications')} onAvatarPress={() => router.push('/profile')} />
 
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {__DEV__ && (

@@ -67,7 +67,7 @@ function NotificationRow({ title, subtitle, meta, icon, tone, unread }) {
       </View>
       <View style={styles.flex}>
         <Text style={styles.title}>{title}</Text>
-        {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        {!!subtitle && <Text style={styles.subtitle} numberOfLines={2}>{subtitle}</Text>}
       </View>
       {!!meta && <Text style={styles.caption}>{meta}</Text>}
     </>

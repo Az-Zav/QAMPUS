@@ -3,6 +3,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const TAB_ICONS = { [AppTab.HOME]: 'home', [AppTab.SCAN]: 'qr-code', [AppTab.QUEUE]: 'ticket' };
 
+// Bottom padding a scrolling screen needs so its last item clears the bar and Scan disc.
+export const BOTTOM_NAV_CLEARANCE = 126;
+
 export default function BottomNav({ active, onNavigate }) {
   return (
     <View style={styles.wrapper}>

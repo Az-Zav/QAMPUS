@@ -28,6 +28,24 @@ export function formatDateTime(date) {
   return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${formatTime(d)}`;
 }
 
+// Date -> "Sep 27, 2026"
+export function formatDate(date) {
+  const d = new Date(date);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// Date relative to now -> "Just now" | "5m ago" | "3h ago" | "Yesterday" | "Sep 27"
+export function formatRelative(date, now = Date.now()) {
+  const minutes = Math.floor((new Date(now) - new Date(date)) / 60000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const days = daysBetween(date, now);
+  if (days === 0) return `${Math.floor(minutes / 60)}h ago`;
+  if (days === 1) return 'Yesterday';
+  const d = new Date(date);
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+}
+
 // Now -> "Good Morning" | "Good Afternoon" | "Good Evening"
 export function greetingFor(now) {
   const hour = new Date(now).getHours();
