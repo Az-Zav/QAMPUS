@@ -1,9 +1,7 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
-import DevPreviewBar from '@/components/shell/DevPreviewBar';
 import EmptyState from '@/components/shell/EmptyState';
 import InfoCard from '@/components/shell/InfoCard';
 import ListRow from '@/components/shell/ListRow';
@@ -14,13 +12,11 @@ import {
   BANS_COPY, COLORS, EmptyStateType, IconSet, InfoCardType, ListRowType, OFFENSE_LABEL, OffenseState, RULES, SPACING,
   TYPOGRAPHY,
 } from '@/constants';
+import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
 import { useNow, usePenaltyRecord } from '@/hooks';
 import { formatDate, formatTime } from '@/utils';
 
 // S15 Bans & Warnings — read from offense records (UIUX §4.13, §5.8).
-
-// 'live' is the signed-in user's own record; the rest are dev previews
-const PREVIEW_STATES = ['live', 'banned', 'warning', 'history', 'clean'];
 
 function offenseState(offense) {
   if (offense.revoked_at) return OffenseState.REVOKED;
@@ -31,8 +27,9 @@ function offenseState(offense) {
 export default function BansScreen() {
   const router = useRouter();
   const now = useNow(60000);
-  const [previewState, setPreviewState] = useState(__DEV__ ? 'banned' : 'live');
-  const { strikeCount, bannedUntil, offenses } = usePenaltyRecord(previewState);
+  const liveRecord = usePenaltyRecord();
+  const preview = usePreview('bans'); // DEV-PREVIEW
+  const { strikeCount, bannedUntil, offenses } = preview.data ?? liveRecord; // DEV-PREVIEW
 
   const banned = !!bannedUntil && new Date(bannedUntil).getTime() > now;
   // The ban's causes are the latest unrevoked offenses that filled the meter, listed oldest first
@@ -45,7 +42,7 @@ export default function BansScreen() {
       <SubHeader title="Bans & Warnings" onBack={goBack} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <DevPreviewBar states={PREVIEW_STATES} value={previewState} onChange={setPreviewState} />
+        {preview.bar /* DEV-PREVIEW */}
 
         {banned ? (
           <InfoCard

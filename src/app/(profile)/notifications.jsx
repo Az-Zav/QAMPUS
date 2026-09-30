@@ -4,7 +4,6 @@ import { SectionList, StyleSheet, View } from 'react-native';
 
 import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
 import CountBadge from '@/components/shell/CountBadge';
-import DevPreviewBar from '@/components/shell/DevPreviewBar';
 import EmptyState from '@/components/shell/EmptyState';
 import ListRow from '@/components/shell/ListRow';
 import SectionLabel from '@/components/shell/SectionLabel';
@@ -14,12 +13,11 @@ import CalledModal from '@/components/tickets/CalledModal';
 import {
   COLORS, EmptyStateType, ListRowTone, ListRowType, NOTIFICATION_TYPE, NOTIFICATIONS_COPY, SPACING, TicketStatus,
 } from '@/constants';
+import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
 import { useMyTickets, useNotifications, useNow } from '@/hooks';
 import { daysBetween, formatRelative } from '@/utils';
 
 // S12 Notifications (UIUX §4.10, §5.6).
-
-const PREVIEW_STATES = ['populated', 'empty'];
 
 const TYPE_STYLE = {
   [NOTIFICATION_TYPE.QUEUE_CONFIRMED]: { icon: 'ticket-outline', tone: ListRowTone.HIGHLIGHT },
@@ -38,18 +36,19 @@ const OPENS_BANS = new Set([NOTIFICATION_TYPE.WARNING, NOTIFICATION_TYPE.NO_SHOW
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const { notifications } = useNotifications();
+  const { notifications: liveNotifications } = useNotifications();
   const { active } = useMyTickets();
   const now = useNow(60000);
 
-  const [previewState, setPreviewState] = useState('populated');
+  const preview = usePreview('notifications'); // DEV-PREVIEW
+  const notifications = preview.data?.notifications ?? liveNotifications; // DEV-PREVIEW
   // Read state is local until the notifications hook can mark items read
   const [readIds, setReadIds] = useState(() => new Set());
   const [calledTicketId, setCalledTicketId] = useState(null);
 
   const items = useMemo(
-    () => (previewState === 'empty' ? [] : notifications.map((n) => ({ ...n, is_read: n.is_read || readIds.has(n.id) }))),
-    [notifications, readIds, previewState],
+    () => notifications.map((n) => ({ ...n, is_read: n.is_read || readIds.has(n.id) })),
+    [notifications, readIds],
   );
   const unread = items.filter((n) => !n.is_read).length;
 
@@ -95,7 +94,7 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={(
           <View style={styles.header}>
-            <DevPreviewBar states={PREVIEW_STATES} value={previewState} onChange={setPreviewState} />
+            {preview.bar /* DEV-PREVIEW */}
             {unread > 0 && <CountBadge label={NOTIFICATIONS_COPY.newCount(unread)} />}
           </View>
         )}
