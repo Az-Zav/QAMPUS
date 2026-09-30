@@ -1,16 +1,30 @@
-import { COLORS, IconSet, InfoCardType, lineHeightFor, RADII, RULES, SPACING, TYPOGRAPHY } from '@/constants';
+import {
+  BAN_COPY,
+  COLORS,
+  IconSet,
+  InfoCardType,
+  lineHeightFor,
+  OFFENSE_POLICY,
+  RADII,
+  RULES,
+  SPACING,
+  STRIKE_COPY,
+  TYPOGRAPHY,
+} from '@/constants';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-const DEFAULT_POLICY = [
-  { icon: 'close-circle-outline', color: COLORS.error, text: "Missing your turn, or cancelling after you've been called, counts as an offense." },
-  { icon: 'ticket-outline', color: COLORS.success, text: "Leaving a queue before you're called is always free and never counted." },
-  { icon: 'ban-outline', color: COLORS.slate, text: 'Two offenses pause joining for 24 hours. Browsing, your tickets and your history stay open.' },
-];
+// Content tones (constants/content) -> colors
+const TONE_COLORS = {
+  error: COLORS.error,
+  success: COLORS.success,
+  neutral: COLORS.slate,
+};
 
+// Strike meter covers clean + warning only; an active ban uses BAN_BANNER instead
 const STRIKE_STATES = {
-  clean: { icon: 'shield-checkmark-outline', iconColor: COLORS.success, title: 'Clean record', body: 'No offenses on your record.' },
-  strike: { icon: 'warning-outline', iconColor: COLORS.error, title: '1 offense on record', body: 'One more offense will pause your ability to join queues for 24 hours.' },
-  banned: { icon: 'ban-outline', iconColor: COLORS.error, title: 'Joining paused', body: 'Your strikes reset once the pause ends.' },
+  clean: { icon: 'shield-checkmark-outline', iconColor: COLORS.success, ...STRIKE_COPY.clean },
+  warning: { icon: 'warning-outline', iconColor: COLORS.error, ...STRIKE_COPY.warning },
 };
 
 function OfficeHours({ title, subtitle, hours, open = true }) {
@@ -42,7 +56,7 @@ function OfficeHours({ title, subtitle, hours, open = true }) {
   );
 }
 
-function BanBanner({ title, body, items }) {
+function BanBanner({ title, body = BAN_COPY.body, items }) {
   return (
     <>
       <View style={styles.row}>
@@ -53,7 +67,7 @@ function BanBanner({ title, body, items }) {
       {!!items?.length && (
         <>
           <View style={styles.divider} />
-          <Text style={[styles.label, { color: COLORS.slate }]}>WHAT CAUSED THIS</Text>
+          <Text style={[styles.label, { color: COLORS.slate }]}>{BAN_COPY.causesLabel}</Text>
           <View style={styles.list}>
             {items.map((item) => (
               <View key={`${item.label}-${item.ticket}`} style={styles.row}>
@@ -68,34 +82,32 @@ function BanBanner({ title, body, items }) {
   );
 }
 
-function StrikeMeter({ title, body, strikes = 0, maxStrikes = RULES.OFFENSES_PER_BAN, banned = false }) {
-  const state = STRIKE_STATES[banned ? 'banned' : strikes > 0 ? 'strike' : 'clean'];
+function StrikeMeter({ title, body, strikes = 0, maxStrikes = RULES.OFFENSES_PER_BAN }) {
+  const state = strikes > 0 ? STRIKE_STATES.warning : STRIKE_STATES.clean;
 
   return (
     <>
       <View style={styles.row}>
         <IconSet name={state.icon} size={18} color={state.iconColor} />
-        <Text style={[styles.title, styles.flex, banned && { color: COLORS.error }]}>{title ?? state.title}</Text>
+        <Text style={[styles.title, styles.flex]}>{title ?? state.title}</Text>
       </View>
-      {!banned && (
-        <View style={styles.meter} accessibilityLabel={`${strikes} of ${maxStrikes} strikes`}>
-          {Array.from({ length: maxStrikes }, (_, i) => (
-            <View key={i} style={[styles.meterSegment, i < strikes ? styles.meterOn : styles.meterOff]} />
-          ))}
-        </View>
-      )}
+      <View style={styles.meter} accessibilityLabel={`${strikes} of ${maxStrikes} strikes`}>
+        {Array.from({ length: maxStrikes }, (_, i) => (
+          <View key={i} style={[styles.meterSegment, i < strikes ? styles.meterOn : styles.meterOff]} />
+        ))}
+      </View>
       <Text style={styles.body}>{body ?? state.body}</Text>
     </>
   );
 }
 
-function Policy({ title = 'How offenses work', items = DEFAULT_POLICY }) {
+function Policy({ title = 'How offenses work', items = OFFENSE_POLICY }) {
   return (
     <>
       <Text style={styles.title}>{title}</Text>
       {items.map((rule) => (
         <View key={rule.text} style={[styles.row, styles.alignStart]}>
-          <IconSet name={rule.icon} size={16} color={rule.color} style={styles.ruleIcon} />
+          <IconSet name={rule.icon} size={16} color={TONE_COLORS[rule.tone] ?? COLORS.slate} style={styles.ruleIcon} />
           <Text style={[styles.body, styles.flex]}>{rule.text}</Text>
         </View>
       ))}
@@ -123,27 +135,29 @@ const VARIANTS = {
   [InfoCardType.FAQ]: { Body: Faq, container: null },
 };
 
-export default function InfoCard({ type = InfoCardType.POLICY, onPress, style, ...props }) {
+// FAQ keeps its own expanded state (pure UI state, like Picker's open);
+// other variants are pressable only when onPress is given.
+export default function InfoCard({ type = InfoCardType.POLICY, onPress, defaultExpanded = false, style, ...props }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const variant = VARIANTS[type] ?? VARIANTS[InfoCardType.POLICY];
   const { Body } = variant;
   const isFaq = type === InfoCardType.FAQ;
-  const bannedOutline = type === InfoCardType.STRIKE_METER && props.banned;
+  const handlePress = isFaq ? () => setExpanded((prev) => !prev) : onPress;
 
   return (
     <Pressable
-      onPress={onPress}
-      disabled={!onPress}
-      accessibilityRole={onPress ? 'button' : undefined}
-      accessibilityState={isFaq ? { expanded: !!props.expanded } : undefined}
+      onPress={handlePress}
+      disabled={!handlePress}
+      accessibilityRole={handlePress ? 'button' : undefined}
+      accessibilityState={isFaq ? { expanded } : undefined}
       style={({ pressed }) => [
         styles.card,
         variant.container && styles[variant.container],
-        bannedOutline && styles.danger,
-        pressed && onPress && styles.pressed,
+        pressed && handlePress && styles.pressed,
         style,
       ]}
     >
-      <Body {...props} />
+      <Body {...props} expanded={isFaq ? expanded : undefined} />
     </Pressable>
   );
 }

@@ -9,7 +9,7 @@ import EmptyState from '@/components/shell/EmptyState';
 import Header from '@/components/shell/Header';
 import ListRow from '@/components/shell/ListRow';
 import NoticeModal from '@/components/shell/NoticeModal';
-import { COLORS, ListRowType, QueueModalKey, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
+import { COLORS, EmptyStateType, ListRowType, QueueModalKey, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
 import { useMyTickets, useNotifications, useOffices } from '@/hooks';
 import { groupHistory, matchesOfficeQuery } from '@/utils';
 
@@ -71,17 +71,14 @@ export default function Queue() {
       >
         {view === QueueView.JOIN ? (
           filteredOffices.length === 0 ? (
-            <EmptyState icon="search-outline" title="No offices found" body="Try a different office or service name." />
+            <EmptyState type={EmptyStateType.NO_RESULTS} />
           ) : (
             filteredOffices.map((office) => (
               <OfficeCard key={office.id} office={office} onJoin={() => openJoin(office)} />
             ))
           )
         ) : groupedHistory.length === 0 ? (
-          <EmptyState
-            title="No queue history"
-            body="Completed, cancelled, and no-show tickets will appear here."
-          />
+          <EmptyState type={EmptyStateType.NO_HISTORY} />
         ) : (
           groupedHistory.map(({ group, items }) => (
             <View key={group} style={styles.historyGroup}>

@@ -261,7 +261,12 @@ export const ModalTone = Object.freeze({
   DESTRUCTIVE: 'destructive',
 });
 
+// Each variant owns its icon and copy (see shell/EmptyState)
 export const EmptyStateType = Object.freeze({
-  DEFAULT: 'default',
+  NO_TICKETS: 'noTickets',
+  NO_HISTORY: 'noHistory',
+  NO_NOTIFICATIONS: 'noNotifications',
+  CLEAN_RECORD: 'cleanRecord',
+  NO_RESULTS: 'noResults',
   OFFLINE: 'offline',
 });

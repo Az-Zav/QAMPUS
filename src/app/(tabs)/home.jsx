@@ -56,15 +56,7 @@ export default function HomeScreen() {
     }
 
     if (previewState === 'empty' || active.length === 0) {
-      return (
-        <EmptyState
-          icon="ticket-outline"
-          title="No active tickets"
-          body="Join a queue and your ticket will appear here."
-          actionLabel="Join a Queue"
-          onAction={() => router.push('/queue')}
-        />
-      );
+      return <EmptyState type={EmptyStateType.NO_TICKETS} onAction={() => router.push('/queue')} />;
     }
 
     return (

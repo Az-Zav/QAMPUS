@@ -1,5 +1,6 @@
 // QAMPUS Unified Constants Barrel
-// Re-exports Theme/UI tokens and Domain/Business enums
+// Re-exports user-facing content, Domain/Business enums and Theme/UI tokens
 
+export * from './content';
 export * from './domain';
 export * from './theme';

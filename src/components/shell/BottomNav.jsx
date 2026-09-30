@@ -8,7 +8,13 @@ export default function BottomNav({ active, onNavigate }) {
     <View style={styles.wrapper}>
       <View style={styles.bar}>
         <NavItem tab={AppTab.HOME} label="Home" active={active === AppTab.HOME} onPress={() => onNavigate(AppTab.HOME)} />
-        <View style={styles.centerSpacer} />
+        <Pressable
+          style={styles.centerSpacer}
+          onPress={() => onNavigate(AppTab.SCAN)}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants">
+            <Text style={[styles.label, { color: active === AppTab.SCAN ? COLORS.gold : COLORS.paper }]}>SCAN</Text>
+        </Pressable>
         <NavItem tab={AppTab.QUEUE} label="Queue" active={active === AppTab.QUEUE} onPress={() => onNavigate(AppTab.QUEUE)} />
       </View>
       <Pressable
@@ -68,7 +74,10 @@ const styles = StyleSheet.create({
   },
   centerSpacer: {
     width: 64,
-  },
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+   },
   label: {
     fontSize: TYPOGRAPHY.size.xs,
     fontFamily: TYPOGRAPHY.fontFamily.medium,

@@ -34,6 +34,7 @@ import {
   COLORS,
   ComponentSize,
   EmptyStateType,
+  FAQ_ITEMS,
   IconSet,
   InfoCardType,
   InputType,
@@ -212,12 +213,11 @@ function DetailRowDemo() {
 function EmptyStateDemo() {
   return (
     <>
-      <Variant label="default + action">
-        <EmptyState title="No active tickets" body="Join a queue and your ticket will appear here." actionLabel="Join a Queue" onAction={noop} />
-      </Variant>
-      <Variant label="type={EmptyStateType.OFFLINE}">
-        <EmptyState type={EmptyStateType.OFFLINE} />
-      </Variant>
+      {Object.entries(EmptyStateType).map(([key, type]) => (
+        <Variant key={type} label={`type={EmptyStateType.${key}}`}>
+          <EmptyState type={type} onAction={noop} />
+        </Variant>
+      ))}
     </>
   );
 }
@@ -238,28 +238,27 @@ function InfoCardDemo({ offices }) {
           />
         ))}
       </Variant>
-      <Variant label="STRIKE_METER strikes={0} / {1} / banned">
+      <Variant label="STRIKE_METER strikes={0} / {1}">
         <InfoCard type={InfoCardType.STRIKE_METER} strikes={0} />
         <InfoCard type={InfoCardType.STRIKE_METER} strikes={1} />
-        <InfoCard type={InfoCardType.STRIKE_METER} banned />
       </Variant>
-      <Variant label="BAN_BANNER">
+      <Variant label="BAN_BANNER (shown instead of the strike meter while banned)">
         <InfoCard
           type={InfoCardType.BAN_BANNER}
           title="Joining paused until 3:00 PM tomorrow"
-          body="You can still browse offices and read your history."
           items={[
             { label: 'No-show', ticket: 'C-09-25-031' },
             { label: 'Cancelled after call', ticket: 'R-09-28-015' },
           ]}
         />
       </Variant>
-      <Variant label="POLICY">
+      <Variant label="POLICY (OFFENSE_POLICY)">
         <InfoCard type={InfoCardType.POLICY} />
       </Variant>
-      <Variant label="FAQ expanded / collapsed">
-        <InfoCard type={InfoCardType.FAQ} title="What counts as an offense?" body="Cancelling after you're called, or missing your call." expanded onPress={noop} />
-        <InfoCard type={InfoCardType.FAQ} title="How long does a ban last?" onPress={noop} />
+      <Variant label="FAQ (FAQ_ITEMS) — tap to expand / collapse">
+        {FAQ_ITEMS.map((item, i) => (
+          <InfoCard key={item.id} type={InfoCardType.FAQ} title={item.question} body={item.answer} defaultExpanded={i === 0} />
+        ))}
       </Variant>
     </>
   );

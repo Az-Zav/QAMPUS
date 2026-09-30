@@ -1,37 +1,30 @@
 import Button from '@/components/primitives/Button';
-import { ButtonType, COLORS, EmptyStateType, IconSet, lineHeightFor, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, COLORS, EMPTY_STATE_COPY, EmptyStateType, IconSet, lineHeightFor, SPACING, TYPOGRAPHY } from '@/constants';
 import { StyleSheet, Text, View } from 'react-native';
 
-const DEFAULTS = {
-  [EmptyStateType.DEFAULT]: { icon: 'ticket-outline', title: 'Nothing here yet', body: null },
-  [EmptyStateType.OFFLINE]: {
-    icon: 'cloud-offline-outline',
-    title: 'Temporarily unavailable',
-    body: 'Please wait — this clears on its own.',
-  },
+// Visual per variant; copy comes from EMPTY_STATE_COPY (constants/content).
+// Screens pick a variant with `type` and only supply onAction.
+const VARIANTS = {
+  [EmptyStateType.NO_TICKETS]: { icon: 'ticket-outline', iconColor: COLORS.gold },
+  [EmptyStateType.NO_HISTORY]: { icon: 'file-tray-outline', iconColor: COLORS.slate },
+  [EmptyStateType.NO_NOTIFICATIONS]: { icon: 'notifications-outline', iconColor: COLORS.slate },
+  [EmptyStateType.CLEAN_RECORD]: { icon: 'shield-checkmark-outline', iconColor: COLORS.success },
+  [EmptyStateType.NO_RESULTS]: { icon: 'search-outline', iconColor: COLORS.slate },
+  [EmptyStateType.OFFLINE]: { icon: 'cloud-offline-outline', iconColor: COLORS.slate },
 };
 
-export default function EmptyState({ type = EmptyStateType.DEFAULT, icon, title, body, actionLabel, onAction, style }) {
-  const defaults = DEFAULTS[type] ?? DEFAULTS[EmptyStateType.DEFAULT];
-  const offline = type === EmptyStateType.OFFLINE;
-  const text = body ?? defaults.body;
+export default function EmptyState({ type = EmptyStateType.NO_TICKETS, onAction, style }) {
+  const variant = VARIANTS[type] ?? VARIANTS[EmptyStateType.NO_TICKETS];
+  const copy = EMPTY_STATE_COPY[type] ?? EMPTY_STATE_COPY[EmptyStateType.NO_TICKETS];
+  const showAction = !!copy.actionLabel && !!onAction;
 
   return (
     <View style={[styles.container, style]}>
-      {offline ? (
-        <IconSet name={icon ?? defaults.icon} size={36} color={COLORS.slate} style={styles.rawIcon} />
-      ) : (
-        <View style={styles.iconCircle}>
-          <IconSet name={icon ?? defaults.icon} size={24} color={COLORS.ink} />
-        </View>
-      )}
-
-      <Text style={styles.title}>{title ?? defaults.title}</Text>
-      {!!text && <Text style={styles.body}>{text}</Text>}
-      {!!actionLabel && (
-        <View style={styles.action}>
-          <Button label={actionLabel} type={ButtonType.PRIMARY} onPress={onAction} />
-        </View>
+      <IconSet name={variant.icon} size={30} color={variant.iconColor} style={styles.icon} />
+      <Text style={styles.title}>{copy.title}</Text>
+      <Text style={styles.body}>{copy.body}</Text>
+      {showAction && (
+        <Button label={copy.actionLabel} type={ButtonType.PRIMARY} onPress={onAction} style={styles.action} />
       )}
     </View>
   );
@@ -41,19 +34,10 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.huge + SPACING.md,
+    paddingVertical: SPACING.huge,
     paddingHorizontal: SPACING.xxxl,
   },
-  iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: RADII.full,
-    backgroundColor: COLORS.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
-  },
-  rawIcon: {
+  icon: {
     marginBottom: SPACING.md,
   },
   title: {
@@ -72,6 +56,6 @@ const styles = StyleSheet.create({
   },
   action: {
     marginTop: SPACING.lg,
-    alignSelf: 'stretch',
+    alignSelf: 'center',
   },
 });
