@@ -1,4 +1,5 @@
-import { AppTab, COLORS, ELEVATION, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { AppTab, ELEVATION, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const TAB_ICONS = { [AppTab.HOME]: 'home', [AppTab.SCAN]: 'qr-code', [AppTab.QUEUE]: 'ticket' };
@@ -7,6 +8,8 @@ const TAB_ICONS = { [AppTab.HOME]: 'home', [AppTab.SCAN]: 'qr-code', [AppTab.QUE
 export const BOTTOM_NAV_CLEARANCE = 126;
 
 export default function BottomNav({ active, onNavigate }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.wrapper}>
       <View style={styles.bar}>
@@ -16,7 +19,7 @@ export default function BottomNav({ active, onNavigate }) {
           onPress={() => onNavigate(AppTab.SCAN)}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants">
-            <Text style={[styles.label, { color: active === AppTab.SCAN ? COLORS.gold : COLORS.paper }]}>SCAN</Text>
+            <Text style={[styles.label, { color: active === AppTab.SCAN ? colors.gold : colors.onInverse }]}>SCAN</Text>
         </Pressable>
         <NavItem tab={AppTab.QUEUE} label="Queue" active={active === AppTab.QUEUE} onPress={() => onNavigate(AppTab.QUEUE)} />
       </View>
@@ -27,14 +30,16 @@ export default function BottomNav({ active, onNavigate }) {
         accessibilityLabel="Scan"
         accessibilityState={{ selected: active === AppTab.SCAN }}
       >
-        <IconSet name={TAB_ICONS[AppTab.SCAN]} color={COLORS.ink} size={26} />
+        <IconSet name={TAB_ICONS[AppTab.SCAN]} color={colors.onGold} size={26} />
       </Pressable>
     </View>
   );
 }
 
 function NavItem({ tab, label, active, onPress }) {
-  const color = active ? COLORS.gold : COLORS.paper;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const color = active ? colors.gold : colors.onInverse;
   return (
     <Pressable
       style={styles.navItem}
@@ -49,7 +54,7 @@ function NavItem({ tab, label, active, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   wrapper: {
     position: 'absolute',
     bottom: 0,
@@ -63,7 +68,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.ink,
+    backgroundColor: c.inverse,
     borderRadius: RADII.full,
     paddingHorizontal: SPACING.xl + SPACING.lg,
     paddingVertical: SPACING.md,
@@ -92,7 +97,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
     justifyContent: 'center',
     alignItems: 'center',
     ...ELEVATION.md,

@@ -1,8 +1,10 @@
-import { COLORS, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 import { StyleSheet, Text, View } from 'react-native';
 
 // Figma Badge/Count — gold pill, e.g. "4 new notifications".
 export default function CountBadge({ label, style }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.pill, style]}>
       <Text style={styles.text}>{label}</Text>
@@ -10,10 +12,10 @@ export default function CountBadge({ label, style }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   pill: {
     alignSelf: 'flex-start',
-    backgroundColor: withOpacity(COLORS.gold, 0.6),
+    backgroundColor: withOpacity(c.gold, 0.6),
     borderRadius: RADII.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xxxs,
@@ -21,6 +23,6 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.slate,
+    color: c.slate,
   },
 });

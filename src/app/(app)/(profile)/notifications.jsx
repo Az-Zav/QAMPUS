@@ -10,11 +10,9 @@ import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 import CalledModal from '@/components/tickets/CalledModal';
 
-import {
-  COLORS, EmptyStateType, ListRowTone, ListRowType, NOTIFICATION_TYPE, NOTIFICATIONS_COPY, SPACING, TicketStatus,
-} from '@/constants';
+import { EmptyStateType, ListRowTone, ListRowType, NOTIFICATION_TYPE, NOTIFICATIONS_COPY, SPACING, TicketStatus } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
-import { useMyTickets, useNotifications, useNow } from '@/hooks';
+import { useMyTickets, useNotifications, useNow, useThemedStyles } from '@/hooks';
 import { daysBetween, formatRelative } from '@/utils';
 
 // S12 Notifications (UIUX §4.10, §5.6).
@@ -35,6 +33,7 @@ const TYPE_STYLE = {
 const OPENS_BANS = new Set([NOTIFICATION_TYPE.WARNING, NOTIFICATION_TYPE.NO_SHOW]);
 
 export default function NotificationsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { notifications: liveNotifications } = useNotifications();
   const { active } = useMyTickets();
@@ -127,8 +126,8 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.paper },
+const makeStyles = (c) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.paper },
   content: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,

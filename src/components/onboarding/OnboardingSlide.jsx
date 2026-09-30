@@ -1,4 +1,5 @@
-import { COLORS, lineHeightFor, SPACING, TYPOGRAPHY } from '@/constants';
+import { lineHeightFor, SPACING, TYPOGRAPHY } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -11,6 +12,7 @@ const ILLUSTRATIONS = {
 
 // slide: { id, title, body } from ONBOARDING_SLIDES; width: page width
 export default function OnboardingSlide({ slide, width }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.slide, { width }]}>
       <Image source={ILLUSTRATIONS[slide.id]} style={styles.illustration} contentFit="contain" />
@@ -20,7 +22,7 @@ export default function OnboardingSlide({ slide, width }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   slide: {
     flex: 1,
     justifyContent: 'flex-end', // text sits just above the dots
@@ -37,14 +39,14 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xl,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.xl, TYPOGRAPHY.lineHeight.tight),
-    color: COLORS.ink,
+    color: c.ink,
     textAlign: 'center',
   },
   body: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.sm, TYPOGRAPHY.lineHeight.relaxed),
-    color: COLORS.slate,
+    color: c.slate,
     textAlign: 'center',
   },
 });

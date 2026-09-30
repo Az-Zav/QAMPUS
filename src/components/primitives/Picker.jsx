@@ -1,8 +1,11 @@
-import { COLORS, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function Picker({ value, onSelect, options = [], placeholder = 'Select an option', searchable = false, style }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
@@ -34,7 +37,7 @@ export default function Picker({ value, onSelect, options = [], placeholder = 'S
             value={search}
             onChangeText={setSearch}
             placeholder={placeholder}
-            placeholderTextColor={COLORS.slate}
+            placeholderTextColor={colors.slate}
             style={styles.searchInput}
           />
         ) : (
@@ -48,7 +51,7 @@ export default function Picker({ value, onSelect, options = [], placeholder = 'S
         <IconSet
           name="chevron-down"
           size={16}
-          color={COLORS.slate}
+          color={colors.slate}
           style={open && styles.chevronOpen}
         />
       </Pressable>
@@ -86,17 +89,17 @@ export default function Picker({ value, onSelect, options = [], placeholder = 'S
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   wrap: {
     borderRadius: RADII.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    borderColor: c.border,
+    backgroundColor: c.white,
     overflow: 'hidden',
   },
   wrapOpen: {
     borderWidth: 2,
-    borderColor: COLORS.gold,
+    borderColor: c.gold,
   },
   field: {
     height: 46,
@@ -109,16 +112,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.md,
-    color: COLORS.ink,
+    color: c.ink,
   },
   valueOpen: {
-    color: COLORS.slate,
+    color: c.slate,
   },
   searchInput: {
     flex: 1,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.md,
-    color: COLORS.ink,
+    color: c.ink,
     padding: 0,
   },
   chevronOpen: {
@@ -133,14 +136,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   optionSelected: {
-    backgroundColor: withOpacity(COLORS.gold, 0.18),
+    backgroundColor: withOpacity(c.gold, 0.18),
   },
   optionText: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.slate,
+    color: c.slate,
   },
   optionTextSelected: {
-    color: COLORS.ink,
+    color: c.ink,
   },
 });

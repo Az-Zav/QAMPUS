@@ -93,7 +93,7 @@ For staff: **the tool should cost no more effort than calling out a number.**
 | S13 | Profile | Identity header, menu |
 | S14 | Edit Profile | Student ID, program (students); name, email, guest type (guests) |
 | S15 | Bans & Warnings | Read-only offense history |
-| S16 | Settings | Push toggle (functional); biometric and theme toggles (inert) |
+| S16 | Settings | Push toggle and Light/Dark theme selector (functional); biometric toggle (inert) |
 | S17 | Help & Support | FAQ and contact |
 
 **Modals** (all centered; no bottom sheets anywhere)
@@ -380,7 +380,7 @@ State is always conveyed by **icon + label**, with color as reinforcement.
 **Elements:**
 - **Push notifications** toggle — functional; description says in-app notifications always persist and push is used for "your turn."
 - **Biometric login** toggle — inert, navigable, changes nothing.
-- **Theme** toggle — inert, navigable, changes nothing.
+- **Theme** selector — functional. Light | Dark; the app follows the device scheme until the user picks one, and the choice holds until the app restarts (not persisted in V1).
 
 ### 4.15 Help & Support (S17)
 
@@ -536,7 +536,7 @@ flowchart TD
     C --> C1["Student ID and program<br/>or guest name, email, type"]
     B --> D[Queue History]
     B --> E[Bans and Warnings]
-    B --> F["Settings<br/>push toggle, inert biometric and theme"]
+    B --> F["Settings<br/>push toggle, theme selector, inert biometric"]
     B --> G[Help and Support]
     B --> H[Log Out confirm]
     H -->|Confirm| I[Login]
@@ -952,7 +952,7 @@ Ticket numbers in copy follow §3.3.
 | Forgot Password, Change Password screens | Out of scope | Excluded |
 | Guest mobile number + OTP | Out of scope (no SMS/OTP) | Replaced by Guest Profile Form and generated Guest ID |
 | Biometric login toggle | Inert in V1 | **Kept** in Settings as an inert, navigable toggle |
-| Light/dark theme toggle | Inert in V1 | **Kept** in Settings as an inert, navigable toggle |
+| Light/dark theme toggle | Functional in V1 | **Kept** in Settings; follows the device by default, user choice overrides it for the session |
 | "Repeated Queue Cancellation" warning (WAITING stage) | Not adopted | Excluded; WAITING cancellation is always free |
 | Schedule-reminder / appointment-style notifications | Out of scope | Excluded |
 | Office windows | Out of scope | Excluded; one queue per office |

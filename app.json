@@ -26,7 +26,10 @@
         {
           "backgroundColor": "#FAF7F0",
           "image": "./assets/images/Qampus-Logo.png",
-          "imageWidth": 76
+          "imageWidth": 76,
+          "dark": {
+            "backgroundColor": "#121110"
+          }
         }
       ],
       "expo-font"

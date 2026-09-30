@@ -1,8 +1,8 @@
 import OnboardingSlide from '@/components/onboarding/OnboardingSlide';
 import Button from '@/components/primitives/Button';
 import PageDots from '@/components/primitives/PageDots';
-import { ButtonType, COLORS, ComponentSize, ONBOARDING_COPY, ONBOARDING_SLIDES, SPACING } from '@/constants';
-import { useSession } from '@/hooks';
+import { ButtonType, ComponentSize, ONBOARDING_COPY, ONBOARDING_SLIDES, SPACING } from '@/constants';
+import { useSession, useThemedStyles } from '@/hooks';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 // S01–S03: three swipeable, skippable slides. Exit -> Login.
 export default function OnboardingScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { completeOnboarding } = useSession();
   const { width } = useWindowDimensions();
@@ -63,10 +64,10 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   topBar: {
     alignItems: 'flex-end',

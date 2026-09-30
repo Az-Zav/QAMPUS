@@ -8,12 +8,9 @@ import ListRow from '@/components/shell/ListRow';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 
-import {
-  BANS_COPY, COLORS, EmptyStateType, IconSet, InfoCardType, ListRowType, OFFENSE_LABEL, OffenseState, RULES, SPACING,
-  TYPOGRAPHY,
-} from '@/constants';
+import { BANS_COPY, EmptyStateType, IconSet, InfoCardType, ListRowType, OFFENSE_LABEL, OffenseState, RULES, SPACING, TYPOGRAPHY } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
-import { useNow, usePenaltyRecord } from '@/hooks';
+import { useNow, usePenaltyRecord, useTheme, useThemedStyles } from '@/hooks';
 import { formatDate, formatTime } from '@/utils';
 
 // S15 Bans & Warnings — read from offense records (UIUX §4.13, §5.8).
@@ -25,6 +22,8 @@ function offenseState(offense) {
 }
 
 export default function BansScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const now = useNow(60000);
   const liveRecord = usePenaltyRecord();
@@ -78,15 +77,15 @@ export default function BansScreen() {
           accessibilityRole="link"
         >
           <Text style={styles.policyText}>{BANS_COPY.policyLink}</Text>
-          <IconSet name="arrow-forward" size={14} color={COLORS.deepGold} />
+          <IconSet name="arrow-forward" size={14} color={colors.deepGold} />
         </Pressable>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.paper },
+const makeStyles = (c) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.paper },
   content: {
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
@@ -104,6 +103,6 @@ const styles = StyleSheet.create({
   policyText: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.deepGold,
+    color: c.deepGold,
   },
 });

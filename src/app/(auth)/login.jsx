@@ -1,12 +1,14 @@
 import Button from '@/components/primitives/Button';
-import { useSession } from '@/hooks';
-import { ButtonType, COLORS, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
+import { useSession, useTheme, useThemedStyles } from '@/hooks';
+import { ButtonType, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
+  const { colors, isDark } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { signInAsStudent, signInAsGuest } = useSession();
 
@@ -23,7 +25,7 @@ export default function Login() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.paper} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.paper} />
 
       <View style={styles.content}>
         {/* Header Section: Logo Image + Text Brand */}
@@ -66,7 +68,7 @@ export default function Login() {
               type={ButtonType.SECONDARY}
               onPress={handleGoogleLogin}
               style={styles.buttonMargin}
-              icon={<IconSet name="logo-google" size={20} color={COLORS.gold} />}
+              icon={<IconSet name="logo-google" size={20} color={colors.gold} />}
             />
 
             <Button
@@ -74,7 +76,7 @@ export default function Login() {
               type={ButtonType.SECONDARY}
               onPress={handleGuestLogin}
               style={styles.buttonMargin}
-              icon={<IconSet name="person-outline" size={20} color={COLORS.ink} />}
+              icon={<IconSet name="person-outline" size={20} color={colors.ink} />}
             />
 
             <Text style={styles.termsText}>
@@ -89,10 +91,10 @@ export default function Login() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   content: {
     flex: 1,
@@ -119,14 +121,14 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xl,
-    color: COLORS.ink,
+    color: c.ink,
     letterSpacing: 2.5,
     lineHeight: TYPOGRAPHY.size.xl * TYPOGRAPHY.lineHeight.tight,
   },
   brandSubtitle: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.slate,
+    color: c.slate,
   },
 
   /* Main Container */
@@ -155,13 +157,13 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.xxl,
     lineHeight: TYPOGRAPHY.size.xxl * TYPOGRAPHY.lineHeight.tight,
     textAlign: 'center',
-    color: COLORS.ink,
+    color: c.ink,
     marginBottom: SPACING.xs,
   },
   subtitle: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.slate,
+    color: c.slate,
     textAlign: 'center',
   },
 
@@ -179,12 +181,12 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.slate,
+    color: c.slate,
     textAlign: 'center',
     lineHeight: TYPOGRAPHY.size.sm * TYPOGRAPHY.lineHeight.relaxed,
   },
   termsLink: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.ink,
+    color: c.ink,
   },
 });

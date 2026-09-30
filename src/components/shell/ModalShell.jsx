@@ -1,5 +1,6 @@
 import DetailRow from '@/components/shell/DetailRow';
-import { COLORS, IconSet, lineHeightFor, ModalTone, OVERLAY, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { IconSet, lineHeightFor, ModalTone, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 const ICON_CIRCLE = 48;
@@ -18,6 +19,8 @@ export default function ModalShell({
   actions, // optional node, stacked full-width under the content
   children,
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const destructive = tone === ModalTone.DESTRUCTIVE;
 
   return (
@@ -32,7 +35,7 @@ export default function ModalShell({
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
-              <IconSet name="close" size={16} color={COLORS.ink} />
+              <IconSet name="close" size={16} color={colors.ink} />
             </Pressable>
           )}
 
@@ -40,7 +43,7 @@ export default function ModalShell({
             <View style={styles.header}>
               {!!icon && (
                 <View style={[styles.iconCircle, destructive && styles.iconCircleDestructive]}>
-                  <IconSet name={icon} size={24} color={destructive ? COLORS.error : COLORS.ink} />
+                  <IconSet name={icon} size={24} color={destructive ? colors.error : colors.onGold} />
                 </View>
               )}
               {!!title && (
@@ -69,14 +72,14 @@ export default function ModalShell({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   overlay: {
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: OVERLAY.scrim,
+    backgroundColor: c.scrim,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.xxl,
@@ -85,7 +88,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
     borderRadius: RADII.xxl,
     padding: SPACING.xxl,
     gap: SPACING.lg,
@@ -98,8 +101,8 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: RADII.full,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    borderColor: c.border,
+    backgroundColor: c.white,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
@@ -113,26 +116,26 @@ const styles = StyleSheet.create({
     width: ICON_CIRCLE,
     height: ICON_CIRCLE,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.xxs,
   },
   iconCircleDestructive: {
-    backgroundColor: withOpacity(COLORS.error, 0.15),
+    backgroundColor: withOpacity(c.error, 0.15),
   },
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xl,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.xl, TYPOGRAPHY.lineHeight.tight),
-    color: COLORS.ink,
+    color: c.ink,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.sm, TYPOGRAPHY.lineHeight.relaxed),
-    color: COLORS.slate,
+    color: c.slate,
     textAlign: 'center',
   },
   rows: {

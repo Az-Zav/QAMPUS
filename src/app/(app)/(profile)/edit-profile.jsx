@@ -9,10 +9,8 @@ import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 
-import {
-  COLORS, EDIT_PROFILE_COPY, GUEST_TYPE_LABEL, IconSet, InputType, PROGRAM_OPTIONS, SPACING, TYPOGRAPHY, USER_ROLE,
-} from '@/constants';
-import { useSession } from '@/hooks';
+import { EDIT_PROFILE_COPY, GUEST_TYPE_LABEL, IconSet, InputType, PROGRAM_OPTIONS, SPACING, TYPOGRAPHY, USER_ROLE } from '@/constants';
+import { useSession, useTheme, useThemedStyles } from '@/hooks';
 
 // S14 Edit Profile (UIUX §4.12). Students edit program only — student ID changes go
 // through the Super Admin (PRD R-01). Guests edit name, email, guest type; Guest ID is read-only (R-02).
@@ -57,13 +55,15 @@ function toChanges(form, isGuest) {
 }
 
 function Field({ label, hint, error, children }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
       {children}
       {!!error && (
         <View style={styles.messageRow}>
-          <IconSet name="alert-circle" size={14} color={COLORS.error} />
+          <IconSet name="alert-circle" size={14} color={colors.error} />
           <Text style={[styles.message, styles.error]} accessibilityLiveRegion="polite">{error}</Text>
         </View>
       )}
@@ -73,6 +73,7 @@ function Field({ label, hint, error, children }) {
 }
 
 export default function EditProfileScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { user, updateProfile } = useSession();
   const [form, setForm] = useState(() => (user ? initialForm(user) : null));
@@ -201,8 +202,8 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.paper },
+const makeStyles = (c) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.paper },
   flex: { flex: 1 },
   content: {
     gap: SPACING.xxl,
@@ -216,16 +217,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xxs,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.ink,
+    color: c.ink,
   },
   messageRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xxs, paddingHorizontal: SPACING.xxs },
   message: {
     paddingHorizontal: SPACING.xxs,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.slate,
+    color: c.slate,
   },
-  error: { paddingHorizontal: 0, color: COLORS.error },
+  error: { paddingHorizontal: 0, color: c.error },
   submitError: { textAlign: 'center' },
-  pickerError: { borderWidth: 2, borderColor: COLORS.error },
+  pickerError: { borderWidth: 2, borderColor: c.error },
 });

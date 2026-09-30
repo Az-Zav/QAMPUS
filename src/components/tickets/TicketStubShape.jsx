@@ -1,4 +1,5 @@
-import { ELEVATION, TICKET_STUB_THEME, TicketStatus } from '@/constants';
+import { ELEVATION, TicketStatus } from '@/constants';
+import { useTheme } from '@/hooks';
 import { StyleSheet } from 'react-native';
 import Svg, { Defs, FeDropShadow, Filter, Line, Path } from 'react-native-svg';
 
@@ -25,9 +26,10 @@ const bleed = {
 };
 
 // Ticket stub background: outline + perforation + drop shadow that traces the notches.
-// Fills its parent; colors come from TICKET_STUB_THEME[status].
+// Fills its parent; colors come from the theme's stub map (constants/theme §5b).
 export default function TicketStubShape({ status }) {
-  const theme = TICKET_STUB_THEME[status] ?? TICKET_STUB_THEME[TicketStatus.WAITING];
+  const { stub } = useTheme();
+  const theme = stub[status] ?? stub[TicketStatus.WAITING];
 
   return (
     <Svg

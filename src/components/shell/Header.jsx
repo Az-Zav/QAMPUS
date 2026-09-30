@@ -1,8 +1,11 @@
-import { COLORS, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Header({ title, hasNotification, inverted = false, onBellPress, onAvatarPress }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const logoSource = inverted
     ? require('../../../assets/images/Qampus-Logo-Inverted.png')
@@ -16,25 +19,25 @@ export default function Header({ title, hasNotification, inverted = false, onBel
       </View>
       <View style={styles.actions}>
         <Pressable onPress={onBellPress} style={styles.iconButton} accessibilityRole="button" accessibilityLabel="Notifications">
-          <IconSet name="notifications-outline" color={COLORS.ink} size={22} />
+          <IconSet name="notifications-outline" color={inverted ? colors.onGold : colors.ink} size={22} />
           {hasNotification && <View style={styles.dot} />}
         </Pressable>
         <Pressable onPress={onAvatarPress} style={styles.avatar} accessibilityRole="button" accessibilityLabel="Profile">
-          <IconSet name="person" color={COLORS.paper} size={18} />
+          <IconSet name="person" color={colors.onInverse} size={18} />
         </Pressable>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   logoGroup: {
     flexDirection: 'row',
@@ -44,10 +47,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: TYPOGRAPHY.size.md,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.ink,
+    color: c.ink,
   },
   invertedTitle: {
-    color: COLORS.ink,
+    color: c.onGold,
   },
   actions: {
     flexDirection: 'row',
@@ -64,13 +67,13 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
   },
   avatar: {
     width: 32,
     height: 32,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.ink,
+    backgroundColor: c.inverse,
     justifyContent: 'center',
     alignItems: 'center',
   },

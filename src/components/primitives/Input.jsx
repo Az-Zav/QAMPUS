@@ -1,4 +1,5 @@
-import { COLORS, InputType, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { InputType, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { useState } from 'react';
 import { StyleSheet, TextInput } from 'react-native';
 
@@ -13,10 +14,12 @@ export default function Input({
   style,
   ...rest
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [focused, setFocused] = useState(false);
   const isError = type === InputType.ERROR;
 
-  const borderColor = disabled ? COLORS.disabledBg : isError ? COLORS.error : focused ? COLORS.gold : COLORS.border;
+  const borderColor = disabled ? colors.disabledBg : isError ? colors.error : focused ? colors.gold : colors.border;
   const borderWidth = disabled ? 0 : focused || isError ? 2 : 1;
 
   return (
@@ -24,7 +27,7 @@ export default function Input({
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
-      placeholderTextColor={COLORS.slate}
+      placeholderTextColor={colors.slate}
       keyboardType={keyboardType}
       maxLength={maxLength}
       editable={!disabled}
@@ -33,7 +36,7 @@ export default function Input({
       accessibilityState={{ disabled }}
       style={[
         styles.base,
-        { borderColor, borderWidth, backgroundColor: disabled ? COLORS.disabledBg : COLORS.white },
+        { borderColor, borderWidth, backgroundColor: disabled ? colors.disabledBg : colors.white },
         style,
       ]}
       {...rest}
@@ -41,13 +44,13 @@ export default function Input({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   base: {
     height: 46,
     borderRadius: RADII.lg,
     paddingHorizontal: SPACING.lg,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.md,
-    color: COLORS.ink,
+    color: c.ink,
   },
 });

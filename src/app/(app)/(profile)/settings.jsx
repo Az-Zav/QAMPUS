@@ -8,17 +8,18 @@ import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 
-import { COLORS, RADII, SETTINGS_COPY, SPACING, withOpacity } from '@/constants';
-import { useSession } from '@/hooks';
+import { RADII, SETTINGS_COPY, SPACING, withOpacity } from '@/constants';
+import { useSession, useTheme, useThemedStyles } from '@/hooks';
 
-// S16 Settings (UIUX §4.14). Push is functional; biometric and theme are inert in V1 (PRD §5).
+// S16 Settings (UIUX §4.14). Push and theme are functional; biometric is inert in V1 (PRD §5).
+// The theme follows the device until a half is picked; the choice lasts until the app restarts.
 
 export default function SettingsScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { user } = useSession();
   const [pushEnabled, setPushEnabled] = useState(user?.push_enabled ?? true);
-  // Inert: the selector moves, but the app theme never changes
-  const [themePreview, setThemePreview] = useState('light');
+  const { scheme, setPreference } = useTheme();
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
 
@@ -47,15 +48,15 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <SectionLabel text={SETTINGS_COPY.appearanceLabel} />
-          <ThemeSelector value={themePreview} onChange={setThemePreview} inert />
+          <ThemeSelector value={scheme} onChange={setPreference} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.paper },
+const makeStyles = (c) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.paper },
   content: {
     gap: SPACING.huge,
     paddingHorizontal: SPACING.lg,
@@ -64,9 +65,9 @@ const styles = StyleSheet.create({
   },
   section: { gap: SPACING.sm },
   group: {
-    backgroundColor: withOpacity(COLORS.white, 0.8),
+    backgroundColor: withOpacity(c.white, 0.8),
     borderWidth: 1,
-    borderColor: withOpacity(COLORS.slate, 0.18),
+    borderColor: withOpacity(c.slate, 0.18),
     borderRadius: RADII.xl,
     overflow: 'hidden',
     padding: 1,

@@ -1,5 +1,6 @@
 import Button from '@/components/primitives/Button';
-import { ButtonType, COLORS, ComponentSize, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { ButtonType, ComponentSize, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { StyleSheet, Text, View } from 'react-native';
 
 const TEXT_INDENT = 42 + SPACING.sm;
@@ -7,6 +8,8 @@ const TEXT_INDENT = 42 + SPACING.sm;
 // office: view from toOfficeView(); joinDisabled/disabledReason are set by the
 // screen when a join check fails (closed, cutoff, banned, ticket limit).
 export default function OfficeCard({ office, onJoin }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isOpen = office.open;
   const joinDisabled = office.joinDisabled || !isOpen;
 
@@ -14,13 +17,13 @@ export default function OfficeCard({ office, onJoin }) {
     <View style={styles.card}>
       <View style={styles.topRow}>
         <View style={styles.officeIcon}>
-          <IconSet name={office.icon || 'business-outline'} size={22} color={COLORS.ink} />
+          <IconSet name={office.icon || 'business-outline'} size={22} color={colors.ink} />
         </View>
 
         <View style={styles.info}>
           <Text numberOfLines={2} style={styles.name}>{office.name}</Text>
           <View style={styles.locationRow}>
-            <IconSet name="location-outline" size={13} color={COLORS.slate} />
+            <IconSet name="location-outline" size={13} color={colors.slate} />
             <Text numberOfLines={1} style={styles.location}>{office.location}</Text>
           </View>
         </View>
@@ -61,11 +64,11 @@ export default function OfficeCard({ office, onJoin }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     borderRadius: RADII.lg,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.goldLight,
+    backgroundColor: c.goldLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm,
@@ -88,7 +91,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   name: {
-    color: COLORS.ink,
+    color: c.ink,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.base,
     lineHeight: 18,
@@ -101,44 +104,44 @@ const styles = StyleSheet.create({
   location: {
     flex: 1,
     marginLeft: 4,
-    color: COLORS.slate,
+    color: c.slate,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: withOpacity(COLORS.success, 0.12),
+    backgroundColor: withOpacity(c.success, 0.12),
     borderRadius: RADII.full,
     paddingHorizontal: 7,
     paddingVertical: 4,
     marginLeft: SPACING.xs,
   },
   closedPill: {
-    backgroundColor: COLORS.disabledBg,
+    backgroundColor: c.disabledBg,
   },
   statusDot: {
     width: 5,
     height: 5,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.success,
+    backgroundColor: c.success,
     marginRight: 4,
   },
   closedDot: {
-    backgroundColor: COLORS.slate,
+    backgroundColor: c.slate,
   },
   statusText: {
-    color: COLORS.success,
+    color: c.success,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xxs,
     letterSpacing: 0.5,
   },
   closedText: {
-    color: COLORS.slate,
+    color: c.slate,
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.border,
+    backgroundColor: c.border,
     marginTop: SPACING.md,
     marginBottom: SPACING.sm,
     marginLeft: TEXT_INDENT,
@@ -156,31 +159,31 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nowLabel: {
-    color: COLORS.slate,
+    color: c.slate,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xxs,
     letterSpacing: 0.7,
     marginRight: 6,
   },
   ticketBadge: {
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
     borderRadius: RADII.sm,
     paddingHorizontal: 7,
     paddingVertical: 4,
   },
   ticketText: {
-    color: COLORS.ink,
+    color: c.onGold,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
   },
   waiting: {
-    color: COLORS.slate,
+    color: c.slate,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
     marginLeft: 7,
   },
   disabledReason: {
-    color: COLORS.slate,
+    color: c.slate,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
     lineHeight: 16,

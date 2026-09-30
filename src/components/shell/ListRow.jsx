@@ -1,5 +1,4 @@
 import {
-  COLORS,
   ELEVATION,
   IconSet,
   lineHeightFor,
@@ -8,31 +7,33 @@ import {
   OffenseState,
   RADII,
   SPACING,
-  STATUS_THEME,
   TicketStatus,
   TYPOGRAPHY,
   withOpacity,
 } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const ICON_CIRCLE = 36;
 const DOT = SPACING.sm;
 
 const TONES = {
-  [ListRowTone.NEUTRAL]: COLORS.slate,
-  [ListRowTone.HIGHLIGHT]: COLORS.gold,
-  [ListRowTone.SUCCESS]: COLORS.success,
-  [ListRowTone.ERROR]: COLORS.error,
+  [ListRowTone.NEUTRAL]: 'slate',
+  [ListRowTone.HIGHLIGHT]: 'gold',
+  [ListRowTone.SUCCESS]: 'success',
+  [ListRowTone.ERROR]: 'error',
 };
 
 const OFFENSE_STATE = {
-  [OffenseState.ACTIVE]: { label: 'Offense recorded', color: COLORS.ink },
-  [OffenseState.REVOKED]: { label: 'Revoked', color: COLORS.success },
-  [OffenseState.CAUSED_BAN]: { label: 'Caused 24h ban', color: COLORS.error },
+  [OffenseState.ACTIVE]: { label: 'Offense recorded', color: 'ink' },
+  [OffenseState.REVOKED]: { label: 'Revoked', color: 'success' },
+  [OffenseState.CAUSED_BAN]: { label: 'Caused 24h ban', color: 'error' },
 };
 
 function MenuRow({ title, icon, pill, destructive }) {
-  const accent = destructive ? COLORS.error : COLORS.ink;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const accent = destructive ? colors.error : colors.ink;
 
   return (
     <>
@@ -48,14 +49,16 @@ function MenuRow({ title, icon, pill, destructive }) {
       <IconSet
         name="chevron-forward"
         size={18}
-        color={destructive ? withOpacity(COLORS.error, 0.6) : COLORS.slate}
+        color={destructive ? withOpacity(colors.error, 0.6) : colors.slate}
       />
     </>
   );
 }
 
 function NotificationRow({ title, subtitle, meta, icon, tone, unread }) {
-  const toneColor = TONES[tone] ?? COLORS.gold;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const toneColor = colors[TONES[tone] ?? TONES[ListRowTone.HIGHLIGHT]];
 
   return (
     <>
@@ -75,6 +78,8 @@ function NotificationRow({ title, subtitle, meta, icon, tone, unread }) {
 }
 
 function OffenseRow({ title, subtitle, status }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const state = OFFENSE_STATE[status] ?? OFFENSE_STATE[OffenseState.ACTIVE];
 
   return (
@@ -84,20 +89,22 @@ function OffenseRow({ title, subtitle, status }) {
         {!!subtitle && <Text style={styles.caption}>{subtitle}</Text>}
       </View>
       <View style={[styles.pill, styles.goldTint]}>
-        <Text style={[styles.pillText, styles.upper, { color: state.color }]}>{state.label}</Text>
+        <Text style={[styles.pillText, styles.upper, { color: colors[state.color] }]}>{state.label}</Text>
       </View>
     </>
   );
 }
 
-// status is a terminal TicketStatus; label and color come from STATUS_THEME
+// status is a terminal TicketStatus; label and color come from the theme's status map
 function HistoryRow({ title, subtitle, meta, icon = 'ticket-outline', status }) {
-  const theme = STATUS_THEME[status] ?? STATUS_THEME[TicketStatus.COMPLETED];
+  const { colors, status: statusTheme } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const theme = statusTheme[status] ?? statusTheme[TicketStatus.COMPLETED];
 
   return (
     <>
       <View style={[styles.iconCircle, styles.goldTint, styles.goldOutline]}>
-        <IconSet name={icon} size={18} color={COLORS.ink} />
+        <IconSet name={icon} size={18} color={colors.ink} />
       </View>
       <View style={styles.flex}>
         <View style={styles.historyHead}>
@@ -134,6 +141,7 @@ export default function ListRow({
   onPress,
   style,
 }) {
+  const styles = useThemedStyles(makeStyles);
   const variant = VARIANTS[type] ?? VARIANTS[ListRowType.MENU];
   const { Body } = variant;
 
@@ -166,7 +174,7 @@ export default function ListRow({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -176,19 +184,19 @@ const styles = StyleSheet.create({
   },
   menu: {
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: c.border,
   },
   noDivider: { borderTopWidth: 0 },
   notification: {
     alignItems: 'flex-start',
     paddingHorizontal: 0,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: c.border,
   },
   card: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     borderRadius: RADII.lg,
     ...ELEVATION.sm,
   },
@@ -209,9 +217,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  goldTint: { backgroundColor: withOpacity(COLORS.gold, 0.15) },
-  goldOutline: { borderWidth: 1, borderColor: withOpacity(COLORS.gold, 0.3) },
-  dangerTint: { backgroundColor: withOpacity(COLORS.error, 0.08) },
+  goldTint: { backgroundColor: withOpacity(c.gold, 0.15) },
+  goldOutline: { borderWidth: 1, borderColor: withOpacity(c.gold, 0.3) },
+  dangerTint: { backgroundColor: withOpacity(c.error, 0.08) },
   dotSlot: {
     width: DOT,
     paddingTop: (ICON_CIRCLE - DOT) / 2,
@@ -220,25 +228,25 @@ const styles = StyleSheet.create({
     width: DOT,
     height: DOT,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
   },
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.base,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.base),
-    color: COLORS.ink,
+    color: c.ink,
   },
   subtitle: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.sm),
-    color: COLORS.slate,
+    color: c.slate,
   },
   caption: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.xs),
-    color: COLORS.slate,
+    color: c.slate,
   },
   pill: {
     paddingHorizontal: SPACING.sm,
@@ -249,7 +257,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.xs),
-    color: COLORS.ink,
+    color: c.ink,
   },
   upper: { textTransform: 'uppercase' },
 });

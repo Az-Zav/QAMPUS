@@ -8,8 +8,27 @@ import { TicketStatus } from './domain';
 // ---------------------------------------------------------------------------
 // 1. Color Palette Tokens
 // ---------------------------------------------------------------------------
+// Both schemes share one set of keys; components read them through useTheme() /
+// useThemedStyles() (providers/ThemeProvider), never from a scheme directly.
+//   ink        primary text & icons          paper      page background
+//   white      raised surface (cards, inputs) inverse   strong contrast surface (nav bar,
+//   onInverse  text & icons on `inverse`                back buttons, avatar, hero, selection)
+//   onGold     text & icons on gold          onSuccess  text & icons on success
+//   scrim      modal backdrop
 
-export const COLORS = Object.freeze({
+export const ColorScheme = Object.freeze({
+  LIGHT: 'light',
+  DARK: 'dark',
+});
+
+// What the user picked in Settings; SYSTEM follows the device
+export const ThemePreference = Object.freeze({
+  SYSTEM: 'system',
+  LIGHT: ColorScheme.LIGHT,
+  DARK: ColorScheme.DARK,
+});
+
+const LIGHT_COLORS = Object.freeze({
   ink: '#0A0A0A',
   gold: '#FFC72C',
   goldLight: '#FFF8E7',
@@ -22,75 +41,100 @@ export const COLORS = Object.freeze({
   borderLight: '#E5DFD3',
   disabledBg: '#E8E5E0',
   white: '#FFFFFF',
+  inverse: '#0A0A0A',
+  onInverse: '#FAF7F0',
+  onGold: '#0A0A0A',
+  onSuccess: '#FFFFFF',
+  scrim: '#000000B3', // 70% black behind modals
+});
+
+const DARK_COLORS = Object.freeze({
+  ink: '#F2EEE6',
+  gold: '#FFC72C',
+  goldLight: '#2B2412',
+  deepGold: '#E0B24A',
+  paper: '#121110',
+  slate: '#A29E95',
+  error: '#EF6B61',
+  success: '#5CB88A',
+  border: '#3A3833',
+  borderLight: '#2E2C28',
+  disabledBg: '#2A2926',
+  white: '#1E1D1B',
+  inverse: '#34312C',
+  onInverse: '#F2EEE6',
+  onGold: '#0A0A0A',
+  onSuccess: '#0A0A0A',
+  scrim: '#000000B3',
+});
+
+export const PALETTES = Object.freeze({
+  [ColorScheme.LIGHT]: LIGHT_COLORS,
+  [ColorScheme.DARK]: DARK_COLORS,
 });
 
 // Helper to append alpha channel to hex color
 export const withOpacity = (hex, alpha) =>
   hex + Math.round(alpha * 255).toString(16).padStart(2, '0').toUpperCase();
 
-// Overlay scrim
-export const OVERLAY = Object.freeze({
-  scrim: withOpacity(COLORS.ink, 0.7),
-});
-
 // ---------------------------------------------------------------------------
 // 2. Status Badge Themes & Icons
 // ---------------------------------------------------------------------------
 
-export const STATUS_THEME = Object.freeze({
+const buildStatusTheme = (c) => ({
   waiting: {
-    bg: withOpacity(COLORS.slate, 0.1),
-    border: COLORS.slate,
-    text: COLORS.slate,
+    bg: withOpacity(c.slate, 0.1),
+    border: c.slate,
+    text: c.slate,
     icon: 'time-outline',
     label: 'Waiting',
   },
   yourTurn: {
-    bg: COLORS.gold,
+    bg: c.gold,
     border: null,
-    text: COLORS.ink,
+    text: c.onGold,
     icon: 'notifications',
     label: 'Your turn',
   },
   expired: {
-    bg: withOpacity(COLORS.error, 0.1),
-    border: COLORS.error,
-    text: COLORS.error,
+    bg: withOpacity(c.error, 0.1),
+    border: c.error,
+    text: c.error,
     icon: 'hourglass-outline',
     label: 'Expired',
   },
   inService: {
-    bg: COLORS.success,
+    bg: c.success,
     border: null,
-    text: COLORS.white,
+    text: c.onSuccess,
     icon: 'person',
     label: 'In service',
   },
   completed: {
-    bg: withOpacity(COLORS.success, 0.1),
+    bg: withOpacity(c.success, 0.1),
     border: null,
-    text: COLORS.success,
+    text: c.success,
     icon: 'checkmark-circle',
     label: 'Completed',
   },
   cancelled: {
-    bg: withOpacity(COLORS.slate, 0.1),
+    bg: withOpacity(c.slate, 0.1),
     border: null,
-    text: COLORS.slate,
+    text: c.slate,
     icon: 'close-circle-outline',
     label: 'Cancelled',
   },
   cancelledByOffice: {
-    bg: withOpacity(COLORS.slate, 0.1),
+    bg: withOpacity(c.slate, 0.1),
     border: null,
-    text: COLORS.slate,
+    text: c.slate,
     icon: 'close-circle-outline',
     label: 'Cancelled by office',
   },
   noShow: {
-    bg: withOpacity(COLORS.error, 0.1),
+    bg: withOpacity(c.error, 0.1),
     border: null,
-    text: COLORS.error,
+    text: c.error,
     icon: 'person-remove',
     label: 'No-show',
   },
@@ -192,7 +236,7 @@ export const ELEVATION = Object.freeze({
     dx: 0,
     dy: 6,
     blur: 8,
-    color: COLORS.ink,
+    color: '#000000',
     opacity: 0.16,
   },
 });
@@ -203,11 +247,35 @@ export const ELEVATION = Object.freeze({
 
 const PERFORATION = withOpacity('#747878', 0.5);
 
-export const TICKET_STUB_THEME = Object.freeze({
-  [TicketStatus.WAITING]: { fill: COLORS.white, stroke: COLORS.white, text: COLORS.ink, perforation: PERFORATION },
-  [TicketStatus.YOUR_TURN]: { fill: COLORS.ink, stroke: COLORS.ink, text: COLORS.paper, perforation: PERFORATION },
-  [TicketStatus.EXPIRED]: { fill: COLORS.white, stroke: COLORS.error, text: COLORS.ink, perforation: PERFORATION },
-  [TicketStatus.IN_SERVICE]: { fill: COLORS.white, stroke: COLORS.white, text: COLORS.ink, perforation: PERFORATION },
+// "Your turn" is the inverse card; in dark mode a gold outline keeps it the standout
+const buildStubTheme = (c, scheme) => ({
+  [TicketStatus.WAITING]: { fill: c.white, stroke: c.white, text: c.ink, perforation: PERFORATION },
+  [TicketStatus.YOUR_TURN]: {
+    fill: c.inverse,
+    stroke: scheme === ColorScheme.DARK ? c.gold : c.inverse,
+    text: c.onInverse,
+    perforation: PERFORATION,
+  },
+  [TicketStatus.EXPIRED]: { fill: c.white, stroke: c.error, text: c.ink, perforation: PERFORATION },
+  [TicketStatus.IN_SERVICE]: { fill: c.white, stroke: c.white, text: c.ink, perforation: PERFORATION },
+});
+
+// ---------------------------------------------------------------------------
+// 5c. Resolved Themes — what useTheme() hands out, built once per scheme
+// ---------------------------------------------------------------------------
+
+const buildTheme = (scheme) =>
+  Object.freeze({
+    scheme,
+    isDark: scheme === ColorScheme.DARK,
+    colors: PALETTES[scheme],
+    status: buildStatusTheme(PALETTES[scheme]),
+    stub: buildStubTheme(PALETTES[scheme], scheme),
+  });
+
+export const THEMES = Object.freeze({
+  [ColorScheme.LIGHT]: buildTheme(ColorScheme.LIGHT),
+  [ColorScheme.DARK]: buildTheme(ColorScheme.DARK),
 });
 
 // ---------------------------------------------------------------------------

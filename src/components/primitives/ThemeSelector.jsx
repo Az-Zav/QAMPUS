@@ -1,24 +1,27 @@
-import { COLORS, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { ColorScheme, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 // Figma Input/ThemeSelector — equal-width Light | Dark halves.
-// `inert` (V1, PRD §5) moves the selection but never calls onChange.
+// value: the scheme on screen; onChange(scheme) when the user picks a half.
 
 const OPTIONS = [
-  { value: 'light', label: 'Light', icon: 'sunny-outline' },
-  { value: 'dark', label: 'Dark', icon: 'moon-outline' },
+  { value: ColorScheme.LIGHT, label: 'Light', icon: 'sunny-outline' },
+  { value: ColorScheme.DARK, label: 'Dark', icon: 'moon-outline' },
 ];
 
-export default function ThemeSelector({ value, onChange, inert = false }) {
+export default function ThemeSelector({ value, onChange }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.container} accessibilityRole="radiogroup">
       {OPTIONS.map((option) => {
         const selected = option.value === value;
-        const color = selected ? COLORS.ink : COLORS.slate;
+        const color = selected ? colors.onGold : colors.slate;
         return (
           <Pressable
             key={option.value}
-            onPress={() => onChange?.(option.value, { inert })}
+            onPress={() => onChange?.(option.value)}
             accessibilityRole="radio"
             accessibilityState={{ selected }}
             style={[styles.half, selected && styles.selected]}
@@ -32,14 +35,14 @@ export default function ThemeSelector({ value, onChange, inert = false }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     gap: SPACING.xs,
     padding: SPACING.xxs + 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     borderRadius: RADII.lg + 2,
   },
   half: {
@@ -51,7 +54,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md - 2,
     borderRadius: RADII.md + 2,
   },
-  selected: { backgroundColor: COLORS.gold },
+  selected: { backgroundColor: c.gold },
   label: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.base,

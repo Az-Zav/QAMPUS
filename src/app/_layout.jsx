@@ -1,11 +1,13 @@
-import { COLORS } from '@/constants';
+import { useTheme } from '@/hooks';
 import { SessionProvider } from '@/providers/SessionProvider';
+import { ThemeProvider } from '@/providers/ThemeProvider';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold, useFonts } from '@expo-google-fonts/dm-sans';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
-import { Platform, StatusBar as RNStatusBar, StyleSheet, View } from 'react-native';
+import { Platform, StatusBar as RNStatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
@@ -33,25 +35,33 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
-      <StatusBar style="dark" translucent backgroundColor="transparent" />
-      <SessionProvider>
-        <View style={styles.shell}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'slide_from_right',
-              contentStyle: { backgroundColor: COLORS.paper },
-            }}
-          />
-        </View>
-      </SessionProvider>
+      <ThemeProvider>
+        <SessionProvider>
+          <ThemedRoot />
+        </SessionProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  shell: {
-    flex: 1,
-    backgroundColor: COLORS.paper,
-  },
-});
+function ThemedRoot() {
+  const { colors, isDark } = useTheme();
+
+  // Native root view behind every screen — no light flash while pages slide
+  useEffect(() => {
+    SystemUI.setBackgroundColorAsync(colors.paper);
+  }, [colors.paper]);
+
+  return (
+    <>
+      <StatusBar style={isDark ? 'light' : 'dark'} translucent backgroundColor="transparent" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          contentStyle: { backgroundColor: colors.paper },
+        }}
+      />
+    </>
+  );
+}

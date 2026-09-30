@@ -1,13 +1,16 @@
-import { COLORS, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 function Switch({ value }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View
       style={[
         styles.track,
         {
-          backgroundColor: value ? COLORS.gold : withOpacity(COLORS.ink, 0.2),
+          backgroundColor: value ? colors.gold : withOpacity(colors.ink, 0.2),
           justifyContent: value ? 'flex-end' : 'flex-start',
         },
       ]}
@@ -18,6 +21,7 @@ function Switch({ value }) {
 }
 
 export default function Toggle({ title, subtitle, value = false, onValueChange, disabled = false, style }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Pressable
       onPress={() => onValueChange?.(!value)}
@@ -36,9 +40,9 @@ export default function Toggle({ title, subtitle, value = false, onValueChange, 
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   row: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.lg,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
@@ -51,12 +55,12 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.ink,
+    color: c.ink,
   },
   subtitle: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.slate,
+    color: c.slate,
   },
   track: {
     width: 48,
@@ -70,6 +74,6 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.ink,
+    backgroundColor: c.ink,
   },
 });

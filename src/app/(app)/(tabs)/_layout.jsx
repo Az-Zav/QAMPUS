@@ -1,10 +1,12 @@
-import { COLORS } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Tabs } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 // Home | Scan | Queue in bar order, so switching slides left or right by position.
 // The bar itself is the shared BottomNav in (app)/_layout.
 export default function TabsLayout() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { width } = useWindowDimensions();
 
   // progress: -1 left of the active tab, 0 active, 1 right of it
@@ -30,7 +32,7 @@ export default function TabsLayout() {
           animation: 'shift',
           sceneStyleInterpolator: slide,
           transitionSpec: { animation: 'timing', config: { duration: 250 } },
-          sceneStyle: { backgroundColor: COLORS.paper },
+          sceneStyle: { backgroundColor: colors.paper },
         }}
       >
         <Tabs.Screen name="home" />
@@ -41,10 +43,10 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   content: {
     flex: 1,
     paddingBottom: 90,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
 });

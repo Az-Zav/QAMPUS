@@ -7,7 +7,8 @@ import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
 import InfoCard from '@/components/shell/InfoCard';
 import SubHeader from '@/components/shell/SubHeader';
 
-import { ButtonType, COLORS, FAQ_ITEMS, HELP_COPY, IconSet, InfoCardType, lineHeightFor, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, FAQ_ITEMS, HELP_COPY, IconSet, InfoCardType, lineHeightFor, SPACING, TYPOGRAPHY } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 
 // S17 Help & Support (UIUX §4.15). FAQ copy lives in constants/content (FAQ_ITEMS).
 
@@ -15,6 +16,8 @@ import { ButtonType, COLORS, FAQ_ITEMS, HELP_COPY, IconSet, InfoCardType, lineHe
 const SUPPORT_MAILTO = 'mailto:?subject=QAMPUS%20support';
 
 export default function HelpScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
@@ -45,7 +48,7 @@ export default function HelpScreen() {
           <Button
             type={ButtonType.SECONDARY}
             label={HELP_COPY.contactLabel}
-            icon={<IconSet name="mail-outline" size={18} color={COLORS.ink} />}
+            icon={<IconSet name="mail-outline" size={18} color={colors.ink} />}
             onPress={() => Linking.openURL(SUPPORT_MAILTO)}
             style={styles.contactButton}
           />
@@ -55,8 +58,8 @@ export default function HelpScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.paper },
+const makeStyles = (c) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.paper },
   content: {
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
@@ -77,24 +80,24 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.md,
     letterSpacing: -0.4,
     textTransform: 'uppercase',
-    color: COLORS.ink,
+    color: c.ink,
   },
   faqCount: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.slate,
+    color: c.slate,
   },
   contact: { gap: SPACING.xxs, paddingTop: SPACING.xl },
   contactTitle: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.lg,
-    color: COLORS.ink,
+    color: c.ink,
   },
   contactBody: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.base,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.base),
-    color: COLORS.slate,
+    color: c.slate,
   },
   contactButton: { marginTop: SPACING.sm },
 });

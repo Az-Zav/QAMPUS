@@ -340,7 +340,7 @@ Profile and Notifications come from header icons and push onto the Home stack. *
 | S13 | `ProfileScreen` | `Hero` (Student/Guest), ProfileMenuRow ×5 | student · guest |
 | S14 | `EditProfileScreen` | Avatar, TextFields, Picker | student · guest · error · saving |
 | S15 | `BansWarningsScreen` | BanBanner, StrikeMeter, PolicyExplainer, OffenseRow | clean · one offense (warning line) · active ban · history only |
-| S16 | `SettingsScreen` | ToggleRow ×2, ThemeSelector | push on · push off |
+| S16 | `SettingsScreen` | ToggleRow ×2, ThemeSelector | push on · push off · light · dark |
 | S17 | `HelpSupportScreen` | FaqCard ×4, contact Button | collapsed · one expanded |
 | S18 | `BrowserRedirectScreen` | message | one |
 
@@ -352,7 +352,7 @@ Profile and Notifications come from header icons and push onto the Home stack. *
 - **S11** invalid messages: wrong office → "This code is for a different office." · no called ticket → "You don't have a called ticket at this office right now." · expired → "Your time to check in has passed. Staff will update your ticket."
 - **S12** tapping YOUR_TURN on a still-CALLED ticket opens M05; WARNING and NO_SHOW go to S15.
 - **S13** the hero's top-right edit icon goes to S14.
-- **S16** biometric and theme toggles are **inert** — they animate and change nothing.
+- **S16** the biometric toggle is **inert** — it animates and changes nothing. The theme selector switches the whole app between light and dark (see `providers/ThemeProvider`).
 - **S04b** is Google's screen, not QAMPUS's — keep it outside the token system. Its "Forgot password?" routes to S18; QAMPUS has no password reset (R-01).
 - **S05, S06, S14** are keyboard-aware.
 
@@ -434,7 +434,7 @@ Countdown is presentational, from `calledAt` via `useCountdown`. It never decide
 | `SearchField` | `value`, `onChangeText`, `placeholder`, `onClear` |
 | `Picker` | `label`, `value`, `options`, `onSelect`, `searchable` |
 | `ToggleRow` | `label`, `description`, `value`, `onChange`, `inert` |
-| `ThemeSelector` | `value`, `onChange`, `inert` |
+| `ThemeSelector` | `value`, `onChange` |
 
 `inert` renders and animates the control but never calls `onChange`.
 

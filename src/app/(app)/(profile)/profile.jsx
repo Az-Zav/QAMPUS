@@ -8,16 +8,16 @@ import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
 import ListRow from '@/components/shell/ListRow';
 import LogOutModal from '@/components/shell/LogOutModal';
 
-import {
-  COLORS, ELEVATION, IconSet, ListRowType, PROFILE_COPY, PROFILE_MENU, RADII, SPACING, TYPOGRAPHY, USER_ROLE, withOpacity,
-} from '@/constants';
-import { useSession } from '@/hooks';
+import { ELEVATION, IconSet, ListRowType, PROFILE_COPY, PROFILE_MENU, RADII, SPACING, TYPOGRAPHY, USER_ROLE, withOpacity } from '@/constants';
+import { useSession, useTheme, useThemedStyles } from '@/hooks';
 
 // S13 Profile (UIUX §4.11, §5.7). Sign in as a guest on Login to see the guest variant.
 
 const COPIED_MS = 1500;
 
 function IdCard({ label, value }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ function IdCard({ label, value }) {
     <View style={[styles.card, styles.idCard]}>
       <Text style={styles.idLabel}>{label}</Text>
       <View style={styles.idField}>
-        <IconSet name="id-card-outline" size={18} color={COLORS.slate} />
+        <IconSet name="id-card-outline" size={18} color={colors.slate} />
         <Text style={styles.idValue} selectable>{value}</Text>
         <Pressable
           onPress={copy}
@@ -44,7 +44,7 @@ function IdCard({ label, value }) {
           accessibilityRole="button"
           accessibilityLabel={copied ? `${label} copied` : `Copy ${label}`}
         >
-          <IconSet name={copied ? 'checkmark' : 'copy-outline'} size={16} color={copied ? COLORS.success : COLORS.slate} />
+          <IconSet name={copied ? 'checkmark' : 'copy-outline'} size={16} color={copied ? colors.success : colors.slate} />
         </Pressable>
       </View>
     </View>
@@ -52,6 +52,7 @@ function IdCard({ label, value }) {
 }
 
 export default function ProfileScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { user, signOut } = useSession();
   const [logOutOpen, setLogOutOpen] = useState(false);
@@ -112,8 +113,8 @@ export default function ProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: COLORS.paper },
+const makeStyles = (c) => StyleSheet.create({
+  screen: { flex: 1, backgroundColor: c.paper },
   scroll: { paddingBottom: BOTTOM_NAV_CLEARANCE },
   body: {
     gap: SPACING.md,
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.xl,
   },
   card: {
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderRadius: RADII.xl,
     overflow: 'hidden',
     ...ELEVATION.md,
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.base,
     letterSpacing: -0.35,
-    color: COLORS.ink,
+    color: c.ink,
   },
   idField: {
     flexDirection: 'row',
@@ -142,16 +143,16 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: withOpacity(COLORS.paper, 0.6),
+    backgroundColor: withOpacity(c.paper, 0.6),
     borderWidth: 1,
-    borderColor: withOpacity(COLORS.border, 0.6),
+    borderColor: withOpacity(c.border, 0.6),
     borderRadius: RADII.lg,
   },
   idValue: {
     flex: 1,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.slate,
+    color: c.slate,
   },
   copyButton: { padding: SPACING.xxs },
 });

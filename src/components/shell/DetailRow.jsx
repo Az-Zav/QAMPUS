@@ -1,7 +1,9 @@
-import { COLORS, SPACING, TYPOGRAPHY } from '@/constants';
+import { SPACING, TYPOGRAPHY } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 import { StyleSheet, Text, View } from 'react-native';
 
 export default function DetailRow({ label, value }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
@@ -10,7 +12,7 @@ export default function DetailRow({ label, value }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -18,12 +20,12 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xxs,
   },
   rowLabel: {
-    color: COLORS.slate,
+    color: c.slate,
     fontSize: TYPOGRAPHY.size.base,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   rowValue: {
-    color: COLORS.ink,
+    color: c.ink,
     fontSize: TYPOGRAPHY.size.base,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },

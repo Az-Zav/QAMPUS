@@ -16,7 +16,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { COLORS, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 
 const minutesAgo = (m) => new Date(Date.now() - m * 60000).toISOString();
 const hoursFromNow = (h) => new Date(Date.now() + h * 3600000).toISOString();
@@ -88,6 +89,7 @@ export function usePreview(screen, { barStyle } = {}) {
 }
 
 function PreviewBar({ states, value, onChange, style }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.toolbar, style]}>
       <Text style={styles.label}>Preview state:</Text>
@@ -102,37 +104,37 @@ function PreviewBar({ states, value, onChange, style }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: SPACING.xxs,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     padding: SPACING.xs,
     borderRadius: RADII.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
   },
   label: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.slate,
+    color: c.slate,
   },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xxs },
   pill: {
     paddingHorizontal: SPACING.xs,
     paddingVertical: SPACING.xxxs,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.disabledBg,
+    backgroundColor: c.disabledBg,
   },
-  activePill: { backgroundColor: COLORS.ink },
+  activePill: { backgroundColor: c.inverse },
   pillText: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.ink,
+    color: c.ink,
     textTransform: 'capitalize',
   },
-  activePillText: { color: COLORS.paper },
+  activePillText: { color: c.onInverse },
 });

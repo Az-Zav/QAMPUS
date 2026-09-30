@@ -2,8 +2,8 @@ import Button from '@/components/primitives/Button';
 import FormField from '@/components/primitives/FormField';
 import Input from '@/components/primitives/Input';
 import Picker from '@/components/primitives/Picker';
-import { COLORS, InputType, lineHeightFor, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
-import { usePrograms, useSession } from '@/hooks';
+import { InputType, lineHeightFor, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
+import { usePrograms, useSession, useThemedStyles } from '@/hooks';
 import { isValidStudentId } from '@/utils';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -14,6 +14,7 @@ const COPY = PROFILE_COPY.student;
 
 // S05: first Google sign-in collects student ID + program (R-01). Exit -> Home.
 export default function CompleteProfileScreen() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { completeStudentProfile } = useSession();
   const { programs } = usePrograms();
@@ -74,10 +75,10 @@ export default function CompleteProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   flex: {
     flex: 1,
@@ -95,13 +96,13 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xxl,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.xxl, TYPOGRAPHY.lineHeight.tight),
-    color: COLORS.ink,
+    color: c.ink,
   },
   body: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.sm, TYPOGRAPHY.lineHeight.relaxed),
-    color: COLORS.slate,
+    color: c.slate,
   },
   footer: {
     paddingHorizontal: SPACING.xxl,

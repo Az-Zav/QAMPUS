@@ -1,15 +1,15 @@
-import { ButtonType, COLORS, ComponentSize, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, ComponentSize, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-const VARIANTS = {
-  [ButtonType.PRIMARY]: { bg: COLORS.gold, border: null, text: COLORS.ink },
-  [ButtonType.SECONDARY]: { bg: COLORS.white, border: COLORS.border, text: COLORS.ink },
-  [ButtonType.DESTRUCTIVE]: { bg: COLORS.white, border: COLORS.error, text: COLORS.error },
-  [ButtonType.ACCENT]: { bg: COLORS.ink, border: null, text: COLORS.gold },
-  [ButtonType.TEXT]: { bg: 'transparent', border: null, text: COLORS.slate },
-};
-
-const DISABLED = { bg: COLORS.disabledBg, border: null, text: COLORS.slate };
+const makeVariants = (c) => ({
+  [ButtonType.PRIMARY]: { bg: c.gold, border: null, text: c.onGold },
+  [ButtonType.SECONDARY]: { bg: c.white, border: c.border, text: c.ink },
+  [ButtonType.DESTRUCTIVE]: { bg: c.white, border: c.error, text: c.error },
+  [ButtonType.ACCENT]: { bg: c.inverse, border: null, text: c.gold },
+  [ButtonType.TEXT]: { bg: 'transparent', border: null, text: c.slate },
+  disabled: { bg: c.disabledBg, border: null, text: c.slate },
+});
 
 const SIZES = {
   [ComponentSize.MD]: { height: 48, paddingHorizontal: SPACING.lg, fontSize: TYPOGRAPHY.size.md },
@@ -26,7 +26,9 @@ export default function Button({
   accessibilityLabel,
   style,
 }) {
-  const variant = disabled ? DISABLED : VARIANTS[type] ?? VARIANTS[ButtonType.PRIMARY];
+  const styles = useThemedStyles(makeStyles);
+  const variants = useThemedStyles(makeVariants);
+  const variant = disabled ? variants.disabled : variants[type] ?? variants[ButtonType.PRIMARY];
   const sizing = SIZES[size] ?? SIZES[ComponentSize.MD];
 
   return (
@@ -57,7 +59,7 @@ export default function Button({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   base: {
     borderRadius: RADII.full,
     alignItems: 'center',

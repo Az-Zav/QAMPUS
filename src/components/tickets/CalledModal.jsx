@@ -1,11 +1,13 @@
 import Button from '@/components/primitives/Button';
 import ModalShell from '@/components/shell/ModalShell';
-import { ButtonType, COLORS, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, SPACING, TYPOGRAPHY } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 import { formatCountdown } from '@/utils';
 import { StyleSheet, Text, View } from 'react-native';
 
 // ticket: view from toTicketView(), status YOUR_TURN. Shown app-wide when a ticket is called.
 export default function CalledModal({ visible, ticket, onClose, onOpenScanner }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <ModalShell
       visible={visible && !!ticket}
@@ -25,7 +27,7 @@ export default function CalledModal({ visible, ticket, onClose, onOpenScanner })
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   numbers: {
     alignItems: 'center',
     gap: SPACING.xxs,
@@ -33,11 +35,11 @@ const styles = StyleSheet.create({
   number: {
     fontSize: TYPOGRAPHY.size.xl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.ink,
+    color: c.ink,
   },
   countdown: {
     fontSize: TYPOGRAPHY.size.xxl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.gold,
+    color: c.gold,
   },
 });

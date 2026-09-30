@@ -1,4 +1,5 @@
-import { COLORS, ELEVATION, GUEST_TYPE_LABEL, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { ELEVATION, GUEST_TYPE_LABEL, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,6 +29,8 @@ function metaLine(context, user) {
 }
 
 export default function Hero({ context = 'profileStudent', user, onBack, onEdit }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const actionsTop = Math.max(insets.top, ACTIONS_TOP);
   const identityTop = actionsTop + IDENTITY_OFFSET;
@@ -38,11 +41,11 @@ export default function Hero({ context = 'profileStudent', user, onBack, onEdit 
     <View style={[styles.container, { height: identityTop + IDENTITY_BLOCK }]}>
       <View style={[styles.actions, { top: actionsTop }]}>
         <Pressable onPress={onBack} style={styles.action} accessibilityRole="button" accessibilityLabel="Go back">
-          <IconSet name="arrow-back" size={22} color={withOpacity(COLORS.paper, 0.8)} />
+          <IconSet name="arrow-back" size={22} color={withOpacity(colors.onInverse, 0.8)} />
         </Pressable>
         {!!onEdit && (
           <Pressable onPress={onEdit} style={styles.action} accessibilityRole="button" accessibilityLabel="Edit profile">
-            <IconSet name="create-outline" size={20} color={COLORS.paper} />
+            <IconSet name="create-outline" size={20} color={colors.onInverse} />
           </Pressable>
         )}
       </View>
@@ -69,10 +72,10 @@ export default function Hero({ context = 'profileStudent', user, onBack, onEdit 
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     width: '100%',
-    backgroundColor: COLORS.ink,
+    backgroundColor: c.inverse,
     borderBottomLeftRadius: CORNER_RADIUS,
     borderBottomRightRadius: CORNER_RADIUS,
     ...ELEVATION.sm,
@@ -97,8 +100,8 @@ const styles = StyleSheet.create({
     height: AVATAR,
     borderRadius: RADII.full,
     borderWidth: 2,
-    borderColor: COLORS.gold,
-    backgroundColor: COLORS.gold,
+    borderColor: c.gold,
+    backgroundColor: c.gold,
     alignItems: 'center',
     justifyContent: 'center',
     ...ELEVATION.md,
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
   initial: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.display,
-    color: COLORS.ink,
+    color: c.onGold,
   },
   name: {
     marginTop: SPACING.sm,
@@ -115,7 +118,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.xl,
     lineHeight: Math.round(TYPOGRAPHY.size.xl * 1.4),
     letterSpacing: -0.6,
-    color: COLORS.paper,
+    color: c.onInverse,
     textAlign: 'center',
   },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xxs, marginTop: SPACING.xxs },
@@ -123,8 +126,8 @@ const styles = StyleSheet.create({
   meta: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.size.sm,
-    color: withOpacity(COLORS.paper, 0.7),
+    color: withOpacity(c.onInverse, 0.7),
     flexShrink: 1,
   },
-  metaDivider: { color: withOpacity(COLORS.gold, 0.6) },
+  metaDivider: { color: withOpacity(c.gold, 0.6) },
 });

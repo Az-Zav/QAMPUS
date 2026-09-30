@@ -10,11 +10,12 @@ import EmptyState from '@/components/shell/EmptyState';
 import Header from '@/components/shell/Header';
 import ListRow from '@/components/shell/ListRow';
 import NoticeModal from '@/components/shell/NoticeModal';
-import { COLORS, EmptyStateType, ListRowType, QueueModalKey, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
-import { useMyTickets, useNotifications, useOffices } from '@/hooks';
+import { EmptyStateType, ListRowType, QueueModalKey, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
+import { useMyTickets, useNotifications, useOffices, useThemedStyles } from '@/hooks';
 import { groupHistory, matchesOfficeQuery } from '@/utils';
 
 export default function Queue() {
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { offices } = useOffices();
   const { history, now } = useMyTickets();
@@ -119,13 +120,13 @@ export default function Queue() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   yellowHero: {
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     paddingBottom: SPACING.lg,
@@ -140,13 +141,13 @@ const styles = StyleSheet.create({
     paddingBottom: 112,
   },
   pageTitle: {
-    color: COLORS.ink,
+    color: c.onGold,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
     letterSpacing: 0.5,
   },
   subtitle: {
-    color: COLORS.ink,
+    color: c.onGold,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xxl,
     marginTop: 2,
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   sectionLabel: {
-    color: COLORS.slate,
+    color: c.slate,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
     letterSpacing: 1,

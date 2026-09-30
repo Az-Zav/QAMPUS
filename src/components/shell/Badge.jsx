@@ -1,11 +1,15 @@
-import { COLORS, ComponentSize, IconSet, RADII, SPACING, STATUS_THEME, TYPOGRAPHY } from '@/constants';
+import { ComponentSize, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 // Neutral gold pill used when there is no status (e.g. an action badge)
-const ACTION_THEME = { bg: COLORS.gold, border: null, text: COLORS.ink, icon: null, label: '' };
+const makeActionTheme = (c) => ({ bg: c.gold, border: null, text: c.onGold, icon: null, label: '' });
 
 export default function Badge({ status, size = ComponentSize.SM, icon, label, onPress }) {
-  const theme = STATUS_THEME[status] ?? ACTION_THEME;
+  const styles = useThemedStyles(makeStyles);
+  const { status: statusTheme } = useTheme();
+  const actionTheme = useThemedStyles(makeActionTheme);
+  const theme = statusTheme[status] ?? actionTheme;
   const fontSize = size === ComponentSize.SM ? TYPOGRAPHY.size.sm : TYPOGRAPHY.size.base;
   const iconName = icon ?? theme.icon;
 
@@ -32,7 +36,7 @@ export default function Badge({ status, size = ComponentSize.SM, icon, label, on
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   badge: {
     borderRadius: RADII.full,
     paddingHorizontal: SPACING.md,

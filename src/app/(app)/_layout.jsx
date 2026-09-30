@@ -1,5 +1,6 @@
 import BottomNav from '@/components/shell/BottomNav';
-import { AppTab, COLORS } from '@/constants';
+import { AppTab } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -9,6 +10,8 @@ const TAB_PATHS = { '/home': AppTab.HOME, '/scan': AppTab.SCAN, '/queue': AppTab
 // (Profile, Notifications and their sub-pages). Pages slide in beneath the bar, which
 // never moves; on those pages no tab is active — Figma Nav/Bottom "Active=None".
 export default function AppLayout() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -18,7 +21,7 @@ export default function AppLayout() {
         screenOptions={{
           headerShown: false,
           animation: 'slide_from_right',
-          contentStyle: { backgroundColor: COLORS.paper },
+          contentStyle: { backgroundColor: colors.paper },
         }}
       />
       <BottomNav active={TAB_PATHS[pathname]} onNavigate={(tab) => router.navigate(`/${tab}`)} />
@@ -26,6 +29,6 @@ export default function AppLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.paper },
+const makeStyles = (c) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.paper },
 });

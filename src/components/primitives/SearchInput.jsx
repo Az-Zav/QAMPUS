@@ -1,8 +1,11 @@
-import { COLORS, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { useRef } from 'react';
 import { Pressable, StyleSheet, TextInput } from 'react-native';
 
 export default function SearchInput({ value, onChangeText, placeholder, style, ...rest }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const inputRef = useRef(null);
 
   return (
@@ -10,7 +13,7 @@ export default function SearchInput({ value, onChangeText, placeholder, style, .
       <IconSet
         name="search"
         size={18}
-        color={COLORS.slate}
+        color={colors.slate}
         style={styles.icon}
       />
       <TextInput
@@ -18,7 +21,7 @@ export default function SearchInput({ value, onChangeText, placeholder, style, .
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={COLORS.slate}
+        placeholderTextColor={colors.slate}
         style={styles.input}
         {...rest}
       />
@@ -26,13 +29,13 @@ export default function SearchInput({ value, onChangeText, placeholder, style, .
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   wrap: {
     height: 38,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.white,
+    backgroundColor: c.white,
     borderWidth: 1,
-    borderColor: withOpacity(COLORS.ink, 0.05),
+    borderColor: withOpacity(c.ink, 0.05),
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
@@ -44,6 +47,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.base,
-    color: COLORS.ink,
+    color: c.ink,
   },
 });

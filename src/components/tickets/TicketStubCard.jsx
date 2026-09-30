@@ -1,15 +1,7 @@
 import Badge from '@/components/shell/Badge';
 import TicketStubShape, { STUB_ASPECT_RATIO } from '@/components/tickets/TicketStubShape';
-import {
-  COLORS,
-  RADII,
-  SPACING,
-  TICKET_STUB_COPY,
-  TICKET_STUB_THEME,
-  TicketStatus,
-  TYPOGRAPHY,
-  withOpacity,
-} from '@/constants';
+import { RADII, SPACING, TICKET_STUB_COPY, TicketStatus, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { formatCountdown } from '@/utils';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -25,8 +17,10 @@ function getTimeLabel({ status, estimatedWaitMinutes, remainingSeconds }) {
 
 // ticket: view from toTicketView()
 export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
+  const { colors, stub } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const { shortNumber, nowServing, officeName, location, status } = ticket;
-  const theme = TICKET_STUB_THEME[status] ?? TICKET_STUB_THEME[TicketStatus.WAITING];
+  const theme = stub[status] ?? stub[TicketStatus.WAITING];
   const isCalled = status === TicketStatus.YOUR_TURN;
   const textColor = theme.text;
   const mutedText = withOpacity(textColor, 0.6);
@@ -82,7 +76,7 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
             <Text style={[styles.numLabel, styles.separator, { color: mutedText }]}>|</Text>
             <Text style={[styles.numLabel, { color: textColor }]}>
               YOURS{' '}
-              <Text style={[styles.numValue, isCalled && { color: COLORS.gold }]}>
+              <Text style={[styles.numValue, isCalled && { color: colors.gold }]}>
                 {shortNumber}
               </Text>
             </Text>
@@ -98,7 +92,7 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   card: {
     width: '100%',
     aspectRatio: STUB_ASPECT_RATIO,
@@ -136,7 +130,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   topPill: {
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
     borderRadius: RADII.full,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xxxs,
@@ -144,7 +138,7 @@ const styles = StyleSheet.create({
   topPillText: {
     fontSize: TYPOGRAPHY.size.xs,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.ink,
+    color: c.onGold,
   },
   locationText: {
     fontSize: TYPOGRAPHY.size.sm,

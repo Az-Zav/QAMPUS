@@ -1,7 +1,10 @@
-import { COLORS, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useTheme, useThemedStyles } from '@/hooks';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 export default function Scan() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Scan to Check In</Text>
@@ -22,7 +25,7 @@ export default function Scan() {
       <TextInput
         style={styles.codeInput}
         placeholder="Enter code manually"
-        placeholderTextColor={COLORS.white}
+        placeholderTextColor={withOpacity(colors.onInverse, 0.6)}
         keyboardType="number-pad"
         autoCapitalize="none"
         autoCorrect={false}
@@ -32,10 +35,10 @@ export default function Scan() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingTop: 64,
@@ -43,7 +46,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: 24,
-    color: COLORS.ink,
+    color: c.ink,
     marginBottom: 40,
   },
   scannerArea: {
@@ -61,7 +64,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 42,
     height: 42,
-    borderColor: COLORS.gold,
+    borderColor: c.gold,
   },
   topLeft: {
     top: 0,
@@ -89,7 +92,7 @@ const styles = StyleSheet.create({
   },
   instruction: {
     marginTop: 24,
-    color: COLORS.slate,
+    color: c.slate,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.size.sm,
     textAlign: 'center',
@@ -100,10 +103,10 @@ const styles = StyleSheet.create({
     marginTop: 28,
     paddingHorizontal: 24,
     borderWidth: 1.5,
-    borderColor: COLORS.white,
+    borderColor: c.onInverse,
     borderRadius: RADII.huge ?? 32,
-    backgroundColor: COLORS.ink,
-    color: COLORS.white,
+    backgroundColor: c.inverse,
+    color: c.onInverse,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: 18,
     textAlign: 'center',

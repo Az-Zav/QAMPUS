@@ -32,32 +32,14 @@ import SubHeader from '@/components/shell/SubHeader';
 import CalledModal from '@/components/tickets/CalledModal';
 import TicketModal from '@/components/tickets/TicketModal';
 import TicketStubCard from '@/components/tickets/TicketStubCard';
-import {
-  AppTab,
-  ButtonType,
-  COLORS,
-  ComponentSize,
-  EmptyStateType,
-  FAQ_ITEMS,
-  IconSet,
-  InfoCardType,
-  InputType,
-  ListRowTone,
-  ListRowType,
-  ModalTone,
-  OffenseState,
-  ONBOARDING_SLIDES,
-  RADII,
-  SPACING,
-  TicketStatus,
-  TYPOGRAPHY,
-} from '@/constants';
-import { useMyTickets, useOffices } from '@/hooks';
+import { AppTab, ButtonType, ComponentSize, EmptyStateType, FAQ_ITEMS, IconSet, InfoCardType, InputType, ListRowTone, ListRowType, ModalTone, OffenseState, ONBOARDING_SLIDES, RADII, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
+import { useMyTickets, useOffices, useTheme, useThemedStyles } from '@/hooks';
 
 const noop = () => {};
 
 // Labelled wrapper for one variant
 function Variant({ label, children }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.variant}>
       <Text style={styles.variantLabel}>{label}</Text>
@@ -76,6 +58,7 @@ function ModalTrigger({ label, onPress }) {
 // ---------------------------------------------------------------------------
 
 function ButtonDemo() {
+  const { colors } = useTheme();
   return (
     <>
       {Object.values(ButtonType).map((type) => (
@@ -90,13 +73,14 @@ function ButtonDemo() {
         <Button label="Small" size={ComponentSize.SM} onPress={noop} />
       </Variant>
       <Variant label="icon={<IconSet ... />}">
-        <Button label="With icon" type={ButtonType.SECONDARY} icon={<IconSet name="logo-google" size={20} color={COLORS.ink} />} onPress={noop} />
+        <Button label="With icon" type={ButtonType.SECONDARY} icon={<IconSet name="logo-google" size={20} color={colors.ink} />} onPress={noop} />
       </Variant>
     </>
   );
 }
 
 function BadgeDemo() {
+  const styles = useThemedStyles(makeStyles);
   return (
     <>
       {Object.values(TicketStatus).map((status) => (
@@ -209,6 +193,7 @@ function SegmentedSwitcherDemo() {
 }
 
 function HeaderDemo() {
+  const styles = useThemedStyles(makeStyles);
   return (
     <>
       <Variant label="default">
@@ -237,6 +222,7 @@ function SubHeaderDemo() {
 }
 
 function BottomNavDemo() {
+  const styles = useThemedStyles(makeStyles);
   const [active, setActive] = useState(AppTab.HOME);
   return (
     <Variant label="active + onNavigate">
@@ -489,6 +475,7 @@ function PageDotsDemo() {
 }
 
 function OnboardingSlideDemo() {
+  const styles = useThemedStyles(makeStyles);
   const { width } = useWindowDimensions();
   return ONBOARDING_SLIDES.map((slide) => (
     <Variant key={slide.id} label={`slide "${slide.id}"`}>
@@ -524,6 +511,7 @@ const DEMOS = [
 ];
 
 export default function Playground() {
+  const styles = useThemedStyles(makeStyles);
   const { active } = useMyTickets();
   const { offices } = useOffices();
   const [selected, setSelected] = useState(DEMOS[0].name);
@@ -557,15 +545,15 @@ export default function Playground() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   heading: {
     fontSize: TYPOGRAPHY.size.xl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.ink,
+    color: c.ink,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
   },
@@ -581,18 +569,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: RADII.full,
-    backgroundColor: COLORS.disabledBg,
+    backgroundColor: c.disabledBg,
   },
   chipActive: {
-    backgroundColor: COLORS.ink,
+    backgroundColor: c.inverse,
   },
   chipText: {
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.ink,
+    color: c.ink,
   },
   chipTextActive: {
-    color: COLORS.gold,
+    color: c.gold,
   },
   scroll: {
     paddingHorizontal: SPACING.lg,
@@ -605,7 +593,7 @@ const styles = StyleSheet.create({
   variantLabel: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.slate,
+    color: c.slate,
     letterSpacing: 0.5,
   },
   row: {
@@ -615,7 +603,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   goldBackdrop: {
-    backgroundColor: COLORS.gold,
+    backgroundColor: c.gold,
     borderRadius: RADII.lg,
     overflow: 'hidden',
   },
@@ -624,7 +612,7 @@ const styles = StyleSheet.create({
   },
   navFrame: {
     height: 110,
-    backgroundColor: COLORS.disabledBg,
+    backgroundColor: c.disabledBg,
     borderRadius: RADII.lg,
   },
 });

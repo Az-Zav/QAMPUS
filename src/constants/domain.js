@@ -57,7 +57,7 @@ export const TICKET_STATUS = Object.freeze({
 });
 
 // UI presentation status — the only status components read. Derived from
-// TICKET_STATUS by utils/ticket (toTicketStatus); keys match STATUS_THEME.
+// TICKET_STATUS by utils/ticket (toTicketStatus); keys match the theme's status map (constants/theme).
 export const TicketStatus = Object.freeze({
   WAITING: 'waiting',
   YOUR_TURN: 'yourTurn',

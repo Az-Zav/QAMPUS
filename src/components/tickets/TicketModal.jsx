@@ -1,7 +1,8 @@
 import Button from '@/components/primitives/Button';
 import Badge from '@/components/shell/Badge';
 import ModalShell from '@/components/shell/ModalShell';
-import { ButtonType, COLORS, ComponentSize, lineHeightFor, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
+import { ButtonType, ComponentSize, lineHeightFor, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 import { formatCountdown } from '@/utils';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -19,6 +20,7 @@ function detailRows({ status, position, peopleAhead, nowServing, estimatedWaitMi
 
 // ticket: view from toTicketView(). Opened from a Home ticket card.
 export default function TicketModal({ visible, ticket, onClose, onCancel, onOpenScanner }) {
+  const styles = useThemedStyles(makeStyles);
   const status = ticket?.status;
   const isCalled = status === TicketStatus.YOUR_TURN;
   const isExpired = status === TicketStatus.EXPIRED;
@@ -55,7 +57,7 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   statusBlock: {
     alignItems: 'center',
     gap: SPACING.sm,
@@ -63,13 +65,13 @@ const styles = StyleSheet.create({
   countdown: {
     fontSize: TYPOGRAPHY.size.xxl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.gold,
+    color: c.gold,
   },
   expired: {
-    color: COLORS.error,
+    color: c.error,
   },
   expiredWarning: {
-    color: COLORS.error,
+    color: c.error,
     fontSize: TYPOGRAPHY.size.sm,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.sm),
     fontFamily: TYPOGRAPHY.fontFamily.regular,

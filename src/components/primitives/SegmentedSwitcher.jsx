@@ -1,7 +1,9 @@
-import { COLORS, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function SegmentedSwitcher({ options = [], value, onChange, style }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={[styles.container, style]} accessibilityRole="tablist">
       {options.map((option) => {
@@ -24,12 +26,12 @@ export default function SegmentedSwitcher({ options = [], value, onChange, style
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: withOpacity(COLORS.white, 0.9),
+    backgroundColor: withOpacity(c.white, 0.9),
     borderWidth: 1,
-    borderColor: withOpacity(COLORS.ink, 0.05),
+    borderColor: withOpacity(c.ink, 0.05),
     borderRadius: RADII.full,
     padding: SPACING.xxs,
   },
@@ -42,14 +44,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
   },
   selected: {
-    backgroundColor: COLORS.ink,
+    backgroundColor: c.inverse,
   },
   label: {
-    color: COLORS.slate,
+    color: c.slate,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.sm,
   },
   selectedLabel: {
-    color: COLORS.gold,
+    color: c.gold,
   },
 });

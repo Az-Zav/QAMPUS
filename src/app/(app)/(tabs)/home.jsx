@@ -9,14 +9,16 @@ import InfoCard from '@/components/shell/InfoCard';
 import TicketModal from '@/components/tickets/TicketModal';
 import TicketStubCard from '@/components/tickets/TicketStubCard';
 
-import { COLORS, EmptyStateType, IconSet, InfoCardType, SPACING, TYPOGRAPHY } from '@/constants';
+import { EmptyStateType, IconSet, InfoCardType, SPACING, TYPOGRAPHY } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
-import { useMyTickets, useNotifications, useOffices, useSession } from '@/hooks';
+import { useMyTickets, useNotifications, useOffices, useSession, useTheme, useThemedStyles } from '@/hooks';
 import { greetingFor } from '@/utils';
 
 const HomeModal = Object.freeze({ TICKET: 'ticket', JOIN: 'join' });
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { user } = useSession();
   const { active: liveActive, now } = useMyTickets();
@@ -87,7 +89,7 @@ export default function HomeScreen() {
         {renderActiveQueues()}
 
         <View style={styles.operatingHeader}>
-          <IconSet name="time-outline" size={16} color={COLORS.slate} />
+          <IconSet name="time-outline" size={16} color={colors.slate} />
           <Text style={styles.operatingTitle}>OPERATING HOURS</Text>
         </View>
 
@@ -124,10 +126,10 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   container: {
     paddingHorizontal: SPACING.lg,
@@ -138,7 +140,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xl,
-    color: COLORS.ink,
+    color: c.ink,
     marginBottom: SPACING.lg,
   },
   userName: {
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.md,
-    color: COLORS.ink,
+    color: c.ink,
     marginBottom: SPACING.md,
   },
   ticketList: {
@@ -163,7 +165,7 @@ const styles = StyleSheet.create({
   operatingTitle: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.slate,
+    color: c.slate,
     letterSpacing: 0.8,
   },
   officeList: {

@@ -2,8 +2,8 @@ import Button from '@/components/primitives/Button';
 import FormField from '@/components/primitives/FormField';
 import Input from '@/components/primitives/Input';
 import Picker from '@/components/primitives/Picker';
-import { COLORS, GUEST_TYPE_LABEL, IconSet, InputType, lineHeightFor, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
-import { useSession } from '@/hooks';
+import { GUEST_TYPE_LABEL, IconSet, InputType, lineHeightFor, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
+import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { isValidEmail } from '@/utils';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -20,6 +20,8 @@ const guestTypeFromLabel = (label) =>
 
 // S06: guest profile form, then the issued Guest ID (R-02). Exit -> Home.
 export default function GuestProfileScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { completeGuestProfile } = useSession();
 
@@ -44,7 +46,7 @@ export default function GuestProfileScreen() {
     return (
       <SafeAreaView style={styles.screen}>
         <View style={styles.issued}>
-          <IconSet name="checkmark-circle-outline" size={44} color={COLORS.success} />
+          <IconSet name="checkmark-circle-outline" size={44} color={colors.success} />
           <Text style={styles.issuedTitle} accessibilityRole="header">
             {ISSUED_COPY.title}
           </Text>
@@ -112,10 +114,10 @@ export default function GuestProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c) => StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.paper,
+    backgroundColor: c.paper,
   },
   flex: {
     flex: 1,
@@ -133,13 +135,13 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xxl,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.xxl, TYPOGRAPHY.lineHeight.tight),
-    color: COLORS.ink,
+    color: c.ink,
   },
   body: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
     lineHeight: lineHeightFor(TYPOGRAPHY.size.sm, TYPOGRAPHY.lineHeight.relaxed),
-    color: COLORS.slate,
+    color: c.slate,
   },
   center: {
     textAlign: 'center',
@@ -154,14 +156,14 @@ const styles = StyleSheet.create({
   issuedTitle: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xl,
-    color: COLORS.ink,
+    color: c.ink,
   },
   guestId: {
     fontFamily: TYPOGRAPHY.fontFamily.mono,
     fontSize: TYPOGRAPHY.size.xxl,
     fontWeight: TYPOGRAPHY.weight.bold,
     letterSpacing: 2,
-    color: COLORS.ink,
+    color: c.ink,
   },
   footer: {
     paddingHorizontal: SPACING.xxl,
