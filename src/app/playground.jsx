@@ -27,6 +27,7 @@ import Header from '@/components/shell/Header';
 import InfoCard from '@/components/shell/InfoCard';
 import ListRow from '@/components/shell/ListRow';
 import NoticeModal from '@/components/shell/NoticeModal';
+import SubHeader from '@/components/shell/SubHeader';
 import CalledModal from '@/components/tickets/CalledModal';
 import TicketModal from '@/components/tickets/TicketModal';
 import TicketStubCard from '@/components/tickets/TicketStubCard';
@@ -188,6 +189,19 @@ function HeaderDemo() {
         <View style={styles.goldBackdrop}>
           <Header title="QUEUE" inverted onBellPress={noop} onAvatarPress={noop} />
         </View>
+      </Variant>
+    </>
+  );
+}
+
+function SubHeaderDemo() {
+  return (
+    <>
+      <Variant label="title + onBack">
+        <SubHeader title="Help & Support" onBack={noop} />
+      </Variant>
+      <Variant label="long title (truncates to one line)">
+        <SubHeader title="Notifications and announcement preferences" onBack={noop} />
       </Variant>
     </>
   );
@@ -467,6 +481,7 @@ const DEMOS = [
   { name: 'SegmentedSwitcher', Demo: SegmentedSwitcherDemo },
   { name: 'PageDots', Demo: PageDotsDemo },
   { name: 'Header', Demo: HeaderDemo },
+  { name: 'SubHeader', Demo: SubHeaderDemo },
   { name: 'BottomNav', Demo: BottomNavDemo },
   { name: 'DetailRow', Demo: DetailRowDemo },
   { name: 'EmptyState', Demo: EmptyStateDemo },
