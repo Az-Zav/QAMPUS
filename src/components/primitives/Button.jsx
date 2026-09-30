@@ -6,6 +6,7 @@ const VARIANTS = {
   [ButtonType.SECONDARY]: { bg: COLORS.white, border: COLORS.border, text: COLORS.ink },
   [ButtonType.DESTRUCTIVE]: { bg: COLORS.white, border: COLORS.error, text: COLORS.error },
   [ButtonType.ACCENT]: { bg: COLORS.ink, border: null, text: COLORS.gold },
+  [ButtonType.TEXT]: { bg: 'transparent', border: null, text: COLORS.slate },
 };
 
 const DISABLED = { bg: COLORS.disabledBg, border: null, text: COLORS.slate };

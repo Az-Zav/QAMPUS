@@ -116,3 +116,19 @@ export const EMPTY_STATE_COPY = Object.freeze({
     body: 'Please wait — this clears on its own.',
   },
 });
+
+// ---------------------------------------------------------------------------
+// 5. Onboarding (S01–S03)
+// ---------------------------------------------------------------------------
+
+export const ONBOARDING_SLIDES = Object.freeze([
+  { id: 'join', title: 'Join queues remotely', body: 'Skip physical lines — join from anywhere on campus.' },
+  { id: 'notify', title: 'Get notified when it’s your turn', body: 'Real-time alerts so you never miss your call.' },
+  { id: 'start', title: 'Skip the line.\nNot the service.', body: 'Get started and reclaim your time.' },
+]);
+
+export const ONBOARDING_COPY = Object.freeze({
+  skip: 'Skip',
+  next: 'Next',
+  getStarted: 'Get Started',
+});

@@ -248,6 +248,7 @@ export const ButtonType = Object.freeze({
   SECONDARY: 'secondary',
   DESTRUCTIVE: 'destructive',
   ACCENT: 'accent',
+  TEXT: 'text',
 });
 
 export const InputType = Object.freeze({

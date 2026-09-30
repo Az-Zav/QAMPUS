@@ -8,16 +8,20 @@ const SessionContext = createContext(null);
 
 export function SessionProvider({ children }) {
   const [user, setUser] = useState(null);
+  // In-memory: onboarding shows again after an app restart until storage is added
+  const [hasOnboarded, setHasOnboarded] = useState(false);
 
   const value = useMemo(
     () => ({
       user,
       isSignedIn: !!user,
+      hasOnboarded,
+      completeOnboarding: () => setHasOnboarded(true),
       signInAsStudent: () => setUser(MOCK_USER_STUDENT),
       signInAsGuest: () => setUser(MOCK_USER_GUEST),
       signOut: () => setUser(null),
     }),
-    [user],
+    [user, hasOnboarded],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

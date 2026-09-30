@@ -5,11 +5,13 @@
 
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import OnboardingSlide from '@/components/onboarding/OnboardingSlide';
 import Button from '@/components/primitives/Button';
 import Input from '@/components/primitives/Input';
+import PageDots from '@/components/primitives/PageDots';
 import Picker from '@/components/primitives/Picker';
 import SearchInput from '@/components/primitives/SearchInput';
 import SegmentedSwitcher from '@/components/primitives/SegmentedSwitcher';
@@ -42,6 +44,7 @@ import {
   ListRowType,
   ModalTone,
   OffenseState,
+  ONBOARDING_SLIDES,
   RADII,
   SPACING,
   TicketStatus,
@@ -434,6 +437,25 @@ function ModalsDemo({ active, offices }) {
   );
 }
 
+function PageDotsDemo() {
+  return [0, 1, 2].map((i) => (
+    <Variant key={i} label={`count={3} index={${i}}`}>
+      <PageDots count={3} index={i} />
+    </Variant>
+  ));
+}
+
+function OnboardingSlideDemo() {
+  const { width } = useWindowDimensions();
+  return ONBOARDING_SLIDES.map((slide) => (
+    <Variant key={slide.id} label={`slide "${slide.id}"`}>
+      <View style={styles.slideFrame}>
+        <OnboardingSlide slide={slide} width={width - SPACING.lg * 2} />
+      </View>
+    </Variant>
+  ));
+}
+
 // Order of the chip bar
 const DEMOS = [
   { name: 'Button', Demo: ButtonDemo },
@@ -443,6 +465,7 @@ const DEMOS = [
   { name: 'Picker', Demo: PickerDemo },
   { name: 'Toggle', Demo: ToggleDemo },
   { name: 'SegmentedSwitcher', Demo: SegmentedSwitcherDemo },
+  { name: 'PageDots', Demo: PageDotsDemo },
   { name: 'Header', Demo: HeaderDemo },
   { name: 'BottomNav', Demo: BottomNavDemo },
   { name: 'DetailRow', Demo: DetailRowDemo },
@@ -452,6 +475,7 @@ const DEMOS = [
   { name: 'TicketStubCard', Demo: TicketStubCardDemo },
   { name: 'OfficeCard', Demo: OfficeCardDemo },
   { name: 'Modals', Demo: ModalsDemo },
+  { name: 'OnboardingSlide', Demo: OnboardingSlideDemo },
 ];
 
 export default function Playground() {
@@ -549,6 +573,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.gold,
     borderRadius: RADII.lg,
     overflow: 'hidden',
+  },
+  slideFrame: {
+    height: 420,
   },
   navFrame: {
     height: 110,
