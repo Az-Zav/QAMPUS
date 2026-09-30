@@ -1,7 +1,7 @@
 import { COLORS } from '@/constants';
 import { SessionProvider } from '@/providers/SessionProvider';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold, useFonts } from '@expo-google-fonts/dm-sans';
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
@@ -36,7 +36,13 @@ export default function RootLayout() {
       <StatusBar style="dark" translucent backgroundColor="transparent" />
       <SessionProvider>
         <View style={styles.shell}>
-          <Slot />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: 'slide_from_right',
+              contentStyle: { backgroundColor: COLORS.paper },
+            }}
+          />
         </View>
       </SessionProvider>
     </SafeAreaProvider>
