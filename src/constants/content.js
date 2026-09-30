@@ -132,3 +132,93 @@ export const ONBOARDING_COPY = Object.freeze({
   next: 'Next',
   getStarted: 'Get Started',
 });
+
+// ---------------------------------------------------------------------------
+// 6. Notifications & Profile (S12 – S17, M09)
+// ---------------------------------------------------------------------------
+
+export const PROFILE_MENU = Object.freeze([
+  { id: 'history', title: 'Queue History', icon: 'receipt-outline', href: '/queue' },
+  { id: 'bans', title: 'Bans & Warnings', icon: 'hammer-outline', href: '/bans' },
+  { id: 'settings', title: 'Settings', icon: 'settings-outline', href: '/settings' },
+  { id: 'help', title: 'Help & Support', icon: 'help-circle-outline', href: '/help' },
+]);
+
+export const PROFILE_COPY = Object.freeze({
+  studentIdLabel: 'Student ID',
+  guestIdLabel: 'Guest ID',
+  logOut: 'Log out',
+});
+
+// Placeholder until the program list source is decided (PRD open question, UI Build Guide §4.2)
+export const PROGRAM_OPTIONS = Object.freeze([
+  'Computer Science',
+  'Information Technology',
+  'Data Science and Analytics',
+]);
+
+export const EDIT_PROFILE_COPY = Object.freeze({
+  title: 'Edit Profile',
+  accountLabel: 'ACCOUNT',
+  detailsLabel: 'DETAILS',
+  studentIdLabel: 'Student ID',
+  studentIdHint: 'Only an administrator can change your student ID.',
+  guestIdLabel: 'Guest ID',
+  guestIdHint: 'Generated for you. Staff use it to look you up.',
+  programLabel: 'Program',
+  programPlaceholder: 'Search programs',
+  nameLabel: 'Full name',
+  namePlaceholder: 'Your full name',
+  emailLabel: 'Email (optional)',
+  emailPlaceholder: 'name@example.com',
+  guestTypeLabel: 'I am a…',
+  guestTypePlaceholder: 'Select one',
+  save: 'Save changes',
+  saving: 'Saving…',
+  errors: {
+    programRequired: 'Choose your program.',
+    nameRequired: 'Enter your name.',
+    emailInvalid: 'Enter a valid email address.',
+    guestTypeRequired: 'Choose what describes you.',
+    saveFailed: 'Couldn’t save your changes. Try again.',
+  },
+});
+
+export const LOG_OUT_COPY = Object.freeze({
+  title: 'Log out?',
+  body: "You'll need to sign in again to see your tickets and history.",
+  confirmLabel: 'Log out',
+  cancelLabel: 'Stay signed in',
+});
+
+export const BANS_COPY = Object.freeze({
+  bannedUntil: (time) => `Joining paused until ${time}`,
+  historyLabel: 'OFFENSE HISTORY',
+  policyLink: 'Learn about queue policy',
+});
+
+export const OFFENSE_LABEL = Object.freeze({
+  NO_SHOW: 'No-show',
+  CANCELLED_AFTER_CALL: 'Cancelled after being called',
+});
+
+export const SETTINGS_COPY = Object.freeze({
+  generalLabel: 'GENERAL',
+  appearanceLabel: 'APPEARANCE',
+  push: { title: 'Push notifications', subtitle: 'In-app notifications always persist. Push is used for your turn.' },
+  biometric: { title: 'Biometric login', subtitle: 'Not available in this version.' },
+});
+
+export const HELP_COPY = Object.freeze({
+  faqTitle: 'Frequently Asked Questions',
+  faqCount: (n) => `${n} articles`,
+  contactTitle: 'Still need help?',
+  contactBody: 'Our campus services team is on standby during administrative office hours (8:00 AM – 5:00 PM).',
+  contactLabel: 'Contact Support',
+});
+
+export const NOTIFICATIONS_COPY = Object.freeze({
+  newCount: (n) => `${n} new notification${n === 1 ? '' : 's'}`,
+  recent: 'Recent',
+  previous: 'Previous',
+});

@@ -143,7 +143,7 @@ function SearchInputDemo() {
 
 function PickerDemo() {
   const [program, setProgram] = useState(null);
-  const options = ['BS Computer Science', 'BS Information Technology', 'BS Civil Engineering', 'BS Architecture'];
+  const options = ['Computer Science', 'Information Technology', 'Data Science and Analytics'];
   return (
     <>
       <Variant label="default">
