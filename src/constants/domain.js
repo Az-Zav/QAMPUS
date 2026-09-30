@@ -56,7 +56,8 @@ export const TICKET_STATUS = Object.freeze({
   NO_SHOW: 'NO_SHOW',
 });
 
-// UI Presentation status mapping
+// UI presentation status — the only status components read. Derived from
+// TICKET_STATUS by utils/ticket (toTicketStatus); keys match STATUS_THEME.
 export const TicketStatus = Object.freeze({
   WAITING: 'waiting',
   YOUR_TURN: 'yourTurn',
@@ -64,19 +65,30 @@ export const TicketStatus = Object.freeze({
   IN_SERVICE: 'inService',
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
+  CANCELLED_BY_OFFICE: 'cancelledByOffice',
   NO_SHOW: 'noShow',
 });
 
-export const HistoryStatus = Object.freeze({
-  COMPLETED: 'COMPLETED',
-  CANCELLED: 'CANCELLED',
-  NO_SHOW: 'NO_SHOW',
-  CANCELLED_BY_OFFICE: 'CANCELLED_BY_OFFICE',
+// Who cancelled a CANCELLED ticket — office/system cancellations never penalize (R-16)
+export const CANCELLED_BY = Object.freeze({
+  USER: 'USER',
+  OFFICE: 'OFFICE',
 });
 
 export const QUEUE_STATUS = Object.freeze({
   OPEN: 'OPEN',
   CLOSED: 'CLOSED',
+});
+
+// ---------------------------------------------------------------------------
+// 2b. Business Rule Limits (PRD)
+// ---------------------------------------------------------------------------
+
+export const RULES = Object.freeze({
+  GRACE_PERIOD_SECONDS: 60, // R-12
+  MAX_ACTIVE_TICKETS: 3, // R-07
+  OFFENSES_PER_BAN: 2, // R-13
+  BAN_HOURS: 24, // R-13
 });
 
 // ---------------------------------------------------------------------------
@@ -90,15 +102,17 @@ export const USER_ROLE = Object.freeze({
   SUPER_ADMIN: 'SUPER_ADMIN',
 });
 
-export const UserRole = USER_ROLE;
-
 export const GUEST_TYPE = Object.freeze({
   PARENT_GUARDIAN: 'PARENT_GUARDIAN',
   REPRESENTATIVE: 'REPRESENTATIVE',
   ALUMNI: 'ALUMNI',
 });
 
-export const GuestType = GUEST_TYPE;
+export const GUEST_TYPE_LABEL = Object.freeze({
+  [GUEST_TYPE.PARENT_GUARDIAN]: 'Parent or guardian',
+  [GUEST_TYPE.REPRESENTATIVE]: 'Representative',
+  [GUEST_TYPE.ALUMNI]: 'Alumni',
+});
 
 // ---------------------------------------------------------------------------
 // 4. Notifications & Offenses
@@ -116,14 +130,10 @@ export const NOTIFICATION_TYPE = Object.freeze({
   GLOBAL_ANNOUNCEMENT: 'GLOBAL_ANNOUNCEMENT',
 });
 
-export const NotificationType = NOTIFICATION_TYPE;
-
 export const OFFENSE_TYPE = Object.freeze({
   NO_SHOW: 'NO_SHOW',
   CANCELLED_AFTER_CALL: 'CANCELLED_AFTER_CALL',
 });
-
-export const OffenseType = OFFENSE_TYPE;
 
 export const OffenseState = Object.freeze({
   ACTIVE: 'active',

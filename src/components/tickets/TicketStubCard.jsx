@@ -1,51 +1,51 @@
 import Badge from '@/components/shell/Badge';
-import { COLORS, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { COLORS, RADII, SPACING, TicketStatus, TYPOGRAPHY, withOpacity } from '@/constants';
+import { formatCountdown } from '@/utils';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-const STATE_IMAGES = {
-  waiting: require('../../../assets/images/TicketStub.png'),
-  yourTurn: require('../../../assets/images/TicketStub-Inverted.png'),
-  called: require('../../../assets/images/TicketStub-Inverted.png'),
+const STUB_IMAGES = {
+  default: require('../../../assets/images/TicketStub.png'),
+  inverted: require('../../../assets/images/TicketStub-Inverted.png'),
   expired: require('../../../assets/images/TicketStub-Expired.png'),
-  inService: require('../../../assets/images/TicketStub.png'),
 };
 
-const TEXT_COLORS = {
-  waiting: COLORS.ink,
-  yourTurn: COLORS.paper,
-  called: COLORS.paper,
-  expired: COLORS.ink,
-  inService: COLORS.ink,
-};
-
-const TOP_LABELS = {
-  waiting: 'NEXT UP',
-  expired: 'WAITING FOR STAFF',
+// Per-status look for the three active states shown on Home (R-08b)
+const APPEARANCE = {
+  [TicketStatus.WAITING]: { image: STUB_IMAGES.default, text: COLORS.ink, topLabel: 'NEXT UP' },
+  [TicketStatus.YOUR_TURN]: { image: STUB_IMAGES.inverted, text: COLORS.paper, topLabel: null },
+  [TicketStatus.EXPIRED]: { image: STUB_IMAGES.expired, text: COLORS.ink, topLabel: 'WAITING FOR STAFF' },
+  [TicketStatus.IN_SERVICE]: { image: STUB_IMAGES.default, text: COLORS.ink, topLabel: null },
 };
 
 function getTimeLabel({ status, estimatedWaitMinutes, remainingSeconds }) {
-  if (status === 'waiting') {
-    return typeof estimatedWaitMinutes === 'number' ? `${estimatedWaitMinutes} mins` : null;
+  if (status === TicketStatus.WAITING && typeof estimatedWaitMinutes === 'number') {
+    return `${estimatedWaitMinutes} mins`;
   }
-  if ((status === 'yourTurn' || status === 'called' || status === 'expired') && typeof remainingSeconds === 'number') {
-    const m = Math.floor(remainingSeconds / 60);
-    const s = remainingSeconds % 60;
-    return `${m}:${String(s).padStart(2, '0')}`;
+  if (typeof remainingSeconds === 'number') {
+    return formatCountdown(remainingSeconds);
   }
   return null;
 }
 
+// ticket: view from toTicketView()
 export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
   const { shortNumber, nowServing, officeName, location, status } = ticket;
-  const isCalled = status === 'yourTurn' || status === 'called';
-  const textColor = TEXT_COLORS[status] ?? COLORS.ink;
+  const appearance = APPEARANCE[status] ?? APPEARANCE[TicketStatus.WAITING];
+  const isCalled = status === TicketStatus.YOUR_TURN;
+  const textColor = appearance.text;
   const mutedText = withOpacity(textColor, 0.6);
-  const topLabel = TOP_LABELS[status];
+  const topLabel = appearance.topLabel;
   const timeLabel = getTimeLabel(ticket);
 
   return (
-    <Pressable onPress={onPress} style={styles.card}>
-      <Image source={STATE_IMAGES[status] ?? STATE_IMAGES.waiting} style={styles.image} resizeMode="cover" />
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      style={styles.card}
+      accessibilityRole="button"
+      accessibilityLabel={`Ticket ${shortNumber}, ${officeName}`}
+    >
+      <Image source={appearance.image} style={styles.image} resizeMode="cover" />
 
       <View style={styles.content}>
         <View style={styles.topHalf}>
@@ -53,17 +53,17 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
             <Text style={[styles.officeName, { color: textColor }]} numberOfLines={1}>
               {officeName}
             </Text>
-            {timeLabel && <Text style={[styles.timeLabel, { color: mutedText }]}>{timeLabel}</Text>}
+            {!!timeLabel && <Text style={[styles.timeLabel, { color: mutedText }]}>{timeLabel}</Text>}
           </View>
 
-          {(topLabel || location) && (
+          {(!!topLabel || !!location) && (
             <View style={styles.metaRow}>
-              {topLabel && (
+              {!!topLabel && (
                 <View style={styles.topPill}>
                   <Text style={styles.topPillText}>{topLabel}</Text>
                 </View>
               )}
-              {location && (
+              {!!location && (
                 <Text style={[styles.locationText, { color: mutedText }]} numberOfLines={1}>
                   {location}
                 </Text>
@@ -87,7 +87,7 @@ export default function TicketStubCard({ ticket, onPress, onOpenScanner }) {
           </View>
 
           <View style={styles.footer}>
-            <Badge status={status} size="sm" />
+            <Badge status={status} />
             {isCalled && <Badge icon="qr-code" label="Open scanner" onPress={onOpenScanner} />}
           </View>
         </View>

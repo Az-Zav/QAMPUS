@@ -1,4 +1,5 @@
 import { COLORS } from '@/constants';
+import { SessionProvider } from '@/providers/SessionProvider';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold, useFonts } from '@expo-google-fonts/dm-sans';
 import { Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -33,9 +34,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
       <StatusBar style="dark" translucent backgroundColor="transparent" />
-      <View style={styles.shell}>
-        <Slot />
-      </View>
+      <SessionProvider>
+        <View style={styles.shell}>
+          <Slot />
+        </View>
+      </SessionProvider>
     </SafeAreaProvider>
   );
 }

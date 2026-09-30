@@ -1,9 +1,9 @@
-import { COLORS, QueueView, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { COLORS, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-export default function SegmentedSwitcher({ options = [QueueView.JOIN, QueueView.HISTORY], value, onChange }) {
+export default function SegmentedSwitcher({ options = [], value, onChange, style }) {
   return (
-    <View style={styles.container} accessibilityRole="tablist">
+    <View style={[styles.container, style]} accessibilityRole="tablist">
       {options.map((option) => {
         const selected = option === value;
         return (
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: withOpacity(COLORS.ink, 0.05),
     borderRadius: RADII.full,
-    padding: 4,
+    padding: SPACING.xxs,
   },
   segment: {
     flex: 1,

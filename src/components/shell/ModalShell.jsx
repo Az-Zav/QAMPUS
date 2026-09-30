@@ -1,26 +1,68 @@
+import DetailRow from '@/components/shell/DetailRow';
+import { COLORS, IconSet, lineHeightFor, ModalTone, OVERLAY, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { COLORS, OVERLAY, RADII, SPACING, TYPOGRAPHY } from '@/constants';
 
-export default function ModalShell({ visible, onClose, showClose = true, children }) {
+const ICON_CIRCLE = 48;
+
+// Base for every modal: scrim, card, close button, and the standard
+// header (icon, title, subtitle) -> children -> detail rows -> actions layout.
+export default function ModalShell({
+  visible,
+  onClose,
+  showClose = true,
+  icon,
+  tone = ModalTone.DEFAULT,
+  title,
+  subtitle,
+  rows, // optional [{ label, value }]
+  actions, // optional node, stacked full-width under the content
+  children,
+}) {
+  const destructive = tone === ModalTone.DESTRUCTIVE;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.card}>
           {showClose && (
             <Pressable
-              style={({ pressed }) => [
-                styles.closeButton,
-                pressed && styles.closeButtonPressed,
-              ]}
+              style={({ pressed }) => [styles.closeButton, pressed && styles.pressed]}
               onPress={onClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={SPACING.md}
               accessibilityRole="button"
-              accessibilityLabel="Close modal"
+              accessibilityLabel="Close"
             >
-              <Text style={styles.closeText}>✕</Text>
+              <IconSet name="close" size={16} color={COLORS.ink} />
             </Pressable>
           )}
+
+          {(icon || title || subtitle) && (
+            <View style={styles.header}>
+              {!!icon && (
+                <View style={[styles.iconCircle, destructive && styles.iconCircleDestructive]}>
+                  <IconSet name={icon} size={24} color={destructive ? COLORS.error : COLORS.ink} />
+                </View>
+              )}
+              {!!title && (
+                <Text style={styles.title} accessibilityRole="header">
+                  {title}
+                </Text>
+              )}
+              {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+            </View>
+          )}
+
           {children}
+
+          {!!rows?.length && (
+            <View style={styles.rows}>
+              {rows.map((row) => (
+                <DetailRow key={row.label} label={row.label} value={row.value} />
+              ))}
+            </View>
+          )}
+
+          {!!actions && <View style={styles.actions}>{actions}</View>}
         </View>
       </View>
     </Modal>
@@ -46,7 +88,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.paper,
     borderRadius: RADII.xxl,
     padding: SPACING.xxl,
-    position: 'relative',
+    gap: SPACING.lg,
   },
   closeButton: {
     position: 'absolute',
@@ -57,17 +99,46 @@ const styles = StyleSheet.create({
     borderRadius: RADII.full,
     borderWidth: 1,
     borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
-    backgroundColor: COLORS.surface,
   },
-  closeButtonPressed: {
-    opacity: 0.7,
+  pressed: { opacity: 0.7 },
+  header: {
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
-  closeText: {
-    fontSize: TYPOGRAPHY.size.base,
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    color: COLORS.textPrimary,
+  iconCircle: {
+    width: ICON_CIRCLE,
+    height: ICON_CIRCLE,
+    borderRadius: RADII.full,
+    backgroundColor: COLORS.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.xxs,
+  },
+  iconCircleDestructive: {
+    backgroundColor: withOpacity(COLORS.error, 0.15),
+  },
+  title: {
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.xl,
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.xl, TYPOGRAPHY.lineHeight.tight),
+    color: COLORS.ink,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.sm,
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.sm, TYPOGRAPHY.lineHeight.relaxed),
+    color: COLORS.slate,
+    textAlign: 'center',
+  },
+  rows: {
+    gap: SPACING.xs,
+  },
+  actions: {
+    gap: SPACING.sm,
   },
 });

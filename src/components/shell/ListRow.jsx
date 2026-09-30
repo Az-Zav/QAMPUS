@@ -1,23 +1,28 @@
-import { COLORS, ELEVATION, HistoryStatus, IconSet, ListRowTone, ListRowType, OffenseState, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import {
+  COLORS,
+  ELEVATION,
+  IconSet,
+  lineHeightFor,
+  ListRowTone,
+  ListRowType,
+  OffenseState,
+  RADII,
+  SPACING,
+  STATUS_THEME,
+  TicketStatus,
+  TYPOGRAPHY,
+  withOpacity,
+} from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const ICON_CIRCLE = 36;
 const DOT = SPACING.sm;
 
-const lineHeight = (size) => Math.round(size * TYPOGRAPHY.lineHeight.normal);
-
 const TONES = {
-  neutral: COLORS.slate,
-  highlight: COLORS.gold,
-  success: COLORS.success,
-  error: COLORS.error,
-};
-
-const HISTORY_STATUS = {
-  [HistoryStatus.COMPLETED]: { label: 'Completed', color: COLORS.success },
-  [HistoryStatus.CANCELLED]: { label: 'Cancelled', color: COLORS.slate },
-  [HistoryStatus.NO_SHOW]: { label: 'No-show', color: COLORS.error },
-  [HistoryStatus.CANCELLED_BY_OFFICE]: { label: 'Cancelled by office', color: COLORS.slate },
+  [ListRowTone.NEUTRAL]: COLORS.slate,
+  [ListRowTone.HIGHLIGHT]: COLORS.gold,
+  [ListRowTone.SUCCESS]: COLORS.success,
+  [ListRowTone.ERROR]: COLORS.error,
 };
 
 const OFFENSE_STATE = {
@@ -85,8 +90,9 @@ function OffenseRow({ title, subtitle, status }) {
   );
 }
 
-function HistoryRow({ title, subtitle, meta, icon = 'school-outline', status }) {
-  const state = HISTORY_STATUS[status] ?? HISTORY_STATUS[HistoryStatus.COMPLETED];
+// status is a terminal TicketStatus; label and color come from STATUS_THEME
+function HistoryRow({ title, subtitle, meta, icon = 'ticket-outline', status }) {
+  const theme = STATUS_THEME[status] ?? STATUS_THEME[TicketStatus.COMPLETED];
 
   return (
     <>
@@ -97,7 +103,7 @@ function HistoryRow({ title, subtitle, meta, icon = 'school-outline', status }) 
         <View style={styles.historyHead}>
           <Text style={[styles.title, styles.shrink]} numberOfLines={1}>{title}</Text>
           <View style={[styles.pill, styles.goldTint, styles.goldOutline]}>
-            <Text style={[styles.pillText, { color: state.color }]}>{state.label}</Text>
+            <Text style={[styles.pillText, { color: theme.text }]}>{theme.label}</Text>
           </View>
         </View>
         {!!subtitle && <Text style={styles.caption}>{subtitle}</Text>}
@@ -108,10 +114,10 @@ function HistoryRow({ title, subtitle, meta, icon = 'school-outline', status }) 
 }
 
 const VARIANTS = {
-  menu: { Body: MenuRow, container: 'menu' },
-  notification: { Body: NotificationRow, container: 'notification' },
-  offense: { Body: OffenseRow, container: 'card' },
-  history: { Body: HistoryRow, container: 'card' },
+  [ListRowType.MENU]: { Body: MenuRow, container: 'menu' },
+  [ListRowType.NOTIFICATION]: { Body: NotificationRow, container: 'notification' },
+  [ListRowType.OFFENSE]: { Body: OffenseRow, container: 'card' },
+  [ListRowType.HISTORY]: { Body: HistoryRow, container: 'card' },
 };
 
 export default function ListRow({
@@ -128,7 +134,7 @@ export default function ListRow({
   onPress,
   style,
 }) {
-  const variant = VARIANTS[type] ?? VARIANTS.menu;
+  const variant = VARIANTS[type] ?? VARIANTS[ListRowType.MENU];
   const { Body } = variant;
 
   return (
@@ -219,19 +225,19 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.base,
-    lineHeight: lineHeight(TYPOGRAPHY.size.base),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.base),
     color: COLORS.ink,
   },
   subtitle: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
-    lineHeight: lineHeight(TYPOGRAPHY.size.sm),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.sm),
     color: COLORS.slate,
   },
   caption: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
-    lineHeight: lineHeight(TYPOGRAPHY.size.xs),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.xs),
     color: COLORS.slate,
   },
   pill: {
@@ -242,7 +248,7 @@ const styles = StyleSheet.create({
   pillText: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
-    lineHeight: lineHeight(TYPOGRAPHY.size.xs),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.xs),
     color: COLORS.ink,
   },
   upper: { textTransform: 'uppercase' },

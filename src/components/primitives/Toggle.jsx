@@ -1,13 +1,15 @@
-import { COLORS, RADII, SPACING, ToggleType, TYPOGRAPHY, withOpacity } from '@/constants';
+import { COLORS, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-function Switch({ toggled }) {
+function Switch({ value }) {
   return (
     <View
       style={[
         styles.track,
-        { backgroundColor: toggled ? COLORS.gold : withOpacity(COLORS.ink, 0.2) },
-        { justifyContent: toggled ? 'flex-end' : 'flex-start' },
+        {
+          backgroundColor: value ? COLORS.gold : withOpacity(COLORS.ink, 0.2),
+          justifyContent: value ? 'flex-end' : 'flex-start',
+        },
       ]}
     >
       <View style={styles.knob} />
@@ -15,21 +17,21 @@ function Switch({ toggled }) {
   );
 }
 
-export default function Toggle({ title, subtitle, toggled, onToggleChange, type = ToggleType.FUNCTIONAL }) {
-  const isDisabled = type === ToggleType.DISABLED;
+export default function Toggle({ title, subtitle, value = false, onValueChange, disabled = false, style }) {
   return (
     <Pressable
-      onPress={isDisabled ? undefined : () => onToggleChange?.(!toggled)}
-      disabled={isDisabled}
-      style={[styles.row, isDisabled && styles.disabled]}
+      onPress={() => onValueChange?.(!value)}
+      disabled={disabled}
+      style={[styles.row, disabled && styles.disabled, style]}
       accessibilityRole="switch"
-      accessibilityState={{ checked: toggled, disabled: isDisabled }}
+      accessibilityLabel={title}
+      accessibilityState={{ checked: value, disabled }}
     >
       <View style={styles.labels}>
         <Text style={styles.title}>{title}</Text>
         {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
-      <Switch toggled={toggled} />
+      <Switch value={value} />
     </Pressable>
   );
 }
@@ -60,7 +62,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 28,
     borderRadius: RADII.full,
-    padding: 2,
+    padding: SPACING.xxxs,
     flexDirection: 'row',
     alignItems: 'center',
   },

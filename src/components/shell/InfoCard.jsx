@@ -1,7 +1,5 @@
-import { COLORS, IconSet, InfoCardType, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { COLORS, IconSet, InfoCardType, lineHeightFor, RADII, RULES, SPACING, TYPOGRAPHY } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-
-const lineHeight = (size) => Math.round(size * TYPOGRAPHY.lineHeight.normal);
 
 const DEFAULT_POLICY = [
   { icon: 'close-circle-outline', color: COLORS.error, text: "Missing your turn, or cancelling after you've been called, counts as an offense." },
@@ -70,7 +68,7 @@ function BanBanner({ title, body, items }) {
   );
 }
 
-function StrikeMeter({ title, body, strikes = 0, maxStrikes = 2, banned = false }) {
+function StrikeMeter({ title, body, strikes = 0, maxStrikes = RULES.OFFENSES_PER_BAN, banned = false }) {
   const state = STRIKE_STATES[banned ? 'banned' : strikes > 0 ? 'strike' : 'clean'];
 
   return (
@@ -118,15 +116,15 @@ function Faq({ title, body, expanded }) {
 }
 
 const VARIANTS = {
-  officeHours: { Body: OfficeHours, container: null },
-  banBanner: { Body: BanBanner, container: 'danger' },
-  strikeMeter: { Body: StrikeMeter, container: null },
-  policy: { Body: Policy, container: null },
-  faq: { Body: Faq, container: null },
+  [InfoCardType.OFFICE_HOURS]: { Body: OfficeHours, container: null },
+  [InfoCardType.BAN_BANNER]: { Body: BanBanner, container: 'danger' },
+  [InfoCardType.STRIKE_METER]: { Body: StrikeMeter, container: null },
+  [InfoCardType.POLICY]: { Body: Policy, container: null },
+  [InfoCardType.FAQ]: { Body: Faq, container: null },
 };
 
 export default function InfoCard({ type = InfoCardType.POLICY, onPress, style, ...props }) {
-  const variant = VARIANTS[type] ?? VARIANTS.policy;
+  const variant = VARIANTS[type] ?? VARIANTS[InfoCardType.POLICY];
   const { Body } = variant;
   const isFaq = type === InfoCardType.FAQ;
   const bannedOutline = type === InfoCardType.STRIKE_METER && props.banned;
@@ -181,25 +179,25 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.base,
-    lineHeight: lineHeight(TYPOGRAPHY.size.base),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.base),
     color: COLORS.ink,
   },
   body: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.sm,
-    lineHeight: lineHeight(TYPOGRAPHY.size.sm),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.sm),
     color: COLORS.slate,
   },
   caption: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xs,
-    lineHeight: lineHeight(TYPOGRAPHY.size.xs),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.xs),
     color: COLORS.slate,
   },
   label: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: TYPOGRAPHY.size.xs,
-    lineHeight: lineHeight(TYPOGRAPHY.size.xs),
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.xs),
   },
 
   meter: { flexDirection: 'row', gap: SPACING.xs },

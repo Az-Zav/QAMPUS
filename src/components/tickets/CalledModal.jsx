@@ -1,62 +1,43 @@
 import Button from '@/components/primitives/Button';
 import ModalShell from '@/components/shell/ModalShell';
-import { ButtonType, COLORS, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, COLORS, SPACING, TYPOGRAPHY } from '@/constants';
+import { formatCountdown } from '@/utils';
 import { StyleSheet, Text, View } from 'react-native';
 
+// ticket: view from toTicketView(), status YOUR_TURN. Shown app-wide when a ticket is called.
 export default function CalledModal({ visible, ticket, onClose, onOpenScanner }) {
-  if (!ticket) return null;
-
-  const { shortNumber, officeName } = ticket;
-
   return (
-    <ModalShell visible={visible} onClose={onClose} showClose>
-      <View style={styles.iconWrapper}>
-        <IconSet name="notifications" color={COLORS.gold} size={28} />
-      </View>
-
-      <Text style={styles.title}>It's your turn</Text>
-      <Text style={styles.subtitle}>
-        Head to {officeName} and scan the code within 1:00
-      </Text>
-
-      <Text style={styles.number}>{shortNumber}</Text>
-      <Text style={styles.countdown}>1:00</Text>
-
-      <Button type={ButtonType.PRIMARY} label="Open scanner" onPress={onOpenScanner} />
+    <ModalShell
+      visible={visible && !!ticket}
+      onClose={onClose}
+      icon="notifications"
+      title="It's your turn"
+      subtitle={ticket ? `Head to ${ticket.officeName} and scan the code before time runs out.` : null}
+      actions={<Button type={ButtonType.PRIMARY} label="Open scanner" onPress={onOpenScanner} />}
+    >
+      {!!ticket && (
+        <View style={styles.numbers}>
+          <Text style={styles.number}>{ticket.shortNumber}</Text>
+          <Text style={styles.countdown}>{formatCountdown(ticket.remainingSeconds ?? 0)}</Text>
+        </View>
+      )}
     </ModalShell>
   );
 }
 
 const styles = StyleSheet.create({
-  iconWrapper: {
-    alignSelf: 'center',
-    marginBottom: SPACING.sm,
-  },
-  title: {
-    fontSize: TYPOGRAPHY.size.xl,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.ink,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: COLORS.slate,
-    textAlign: 'center',
-    marginTop: SPACING.xxs,
-    marginBottom: SPACING.lg,
+  numbers: {
+    alignItems: 'center',
+    gap: SPACING.xxs,
   },
   number: {
     fontSize: TYPOGRAPHY.size.xl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.ink,
-    textAlign: 'center',
   },
   countdown: {
     fontSize: TYPOGRAPHY.size.xxl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gold,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
   },
 });

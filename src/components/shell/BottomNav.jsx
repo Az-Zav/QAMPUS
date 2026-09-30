@@ -11,7 +11,13 @@ export default function BottomNav({ active, onNavigate }) {
         <View style={styles.centerSpacer} />
         <NavItem tab={AppTab.QUEUE} label="Queue" active={active === AppTab.QUEUE} onPress={() => onNavigate(AppTab.QUEUE)} />
       </View>
-      <Pressable style={styles.scanButton} onPress={() => onNavigate(AppTab.SCAN)} accessibilityLabel="Scan">
+      <Pressable
+        style={styles.scanButton}
+        onPress={() => onNavigate(AppTab.SCAN)}
+        accessibilityRole="tab"
+        accessibilityLabel="Scan"
+        accessibilityState={{ selected: active === AppTab.SCAN }}
+      >
         <IconSet name={TAB_ICONS[AppTab.SCAN]} color={COLORS.ink} size={26} />
       </Pressable>
     </View>
@@ -21,7 +27,13 @@ export default function BottomNav({ active, onNavigate }) {
 function NavItem({ tab, label, active, onPress }) {
   const color = active ? COLORS.gold : COLORS.paper;
   return (
-    <Pressable style={styles.navItem} onPress={onPress}>
+    <Pressable
+      style={styles.navItem}
+      onPress={onPress}
+      accessibilityRole="tab"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: active }}
+    >
       <IconSet name={TAB_ICONS[tab]} color={color} size={22} />
       <Text style={[styles.label, { color }]}>{label.toUpperCase()}</Text>
     </Pressable>

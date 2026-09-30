@@ -22,7 +22,12 @@ export default function Picker({ value, onSelect, options = [], placeholder = 'S
 
   return (
     <View style={[styles.wrap, open && styles.wrapOpen, style]}>
-      <Pressable style={styles.field} onPress={toggle}>
+      <Pressable
+        style={styles.field}
+        onPress={toggle}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: open }}
+      >
         {searchable && open ? (
           <TextInput
             autoFocus
@@ -58,6 +63,8 @@ export default function Picker({ value, onSelect, options = [], placeholder = 'S
                 key={option}
                 style={[styles.option, isSelected && styles.optionSelected]}
                 onPress={() => select(option)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isSelected }}
               >
                 <Text
                   style={[styles.optionText, isSelected && styles.optionTextSelected]}

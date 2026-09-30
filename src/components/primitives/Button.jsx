@@ -1,38 +1,40 @@
-import { ButtonType, COLORS, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, COLORS, ComponentSize, RADII, SPACING, TYPOGRAPHY } from '@/constants';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const VARIANTS = {
-  primary: { bg: COLORS.gold, border: null, text: COLORS.ink },
-  secondary: { bg: COLORS.white, border: COLORS.border, text: COLORS.ink },
-  destructive: { bg: COLORS.white, border: COLORS.error, text: COLORS.error },
-  accent: { bg: COLORS.ink, border: null, text: COLORS.gold },
-  disabled: { bg: COLORS.disabledBg, border: null, text: COLORS.slate },
+  [ButtonType.PRIMARY]: { bg: COLORS.gold, border: null, text: COLORS.ink },
+  [ButtonType.SECONDARY]: { bg: COLORS.white, border: COLORS.border, text: COLORS.ink },
+  [ButtonType.DESTRUCTIVE]: { bg: COLORS.white, border: COLORS.error, text: COLORS.error },
+  [ButtonType.ACCENT]: { bg: COLORS.ink, border: null, text: COLORS.gold },
 };
 
+const DISABLED = { bg: COLORS.disabledBg, border: null, text: COLORS.slate };
+
 const SIZES = {
-  md: { height: 48, paddingHorizontal: SPACING.lg, fontSize: TYPOGRAPHY.size.md },
-  sm: { height: 32, paddingHorizontal: SPACING.md, fontSize: TYPOGRAPHY.size.xs },
+  [ComponentSize.MD]: { height: 48, paddingHorizontal: SPACING.lg, fontSize: TYPOGRAPHY.size.md },
+  [ComponentSize.SM]: { height: 32, paddingHorizontal: SPACING.md, fontSize: TYPOGRAPHY.size.xs },
 };
 
 export default function Button({
   label,
   onPress,
   type = ButtonType.PRIMARY,
-  size = 'md',
+  size = ComponentSize.MD,
+  disabled = false,
+  icon,
   accessibilityLabel,
   style,
-  icon,
 }) {
-  const variant = VARIANTS[type] ?? VARIANTS.primary;
-  const sizing = SIZES[size] || SIZES.md;
-  const isDisabled = type === ButtonType.DISABLED;
+  const variant = disabled ? DISABLED : VARIANTS[type] ?? VARIANTS[ButtonType.PRIMARY];
+  const sizing = SIZES[size] ?? SIZES[ComponentSize.MD];
 
   return (
     <Pressable
-      onPress={isDisabled ? undefined : onPress}
-      disabled={isDisabled}
+      onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel || label}
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled }}
       style={({ pressed }) => [
         styles.base,
         {
@@ -42,15 +44,13 @@ export default function Button({
           borderColor: variant.border,
           borderWidth: variant.border ? 1 : 0,
         },
-        pressed && !isDisabled && styles.pressed,
+        pressed && styles.pressed,
         style,
       ]}
     >
       <View style={styles.contentRow}>
         {icon && <View style={styles.iconWrapper}>{icon}</View>}
-        <Text style={[styles.label, { color: variant.text, fontSize: sizing.fontSize }]}>
-          {label}
-        </Text>
+        <Text style={[styles.label, { color: variant.text, fontSize: sizing.fontSize }]}>{label}</Text>
       </View>
     </Pressable>
   );

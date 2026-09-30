@@ -1,4 +1,5 @@
 import Button from '@/components/primitives/Button';
+import { useSession } from '@/hooks';
 import { ButtonType, COLORS, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -7,13 +8,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
   const router = useRouter();
+  const { signInAsStudent, signInAsGuest } = useSession();
 
   const handleGoogleLogin = () => {
-    router.replace('/(tabs)/home');
+    signInAsStudent();
+    router.replace('/home');
   };
 
   const handleGuestLogin = () => {
-    router.replace('/(tabs)/home');
+    signInAsGuest();
+    router.replace('/home');
   };
 
   return (

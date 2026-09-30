@@ -15,17 +15,11 @@ export const COLORS = Object.freeze({
   paper: '#FAF7F0',
   slate: '#6E6B63',
   error: '#B3261E',
-  danger: '#B3261E',
   success: '#2E7D4F',
   border: '#D9D6CF',
   borderLight: '#E5DFD3',
   disabledBg: '#E8E5E0',
   white: '#FFFFFF',
-  black: '#000000',
-  surface: '#FFFFFF',
-  background: '#FAF7F0',
-  textPrimary: '#0A0A0A',
-  textSecondary: '#6E6B63',
 });
 
 // Helper to append alpha channel to hex color
@@ -50,13 +44,6 @@ export const STATUS_THEME = Object.freeze({
     label: 'Waiting',
   },
   yourTurn: {
-    bg: COLORS.gold,
-    border: null,
-    text: COLORS.ink,
-    icon: 'notifications',
-    label: 'Your turn',
-  },
-  called: {
     bg: COLORS.gold,
     border: null,
     text: COLORS.ink,
@@ -91,6 +78,13 @@ export const STATUS_THEME = Object.freeze({
     icon: 'close-circle-outline',
     label: 'Cancelled',
   },
+  cancelledByOffice: {
+    bg: withOpacity(COLORS.slate, 0.1),
+    border: null,
+    text: COLORS.slate,
+    icon: 'close-circle-outline',
+    label: 'Cancelled by office',
+  },
   noShow: {
     bg: withOpacity(COLORS.error, 0.1),
     border: null,
@@ -116,6 +110,7 @@ export const TYPOGRAPHY = Object.freeze({
     bold: '700',
   },
   size: {
+    xxs: 9,
     xs: 11,
     sm: 12,
     base: 14,
@@ -131,6 +126,9 @@ export const TYPOGRAPHY = Object.freeze({
     relaxed: 1.5,
   },
 });
+
+// Absolute lineHeight for a font size (RN needs pixels, not multipliers)
+export const lineHeightFor = (size, ratio = TYPOGRAPHY.lineHeight.normal) => Math.round(size * ratio);
 
 // ---------------------------------------------------------------------------
 // 4. Spacing & Radii Tokens
@@ -218,23 +216,21 @@ export const ICONS = Object.freeze({
 // 7. Component UI Type Enums (Styling & Component Variants)
 // ---------------------------------------------------------------------------
 
+export const ComponentSize = Object.freeze({
+  SM: 'sm',
+  MD: 'md',
+});
+
 export const ButtonType = Object.freeze({
   PRIMARY: 'primary',
   SECONDARY: 'secondary',
   DESTRUCTIVE: 'destructive',
   ACCENT: 'accent',
-  DISABLED: 'disabled',
-});
-
-export const ToggleType = Object.freeze({
-  FUNCTIONAL: 'functional',
-  DISABLED: 'disabled',
 });
 
 export const InputType = Object.freeze({
   DEFAULT: 'default',
   ERROR: 'error',
-  DISABLED: 'disabled',
 });
 
 export const InfoCardType = Object.freeze({
@@ -259,39 +255,13 @@ export const ListRowTone = Object.freeze({
   ERROR: 'error',
 });
 
-export const ConfirmModalType = Object.freeze({
+// Shared by ConfirmModal, NoticeModal and ModalShell's header icon
+export const ModalTone = Object.freeze({
   DEFAULT: 'default',
   DESTRUCTIVE: 'destructive',
 });
 
-// Compatibility aliases
-export const colors = COLORS;
-export const typography = TYPOGRAPHY;
-export const spacing = SPACING;
-export const radii = RADII;
-export const elevation = ELEVATION;
-export const statusBadge = STATUS_THEME;
-export const statusIcon = ICONS;
-export const overlay = OVERLAY;
-
-export const theme = {
-  colors: COLORS,
-  COLORS,
-  statusBadge: STATUS_THEME,
-  STATUS_THEME,
-  overlay: OVERLAY,
-  typography: TYPOGRAPHY,
-  TYPOGRAPHY,
-  spacing: SPACING,
-  SPACING,
-  radii: RADII,
-  RADII,
-  elevation: ELEVATION,
-  ELEVATION,
-  IconSet,
-  statusIcon: ICONS,
-  ICONS,
-  withOpacity,
-};
-
-export default theme;
+export const EmptyStateType = Object.freeze({
+  DEFAULT: 'default',
+  OFFLINE: 'offline',
+});

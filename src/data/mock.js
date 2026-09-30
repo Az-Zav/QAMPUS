@@ -1,5 +1,13 @@
-// Centralized Mock Data Store for QAMPUS
-// Matches PRD v1.3 and TDD v2.0 Data Models
+// Centralized Mock Data Store for QAMPUS (PRD v1.3)
+// Read only through hooks in src/hooks — screens and components never import this file.
+
+const minutesAgo = (m) => new Date(Date.now() - m * 60000).toISOString();
+const daysAgo = (d, hour, minute = 0) => {
+  const date = new Date();
+  date.setDate(date.getDate() - d);
+  date.setHours(hour, minute, 0, 0);
+  return date.toISOString();
+};
 
 export const MOCK_USER_STUDENT = Object.freeze({
   id: 'usr_std_001',
@@ -124,7 +132,7 @@ export const MOCK_ACTIVE_TICKETS = Object.freeze([
     daily_sequence: 15,
     status: 'CALLED',
     joined_at: '2026-09-28T09:15:00Z',
-    called_at: new Date(Date.now() - 20000).toISOString(), // called 20s ago
+    called_at: new Date(Date.now() - 20000).toISOString(), // called 20s ago (40s left on load)
     service_started_at: null,
     completed_at: null,
     cancelled_at: null,
@@ -166,10 +174,10 @@ export const MOCK_HISTORY_TICKETS = Object.freeze([
     short_ticket_number: 'A-022',
     daily_sequence: 22,
     status: 'COMPLETED',
-    joined_at: '2026-09-27T10:00:00Z',
-    called_at: '2026-09-27T10:25:00Z',
-    service_started_at: '2026-09-27T10:25:45Z',
-    completed_at: '2026-09-27T10:35:10Z',
+    joined_at: daysAgo(0, 8, 0),
+    called_at: daysAgo(0, 8, 25),
+    service_started_at: daysAgo(0, 8, 26),
+    completed_at: daysAgo(0, 8, 35),
     cancelled_at: null,
     no_show_at: null,
   },
@@ -181,11 +189,12 @@ export const MOCK_HISTORY_TICKETS = Object.freeze([
     short_ticket_number: 'R-009',
     daily_sequence: 9,
     status: 'CANCELLED',
-    joined_at: '2026-09-26T14:00:00Z',
+    cancelled_by: 'USER',
+    joined_at: daysAgo(1, 14, 0),
     called_at: null,
     service_started_at: null,
     completed_at: null,
-    cancelled_at: '2026-09-26T14:12:00Z',
+    cancelled_at: daysAgo(1, 14, 12),
     no_show_at: null,
   },
   {
@@ -196,12 +205,28 @@ export const MOCK_HISTORY_TICKETS = Object.freeze([
     short_ticket_number: 'C-031',
     daily_sequence: 31,
     status: 'NO_SHOW',
-    joined_at: '2026-09-25T11:00:00Z',
-    called_at: '2026-09-25T11:45:00Z',
+    joined_at: daysAgo(5, 11, 0),
+    called_at: daysAgo(5, 11, 45),
     service_started_at: null,
     completed_at: null,
     cancelled_at: null,
-    no_show_at: '2026-09-25T11:47:00Z',
+    no_show_at: daysAgo(5, 11, 47),
+  },
+  {
+    id: 'tkt_hist_004',
+    office_code: 'G',
+    office_name: 'Guidance & Counseling Services',
+    ticket_number: 'G-09-22-004',
+    short_ticket_number: 'G-004',
+    daily_sequence: 4,
+    status: 'CANCELLED',
+    cancelled_by: 'OFFICE',
+    joined_at: daysAgo(8, 9, 0),
+    called_at: null,
+    service_started_at: null,
+    completed_at: null,
+    cancelled_at: daysAgo(8, 9, 40),
+    no_show_at: null,
   },
 ]);
 
@@ -220,7 +245,7 @@ export const MOCK_NOTIFICATIONS = Object.freeze([
     title: 'Almost Your Turn (Cashier)',
     message: 'You are now 3rd in line for Cashier & Student Accounts. Please head towards Finance Hall.',
     is_read: false,
-    created_at: new Date(Date.now() - 300000).toISOString(),
+    created_at: minutesAgo(5),
   },
   {
     id: 'notif_003',
@@ -228,7 +253,7 @@ export const MOCK_NOTIFICATIONS = Object.freeze([
     title: 'Queue Joined',
     message: 'You joined the queue for Cashier & Student Accounts as Ticket C-048.',
     is_read: true,
-    created_at: new Date(Date.now() - 1800000).toISOString(),
+    created_at: minutesAgo(30),
   },
 ]);
 

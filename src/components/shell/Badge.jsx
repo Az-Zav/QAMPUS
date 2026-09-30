@@ -1,50 +1,34 @@
-import { COLORS, IconSet, RADII, SPACING, STATUS_THEME, TYPOGRAPHY } from '@/constants';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { COLORS, ComponentSize, IconSet, RADII, SPACING, STATUS_THEME, TYPOGRAPHY } from '@/constants';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
-export default function Badge({ status, size = 'sm', onPress, icon, label }) {
-  const isActionable = typeof onPress === 'function';
-  const Wrapper = isActionable ? Pressable : View;
+// Neutral gold pill used when there is no status (e.g. an action badge)
+const ACTION_THEME = { bg: COLORS.gold, border: null, text: COLORS.ink, icon: null, label: '' };
 
-  const currentTheme = STATUS_THEME[status] ?? {
-    bg: COLORS.gold,
-    border: null,
-    text: COLORS.ink,
-    icon: 'notifications',
-    label: status ?? 'Status',
-  };
-
-  const fontSize = size === 'sm' ? TYPOGRAPHY.size.sm : TYPOGRAPHY.size.base;
-  const iconName = icon ?? currentTheme.icon;
-  const displayLabel = label ?? currentTheme.label;
+export default function Badge({ status, size = ComponentSize.SM, icon, label, onPress }) {
+  const theme = STATUS_THEME[status] ?? ACTION_THEME;
+  const fontSize = size === ComponentSize.SM ? TYPOGRAPHY.size.sm : TYPOGRAPHY.size.base;
+  const iconName = icon ?? theme.icon;
 
   return (
-    <Wrapper
+    <Pressable
       onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : 'text'}
       style={({ pressed }) => [
         styles.badge,
         {
-          backgroundColor: currentTheme.bg,
-          borderColor: currentTheme.border ?? 'transparent',
-          borderWidth: currentTheme.border ? 1 : 0,
+          backgroundColor: theme.bg,
+          borderColor: theme.border ?? 'transparent',
+          borderWidth: theme.border ? 1 : 0,
         },
-        isActionable && pressed && styles.pressed,
+        pressed && styles.pressed,
       ]}
-      accessibilityRole={isActionable ? 'button' : undefined}
     >
-      {iconName && <IconSet name={iconName} color={currentTheme.text} size={fontSize + 2} />}
-      <Text
-        style={[
-          styles.text,
-          {
-            color: currentTheme.text,
-            fontSize,
-            lineHeight: fontSize * 1.2,
-          },
-        ]}
-      >
-        {displayLabel}
+      {!!iconName && <IconSet name={iconName} color={theme.text} size={fontSize + 2} />}
+      <Text style={[styles.text, { color: theme.text, fontSize, lineHeight: fontSize * TYPOGRAPHY.lineHeight.tight }]}>
+        {label ?? theme.label}
       </Text>
-    </Wrapper>
+    </Pressable>
   );
 }
 
