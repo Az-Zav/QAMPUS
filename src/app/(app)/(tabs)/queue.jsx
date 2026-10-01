@@ -4,15 +4,17 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import SearchInput from '@/components/primitives/SearchInput';
 import SegmentedSwitcher from '@/components/primitives/SegmentedSwitcher';
-import JoinConfirmModal from '@/components/queue/JoinConfirmModal';
+import JoinConfirmModal from '@/components/modals/JoinConfirmModal';
 import OfficeCard from '@/components/queue/OfficeCard';
 import EmptyState from '@/components/shell/EmptyState';
 import Header from '@/components/shell/Header';
 import ListRow from '@/components/shell/ListRow';
-import NoticeModal from '@/components/shell/NoticeModal';
-import { EmptyStateType, ListRowType, QueueModalKey, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
+import NoticeModal from '@/components/modals/NoticeModal';
+import { EmptyStateType, ListRowType, MODAL_COPY, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
 import { useMyTickets, useNotifications, useOffices, useThemedStyles } from '@/hooks';
 import { groupHistory, matchesOfficeQuery } from '@/utils';
+
+const QueueModal = Object.freeze({ JOIN_CONFIRM: 'join', SUCCESS: 'success' });
 
 export default function Queue() {
   const styles = useThemedStyles(makeStyles);
@@ -42,7 +44,7 @@ export default function Queue() {
 
   const openJoin = (office) => {
     setSelectedOffice(office);
-    setModal(QueueModalKey.JOIN_CONFIRM);
+    setModal(QueueModal.JOIN_CONFIRM);
   };
 
   const closeModal = () => setModal(null);
@@ -102,18 +104,18 @@ export default function Queue() {
       </ScrollView>
 
       <JoinConfirmModal
-        visible={modal === QueueModalKey.JOIN_CONFIRM}
+        visible={modal === QueueModal.JOIN_CONFIRM}
         office={selectedOffice}
         onClose={closeModal}
-        onConfirm={() => setModal(QueueModalKey.SUCCESS)}
+        onConfirm={() => setModal(QueueModal.SUCCESS)}
       />
 
       <NoticeModal
-        visible={modal === QueueModalKey.SUCCESS}
-        icon="checkmark-circle-outline"
-        title="You're in the queue"
-        body={`Your ${selectedOffice?.code ?? ''} queue ticket has been issued. Check Home for your position and updates.`}
-        buttonLabel="Done"
+        visible={modal === QueueModal.SUCCESS}
+        icon={MODAL_COPY.joined.icon}
+        title={MODAL_COPY.joined.title}
+        body={MODAL_COPY.joined.body(selectedOffice?.code ?? '')}
+        buttonLabel={MODAL_COPY.joined.buttonLabel}
         onClose={closeModal}
       />
     </View>

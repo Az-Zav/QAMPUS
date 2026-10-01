@@ -3,12 +3,12 @@ import { useMemo, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
 import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
-import CountBadge from '@/components/shell/CountBadge';
+import CountBadge from '@/components/primitives/CountBadge';
 import EmptyState from '@/components/shell/EmptyState';
 import ListRow from '@/components/shell/ListRow';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
-import CalledModal from '@/components/tickets/CalledModal';
+import CalledModal from '@/components/modals/CalledModal';
 
 import { EmptyStateType, ListRowTone, ListRowType, NOTIFICATION_TYPE, NOTIFICATIONS_COPY, SPACING, TicketStatus } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW

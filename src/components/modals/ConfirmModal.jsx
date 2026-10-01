@@ -1,5 +1,5 @@
 import Button from '@/components/primitives/Button';
-import ModalShell from '@/components/shell/ModalShell';
+import ModalShell from '@/components/modals/ModalShell';
 import { ButtonType, ModalTone } from '@/constants';
 
 // Two-choice modal. The safe action (cancel) is always the primary button;

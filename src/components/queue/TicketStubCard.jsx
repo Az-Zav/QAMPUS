@@ -1,5 +1,5 @@
-import Badge from '@/components/shell/Badge';
-import TicketStubShape, { STUB_ASPECT_RATIO } from '@/components/tickets/TicketStubShape';
+import Badge from '@/components/primitives/Badge';
+import TicketStubShape, { STUB_ASPECT_RATIO } from '@/components/queue/TicketStubShape';
 import { RADII, SPACING, TICKET_STUB_COPY, TicketStatus, TYPOGRAPHY, withOpacity } from '@/constants';
 import { useTheme, useThemedStyles } from '@/hooks';
 import { formatCountdown } from '@/utils';

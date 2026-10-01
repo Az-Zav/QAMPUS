@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Props contract
 //
-// <Hero
+// <ProfileHeader
 //   context  'profileStudent' | 'profileGuest'
 //   user     { name, email, institutional_id, program, guest_type, avatar_url }
 //   onBack   func
@@ -28,7 +28,7 @@ function metaLine(context, user) {
   return [user.email, user.program];
 }
 
-export default function Hero({ context = 'profileStudent', user, onBack, onEdit }) {
+export default function ProfileHeader({ context, user, onBack, onEdit }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();

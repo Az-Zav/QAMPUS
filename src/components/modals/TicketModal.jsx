@@ -1,21 +1,23 @@
 import Button from '@/components/primitives/Button';
-import Badge from '@/components/shell/Badge';
-import ModalShell from '@/components/shell/ModalShell';
-import { ButtonType, ComponentSize, lineHeightFor, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
+import Badge from '@/components/primitives/Badge';
+import ModalShell from '@/components/modals/ModalShell';
+import { ButtonType, ComponentSize, lineHeightFor, MODAL_COPY, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
 import { useThemedStyles } from '@/hooks';
 import { formatCountdown } from '@/utils';
 import { StyleSheet, Text, View } from 'react-native';
 
+const COPY = MODAL_COPY.ticket;
+
 function detailRows({ status, position, peopleAhead, nowServing, estimatedWaitMinutes }) {
   if (status === TicketStatus.WAITING) {
     return [
-      { label: 'Position', value: `${position} in line` },
-      { label: 'People ahead', value: peopleAhead },
-      { label: 'Now serving', value: nowServing },
-      { label: 'Estimated wait', value: `about ${estimatedWaitMinutes} min` },
+      { label: COPY.positionLabel, value: COPY.positionValue(position) },
+      { label: COPY.aheadLabel, value: peopleAhead },
+      { label: COPY.nowServingLabel, value: nowServing },
+      { label: COPY.waitLabel, value: COPY.waitValue(estimatedWaitMinutes) },
     ];
   }
-  return [{ label: 'Now serving', value: nowServing }];
+  return [{ label: COPY.nowServingLabel, value: nowServing }];
 }
 
 // ticket: view from toTicketView(). Opened from a Home ticket card.
@@ -35,8 +37,8 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
       rows={ticket ? detailRows(ticket) : null}
       actions={
         <>
-          {isCalled && <Button type={ButtonType.PRIMARY} label="Open scanner" onPress={onOpenScanner} />}
-          {canCancel && <Button type={ButtonType.SECONDARY} label="Cancel ticket" onPress={onCancel} />}
+          {isCalled && <Button type={ButtonType.PRIMARY} label={COPY.scanLabel} onPress={onOpenScanner} />}
+          {canCancel && <Button type={ButtonType.SECONDARY} label={COPY.cancelLabel} onPress={onCancel} />}
         </>
       }
     >
@@ -49,7 +51,7 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
             </Text>
           )}
           {isExpired && (
-            <Text style={styles.expiredWarning}>Your time to check in has passed. Staff will update your ticket.</Text>
+            <Text style={styles.expiredWarning}>{COPY.expiredWarning}</Text>
           )}
         </View>
       )}

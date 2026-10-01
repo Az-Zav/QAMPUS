@@ -1,9 +1,11 @@
 import Button from '@/components/primitives/Button';
-import ModalShell from '@/components/shell/ModalShell';
-import { ButtonType, SPACING, TYPOGRAPHY } from '@/constants';
+import ModalShell from '@/components/modals/ModalShell';
+import { ButtonType, MODAL_COPY, SPACING, TYPOGRAPHY } from '@/constants';
 import { useThemedStyles } from '@/hooks';
 import { formatCountdown } from '@/utils';
 import { StyleSheet, Text, View } from 'react-native';
+
+const COPY = MODAL_COPY.called;
 
 // ticket: view from toTicketView(), status YOUR_TURN. Shown app-wide when a ticket is called.
 export default function CalledModal({ visible, ticket, onClose, onOpenScanner }) {
@@ -12,10 +14,10 @@ export default function CalledModal({ visible, ticket, onClose, onOpenScanner })
     <ModalShell
       visible={visible && !!ticket}
       onClose={onClose}
-      icon="notifications"
-      title="It's your turn"
-      subtitle={ticket ? `Head to ${ticket.officeName} and scan the code before time runs out.` : null}
-      actions={<Button type={ButtonType.PRIMARY} label="Open scanner" onPress={onOpenScanner} />}
+      icon={COPY.icon}
+      title={COPY.title}
+      subtitle={ticket ? COPY.body(ticket.officeName) : null}
+      actions={<Button type={ButtonType.PRIMARY} label={COPY.scanLabel} onPress={onOpenScanner} />}
     >
       {!!ticket && (
         <View style={styles.numbers}>

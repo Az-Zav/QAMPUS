@@ -1,5 +1,5 @@
 import Button from '@/components/primitives/Button';
-import ModalShell from '@/components/shell/ModalShell';
+import ModalShell from '@/components/modals/ModalShell';
 import { ButtonType, ModalTone } from '@/constants';
 
 // One-way informational modal (joined, banned, cutoff, scan result...).

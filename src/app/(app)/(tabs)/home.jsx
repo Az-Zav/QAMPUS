@@ -2,12 +2,12 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import JoinConfirmModal from '@/components/queue/JoinConfirmModal';
+import JoinConfirmModal from '@/components/modals/JoinConfirmModal';
 import EmptyState from '@/components/shell/EmptyState';
 import Header from '@/components/shell/Header';
 import InfoCard from '@/components/shell/InfoCard';
-import TicketModal from '@/components/tickets/TicketModal';
-import TicketStubCard from '@/components/tickets/TicketStubCard';
+import TicketModal from '@/components/modals/TicketModal';
+import TicketStubCard from '@/components/queue/TicketStubCard';
 
 import { EmptyStateType, IconSet, InfoCardType, SPACING, TYPOGRAPHY } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW

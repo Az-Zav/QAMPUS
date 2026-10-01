@@ -32,11 +32,6 @@ export const QueueView = Object.freeze({
   HISTORY: 'History',
 });
 
-export const QueueModalKey = Object.freeze({
-  JOIN_CONFIRM: 'join',
-  SUCCESS: 'success',
-});
-
 export const HistoryGroup = Object.freeze({
   TODAY: 'TODAY',
   YESTERDAY: 'YESTERDAY',

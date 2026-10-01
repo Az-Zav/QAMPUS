@@ -3,12 +3,12 @@ import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import Hero from '@/components/primitives/Hero';
+import ConfirmModal from '@/components/modals/ConfirmModal';
 import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
 import ListRow from '@/components/shell/ListRow';
-import LogOutModal from '@/components/shell/LogOutModal';
+import ProfileHeader from '@/components/shell/ProfileHeader';
 
-import { ELEVATION, IconSet, ListRowType, PROFILE_COPY, PROFILE_MENU, RADII, SPACING, TYPOGRAPHY, USER_ROLE, withOpacity } from '@/constants';
+import { ELEVATION, IconSet, ListRowType, MODAL_COPY, PROFILE_COPY, PROFILE_MENU, RADII, SPACING, TYPOGRAPHY, USER_ROLE, withOpacity } from '@/constants';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
 
 // S13 Profile (UIUX §4.11, §5.7). Sign in as a guest on Login to see the guest variant.
@@ -73,7 +73,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scroll} bounces={false} showsVerticalScrollIndicator={false}>
-        <Hero
+        <ProfileHeader
           context={isGuest ? 'profileGuest' : 'profileStudent'}
           user={user}
           onBack={goBack}
@@ -108,7 +108,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      <LogOutModal visible={logOutOpen} onConfirm={logOut} onClose={() => setLogOutOpen(false)} />
+      <ConfirmModal {...MODAL_COPY.logOut} visible={logOutOpen} onConfirm={logOut} onClose={() => setLogOutOpen(false)} />
     </View>
   );
 }

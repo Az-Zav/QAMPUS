@@ -219,13 +219,6 @@ export const EDIT_PROFILE_COPY = Object.freeze({
   },
 });
 
-export const LOG_OUT_COPY = Object.freeze({
-  title: 'Log out?',
-  body: "You'll need to sign in again to see your tickets and history.",
-  confirmLabel: 'Log out',
-  cancelLabel: 'Stay signed in',
-});
-
 export const BANS_COPY = Object.freeze({
   bannedUntil: (time) => `Joining paused until ${time}`,
   historyLabel: 'OFFENSE HISTORY',
@@ -256,4 +249,52 @@ export const NOTIFICATIONS_COPY = Object.freeze({
   newCount: (n) => `${n} new notification${n === 1 ? '' : 's'}`,
   recent: 'Recent',
   previous: 'Previous',
+});
+
+// ---------------------------------------------------------------------------
+// 8. Modals (M01 – M09)
+// ---------------------------------------------------------------------------
+
+const aboutMinutes = (min) => `about ${min} min`;
+
+export const MODAL_COPY = Object.freeze({
+  logOut: {
+    icon: 'log-out-outline',
+    title: 'Log out?',
+    body: "You'll need to sign in again to see your tickets and history.",
+    confirmLabel: 'Log out',
+    cancelLabel: 'Stay signed in',
+  },
+  joinConfirm: {
+    icon: 'ticket-outline',
+    title: 'Join this queue?',
+    waitLabel: 'Estimated wait',
+    waitValue: aboutMinutes,
+    waitingLabel: 'People waiting',
+    confirmLabel: 'Confirm join',
+    cancelLabel: 'Cancel',
+  },
+  joined: {
+    icon: 'checkmark-circle-outline',
+    title: "You're in the queue",
+    body: (code) => `Your ${code} queue ticket has been issued. Check Home for your position and updates.`,
+    buttonLabel: 'Done',
+  },
+  called: {
+    icon: 'notifications',
+    title: "It's your turn",
+    body: (officeName) => `Head to ${officeName} and scan the code before time runs out.`,
+    scanLabel: 'Open scanner',
+  },
+  ticket: {
+    positionLabel: 'Position',
+    positionValue: (position) => `${position} in line`,
+    aheadLabel: 'People ahead',
+    nowServingLabel: 'Now serving',
+    waitLabel: 'Estimated wait',
+    waitValue: aboutMinutes,
+    scanLabel: 'Open scanner',
+    cancelLabel: 'Cancel ticket',
+    expiredWarning: 'Your time to check in has passed. Staff will update your ticket.',
+  },
 });
