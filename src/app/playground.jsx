@@ -31,7 +31,7 @@ import NoticeModal from '@/components/modals/NoticeModal';
 import SubHeader from '@/components/shell/SubHeader';
 import CalledModal from '@/components/modals/CalledModal';
 import TicketModal from '@/components/modals/TicketModal';
-import TicketStubCard from '@/components/queue/TicketStubCard';
+import TicketStubCard from '@/components/tickets/TicketStubCard';
 import { AppTab, ButtonType, ComponentSize, EmptyStateType, FAQ_ITEMS, IconSet, InfoCardType, InputType, ListRowTone, ListRowType, ModalTone, OffenseState, ONBOARDING_SLIDES, RADII, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
 import { useMyTickets, useOffices, useTheme, useThemedStyles } from '@/hooks';
 

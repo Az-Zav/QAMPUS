@@ -7,7 +7,7 @@ import EmptyState from '@/components/shell/EmptyState';
 import Header from '@/components/shell/Header';
 import InfoCard from '@/components/shell/InfoCard';
 import TicketModal from '@/components/modals/TicketModal';
-import TicketStubCard from '@/components/queue/TicketStubCard';
+import TicketStubCard from '@/components/tickets/TicketStubCard';
 
 import { EmptyStateType, IconSet, InfoCardType, SPACING, TYPOGRAPHY } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
