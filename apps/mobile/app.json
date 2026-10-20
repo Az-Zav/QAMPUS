@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "Qampus",
+    "slug": "Qampus",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/Qampus-Logo.png",
+    "scheme": "qampus",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF7F0",
+        "foregroundImage": "./assets/images/Qampus-Logo.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.qampus.app"
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/Qampus-Logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FAF7F0",
+          "image": "./assets/images/Qampus-Logo.png",
+          "imageWidth": 76,
+          "dark": {
+            "backgroundColor": "#121110"
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

@@ -1,0 +1,42 @@
+import { lineHeightFor, SPACING, TYPOGRAPHY } from '../tokens';
+import { useThemedStyles } from '../ThemeProvider';
+import { StyleSheet, Text, View } from 'react-native';
+
+// Label + field + helper line. `error` replaces the helper and turns it red.
+// The field itself (Input, Picker, ...) is passed as children.
+export default function FormField({ label, helper, error, children, style }) {
+  const styles = useThemedStyles(makeStyles);
+  const note = error || helper;
+
+  return (
+    <View style={[styles.field, style]}>
+      {!!label && <Text style={styles.label}>{label}</Text>}
+      {children}
+      {!!note && (
+        <Text style={[styles.note, !!error && styles.error]} accessibilityLiveRegion={error ? 'polite' : 'none'}>
+          {note}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+const makeStyles = (c) => StyleSheet.create({
+  field: {
+    gap: SPACING.xs, // label ↔ field ↔ helper spacing
+  },
+  label: {
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: TYPOGRAPHY.size.sm,
+    color: c.ink,
+  },
+  note: {
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: TYPOGRAPHY.size.xs,
+    lineHeight: lineHeightFor(TYPOGRAPHY.size.xs),
+    color: c.slate,
+  },
+  error: {
+    color: c.error,
+  },
+});

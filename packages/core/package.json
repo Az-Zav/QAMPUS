@@ -1,0 +1,13 @@
+{
+  "name": "@qampus/core",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./domain": "./src/domain.js",
+    "./format": "./src/format.js",
+    "./ticket": "./src/ticket.js",
+    "./mock": "./src/mock.js"
+  }
+}

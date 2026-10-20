@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Qampus Staff",
+    "slug": "qampus-staff",
+    "version": "1.0.0",
+    "icon": "./assets/images/Qampus-Logo.png",
+    "scheme": "qampus-staff",
+    "userInterfaceStyle": "automatic",
+    "platforms": [
+      "web"
+    ],
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/Qampus-Logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-image"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
