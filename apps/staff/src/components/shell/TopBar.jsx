@@ -1,64 +1,148 @@
+import StaffModal from '@/components/modals/StaffModal';
+import { MenuBackdrop, MenuDivider, MenuItem, MenuPanel } from '@/components/primitives/Menu';
 import {
   CONTENT_MAX_WIDTH,
+  INFO_COPY,
   NAV_ITEMS,
   PAGE_GUTTER,
+  QUEUE_COPY,
   RADII,
-  SPACING,
+  STAFF_FONT,
+  TOP_BAR_COPY,
   TOP_BAR_HEIGHT,
   TYPOGRAPHY,
 } from '@/constants';
-import { useSession, useStaffOffice, useThemedStyles } from '@/hooks';
-import { Bell, ChevronDown } from '@/icons';
+import { useSession, useStaffOffice, useStaffQueue, useTheme, useThemedStyles } from '@/hooks';
+import { BellRing, ChevronDown, CircleCheck, CircleX } from '@/icons';
 import { Link, usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-// Staff/TopBar — brand + office on the left, section nav in the middle, account on the right.
-// The office status pill (OPEN/CLOSED) arrives with the queue screen's live data.
+const Menu = Object.freeze({ NONE: null, ACCOUNT: 'account', NOTIFICATIONS: 'notifications' });
+
+// Figma Staff/TopBar — brand, office and queue status pill on the left, section tabs in the middle,
+// notifications bell and account menu on the right.
 export default function TopBar() {
   const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
   const pathname = usePathname();
   const { user, signOut } = useSession();
   const { office } = useStaffOffice();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { isOpen, cutoffWarningMinutes, notifications } = useStaffQueue();
+  const [menu, setMenu] = useState(Menu.NONE);
+  const [info, setInfo] = useState(null);
+
+  const toggle = (next) => setMenu((current) => (current === next ? Menu.NONE : next));
+  const showInfo = (content) => {
+    setMenu(Menu.NONE);
+    setInfo(content);
+  };
+  const StatusIcon = isOpen ? CircleCheck : CircleX;
 
   return (
     <View style={styles.bar}>
       <View style={styles.inner}>
         <View style={styles.left}>
           <Text style={styles.brand}>QAMPUS</Text>
-          <Text style={styles.office}>{office?.name ?? ''}</Text>
+          <Text style={styles.office} numberOfLines={1}>
+            {office?.short_name}
+          </Text>
+          <View style={[styles.pill, { backgroundColor: isOpen ? colors.success : colors.slate }]}>
+            <StatusIcon size={14} color={colors.onInverse} />
+            <Text style={styles.pillLabel}>{isOpen ? TOP_BAR_COPY.open : TOP_BAR_COPY.closed}</Text>
+          </View>
         </View>
 
-        <View style={styles.nav}>
-          {NAV_ITEMS.map(({ href, label }) => (
-            <Link key={href} href={href} style={[styles.navItem, pathname === href && styles.navItemActive]}>
-              {label}
-            </Link>
-          ))}
+        <View style={styles.tabs} accessibilityRole="tablist">
+          {NAV_ITEMS.map(({ href, label }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: active }}
+                style={[styles.tab, active && styles.tabActive]}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </View>
 
         <View style={styles.right}>
-          <Bell size={18} color={styles.icon.color} />
+          {menu !== Menu.NONE && <MenuBackdrop onPress={() => setMenu(Menu.NONE)} />}
           <Pressable
-            onPress={() => setMenuOpen((open) => !open)}
+            onPress={() => toggle(Menu.NOTIFICATIONS)}
             accessibilityRole="button"
-            accessibilityLabel="Account menu"
-            accessibilityState={{ expanded: menuOpen }}
+            accessibilityLabel={TOP_BAR_COPY.notifications}
+            accessibilityState={{ expanded: menu === Menu.NOTIFICATIONS }}
+            hitSlop={8}
+          >
+            <BellRing size={22} color={colors.onInverse} />
+          </Pressable>
+          <Pressable
+            onPress={() => toggle(Menu.ACCOUNT)}
+            accessibilityRole="button"
+            accessibilityLabel={TOP_BAR_COPY.accountMenu}
+            accessibilityState={{ expanded: menu === Menu.ACCOUNT }}
             style={styles.account}
           >
             <Text style={styles.accountName}>{user?.name}</Text>
-            <ChevronDown size={14} color={styles.icon.color} />
+            <ChevronDown size={18} color={colors.slate} />
           </Pressable>
-          {menuOpen && (
-            <View style={styles.menu}>
-              <Pressable onPress={signOut} accessibilityRole="button" style={styles.menuItem}>
-                <Text style={styles.menuLabel}>Sign out</Text>
-              </Pressable>
-            </View>
+
+          {menu === Menu.NOTIFICATIONS && (
+            <MenuPanel style={styles.menu}>
+              <Text style={styles.menuHeading}>{TOP_BAR_COPY.notifications}</Text>
+              <MenuDivider />
+              {cutoffWarningMinutes !== null && (
+                <View style={styles.notice}>
+                  <Text style={styles.noticeTitle}>{QUEUE_COPY.cutoffBanner(cutoffWarningMinutes)}</Text>
+                </View>
+              )}
+              {notifications.map(({ id, title, message }) => (
+                <View key={id} style={styles.notice}>
+                  <Text style={styles.noticeTitle}>{title}</Text>
+                  <Text style={styles.noticeBody}>{message}</Text>
+                </View>
+              ))}
+              {cutoffWarningMinutes === null && notifications.length === 0 && (
+                <View style={styles.notice}>
+                  <Text style={styles.noticeBody}>{TOP_BAR_COPY.noNotifications}</Text>
+                </View>
+              )}
+            </MenuPanel>
+          )}
+
+          {menu === Menu.ACCOUNT && (
+            <MenuPanel style={styles.menu}>
+              <View style={styles.menuHead}>
+                <Text style={styles.menuName}>{user?.full_name ?? user?.name}</Text>
+                <Text style={styles.menuRole}>
+                  {office?.short_name} · {TOP_BAR_COPY.assignedStaff}
+                </Text>
+              </View>
+              <MenuDivider />
+              <MenuItem
+                label={TOP_BAR_COPY.officeAssignment}
+                onPress={() => showInfo(INFO_COPY.officeAssignment(office))}
+              />
+              <MenuItem label={TOP_BAR_COPY.help} onPress={() => showInfo(INFO_COPY.help)} />
+              <MenuDivider />
+              <MenuItem label={TOP_BAR_COPY.signOut} onPress={signOut} danger />
+            </MenuPanel>
           )}
         </View>
       </View>
+
+      <StaffModal
+        visible={!!info}
+        title={info?.title}
+        body={info?.body}
+        cancelLabel={INFO_COPY.ok}
+        onCancel={() => setInfo(null)}
+      />
     </View>
   );
 }
@@ -79,33 +163,40 @@ const makeStyles = (c) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      gap: 24,
     },
-    left: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACING.lg },
-    brand: {
+    left: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 },
+    brand: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: TYPOGRAPHY.size.lg, color: c.gold },
+    office: { flexShrink: 1, fontFamily: STAFF_FONT.semibold, fontSize: 16, color: c.onInverse },
+    pill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingLeft: 10,
+      paddingRight: 12,
+      paddingVertical: 5,
+      borderRadius: RADII.full,
+    },
+    pillLabel: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: TYPOGRAPHY.size.xs, color: c.onInverse },
+    tabs: { flexDirection: 'row', alignItems: 'center', gap: 28 },
+    tab: { fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.size.md, color: c.slate },
+    tabActive: { fontFamily: STAFF_FONT.semibold, color: c.gold },
+    right: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 18 },
+    account: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+    accountName: { fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.size.md, color: c.onInverse },
+    menu: { position: 'absolute', top: TOP_BAR_HEIGHT - 13, right: 0, width: 320 },
+    menuHead: { gap: 3, paddingTop: 6, paddingBottom: 12, paddingHorizontal: 14 },
+    menuName: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: 16, color: c.ink },
+    menuRole: { fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: 13, color: c.slate },
+    menuHeading: {
       fontFamily: TYPOGRAPHY.fontFamily.bold,
-      fontSize: TYPOGRAPHY.size.base,
-      color: c.gold,
-      letterSpacing: 0.5,
+      fontSize: 16,
+      color: c.ink,
+      paddingTop: 6,
+      paddingBottom: 12,
+      paddingHorizontal: 14,
     },
-    office: { fontFamily: TYPOGRAPHY.fontFamily.medium, fontSize: TYPOGRAPHY.size.base, color: c.onInverse },
-    nav: { flexDirection: 'row', gap: SPACING.xxl },
-    navItem: { fontFamily: TYPOGRAPHY.fontFamily.medium, fontSize: TYPOGRAPHY.size.sm, color: c.slate },
-    navItemActive: { color: c.gold },
-    right: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: SPACING.lg },
-    icon: { color: c.onInverse },
-    account: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-    accountName: { fontFamily: TYPOGRAPHY.fontFamily.medium, fontSize: TYPOGRAPHY.size.sm, color: c.onInverse },
-    menu: {
-      position: 'absolute',
-      top: TOP_BAR_HEIGHT - 16,
-      right: 0,
-      minWidth: 160,
-      backgroundColor: c.white,
-      borderRadius: RADII.md,
-      borderWidth: 1,
-      borderColor: c.border,
-      padding: SPACING.xs,
-    },
-    menuItem: { paddingVertical: SPACING.sm, paddingHorizontal: SPACING.md, borderRadius: RADII.sm },
-    menuLabel: { fontFamily: TYPOGRAPHY.fontFamily.medium, fontSize: TYPOGRAPHY.size.base, color: c.ink },
+    notice: { gap: 3, paddingHorizontal: 14, paddingVertical: 12 },
+    noticeTitle: { fontFamily: STAFF_FONT.semibold, fontSize: TYPOGRAPHY.size.md, color: c.ink },
+    noticeBody: { fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: 13, color: c.slate },
   });

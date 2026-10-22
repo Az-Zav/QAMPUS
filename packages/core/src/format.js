@@ -22,6 +22,23 @@ export function formatTime(date) {
   return `${hours}:${pad2(d.getMinutes())} ${d.getHours() < 12 ? 'AM' : 'PM'}`;
 }
 
+// Date -> "09:41" (24-hour; staff surfaces)
+export function formatClock24(date) {
+  const d = new Date(date);
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+// Date -> "20 Sep 2026" (staff records)
+export function formatDayMonthYear(date) {
+  const d = new Date(date);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// "418902" -> "418 902"
+export function formatManualCode(code) {
+  return code ? `${code.slice(0, 3)} ${code.slice(3)}` : '';
+}
+
 // Date -> "Sep 27, 2:05 PM"
 export function formatDateTime(date) {
   const d = new Date(date);

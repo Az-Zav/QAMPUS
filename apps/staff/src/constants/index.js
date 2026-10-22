@@ -4,3 +4,4 @@ export * from '@qampus/core/domain';
 export * from '@qampus/ui/tokens';
 export * from './content';
 export * from './layout';
+export * from './theme';

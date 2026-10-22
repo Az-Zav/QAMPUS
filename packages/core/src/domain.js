@@ -98,3 +98,46 @@ export const OffenseState = Object.freeze({
   REVOKED: 'revoked',
   CAUSED_BAN: 'causedBan',
 });
+
+// ---------------------------------------------------------------------------
+// 4. Activity Log (staff W05, R-28)
+// ---------------------------------------------------------------------------
+
+export const ACTIVITY_ACTION = Object.freeze({
+  JOINED: 'JOINED',
+  CALLED: 'CALLED',
+  SERVICE_STARTED: 'SERVICE_STARTED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+  NO_SHOW: 'NO_SHOW',
+  OVERRIDE: 'OVERRIDE',
+  INVALID_SCAN: 'INVALID_SCAN',
+  QUEUE_OPENED: 'QUEUE_OPENED',
+  QUEUE_CLOSED: 'QUEUE_CLOSED',
+  QUEUE_CANCELLED: 'QUEUE_CANCELLED',
+  CUTOFF_OVERRIDE: 'CUTOFF_OVERRIDE',
+  OFFENSE_RECORDED: 'OFFENSE_RECORDED',
+  OFFENSE_REVOKED: 'OFFENSE_REVOKED',
+});
+
+export const ACTIVITY_ACTION_LABEL = Object.freeze({
+  [ACTIVITY_ACTION.JOINED]: 'Joined',
+  [ACTIVITY_ACTION.CALLED]: 'Called',
+  [ACTIVITY_ACTION.SERVICE_STARTED]: 'Service started',
+  [ACTIVITY_ACTION.COMPLETED]: 'Completed',
+  [ACTIVITY_ACTION.CANCELLED]: 'Cancelled',
+  [ACTIVITY_ACTION.NO_SHOW]: 'No-show',
+  [ACTIVITY_ACTION.OVERRIDE]: 'Override',
+  [ACTIVITY_ACTION.INVALID_SCAN]: 'Invalid scan',
+  [ACTIVITY_ACTION.QUEUE_OPENED]: 'Queue opened',
+  [ACTIVITY_ACTION.QUEUE_CLOSED]: 'Queue closed',
+  [ACTIVITY_ACTION.QUEUE_CANCELLED]: 'Queue cancelled',
+  [ACTIVITY_ACTION.CUTOFF_OVERRIDE]: 'Cutoff override',
+  [ACTIVITY_ACTION.OFFENSE_RECORDED]: 'Offense recorded',
+  [ACTIVITY_ACTION.OFFENSE_REVOKED]: 'Offense revoked',
+});
+
+export const OFFENSE_TYPE_LABEL = Object.freeze({
+  [OFFENSE_TYPE.NO_SHOW]: 'No-show',
+  [OFFENSE_TYPE.CANCELLED_AFTER_CALL]: 'Cancelled after call',
+});

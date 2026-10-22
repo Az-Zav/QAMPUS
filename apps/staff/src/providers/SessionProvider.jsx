@@ -25,10 +25,15 @@ export function SessionProvider({ children }) {
       signInStatus,
 
       // Backend swap: Google sign-in + a server-side lookup of the office assignment.
-      // `variant: 'unassigned'` lets the mock exercise the Not Assigned screen.
+      // `variant: 'unassigned'` lets the mock exercise the Not Assigned screen, and
+      // `variant: 'error'` the off-domain account error.
       signIn: async ({ variant } = {}) => {
         setSignInStatus(SignInStatus.LOADING);
         await new Promise((resolve) => setTimeout(resolve, 600));
+        if (variant === 'error') {
+          setSignInStatus(SignInStatus.ERROR);
+          return;
+        }
         setUser(variant === 'unassigned' ? MOCK_USER_STAFF_UNASSIGNED : MOCK_USER_STAFF);
         setSignInStatus(SignInStatus.IDLE);
       },

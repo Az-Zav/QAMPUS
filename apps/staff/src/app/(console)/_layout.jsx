@@ -1,21 +1,22 @@
+import Outage from '@/components/shell/Outage';
 import TopBar from '@/components/shell/TopBar';
-import { CONTENT_MAX_WIDTH, PAGE_GUTTER } from '@/constants';
 import { useThemedStyles } from '@/hooks';
-import { Slot } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Slot, useGlobalSearchParams } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
 
-// Signed-in console shell: TopBar over a centered, max-width content column.
+// Signed-in console shell: TopBar over the active screen (each screen owns its ConsolePage scroll).
+// When the backend can't be reached every console screen shows the shared Outage state (R-36).
 export default function ConsoleLayout() {
   const styles = useThemedStyles(makeStyles);
+  // Dev aid until real polling: ?outage=1 on any console route shows the outage state
+  const { outage } = useGlobalSearchParams();
+
+  if (outage) return <Outage />;
 
   return (
     <View style={styles.screen}>
       <TopBar />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.column}>
-          <Slot />
-        </View>
-      </ScrollView>
+      <Slot />
     </View>
   );
 }
@@ -23,7 +24,4 @@ export default function ConsoleLayout() {
 const makeStyles = (c) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: c.paper },
-    scroll: { flex: 1 },
-    scrollContent: { alignItems: 'center', paddingHorizontal: PAGE_GUTTER, paddingVertical: PAGE_GUTTER },
-    column: { width: '100%', maxWidth: CONTENT_MAX_WIDTH },
   });

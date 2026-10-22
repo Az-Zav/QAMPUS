@@ -25,6 +25,7 @@ export default function Button({
   icon,
   accessibilityLabel,
   style,
+  labelStyle,
 }) {
   const styles = useThemedStyles(makeStyles);
   const variants = useThemedStyles(makeVariants);
@@ -53,7 +54,7 @@ export default function Button({
     >
       <View style={styles.contentRow}>
         {icon && <View style={styles.iconWrapper}>{icon}</View>}
-        <Text style={[styles.label, { color: variant.text, fontSize: sizing.fontSize }]}>{label}</Text>
+        <Text style={[styles.label, { color: variant.text, fontSize: sizing.fontSize }, labelStyle]}>{label}</Text>
       </View>
     </Pressable>
   );

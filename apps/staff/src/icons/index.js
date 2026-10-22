@@ -1,23 +1,18 @@
 // Staff icon set: Lucide, matching the Figma (lucide/* frames). Mobile keeps Ionicons.
 
 export {
-  Bell,
   BellRing,
-  Ban,
+  Check,
+  ChevronDown,
   CircleCheck,
   CircleX,
-  Clock,
-  Hourglass,
-  Inbox,
+  Copy,
   Megaphone,
-  Moon,
-  ScanQrCode,
+  OctagonX,
+  Search,
   ShieldCheck,
-  Sun,
   Timer,
   TriangleAlert,
   UserRoundCheck,
-  UserRoundX,
   WifiOff,
-  ChevronDown,
 } from 'lucide-react-native';
