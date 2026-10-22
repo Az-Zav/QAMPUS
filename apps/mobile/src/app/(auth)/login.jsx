@@ -12,11 +12,16 @@ export default function Login() {
   const router = useRouter();
   const { signInAsStudent, signInAsGuest } = useSession();
 
-  // Mock sign-in is always a first sign-in, so both paths collect a profile (UIUX §4.2)
-  const handleGoogleLogin = () => {
-    signInAsStudent();
-    router.replace('/complete-profile');
+  const handleGoogleLogin = async () => {
+    try {
+      const signedIn = await signInAsStudent();
+      if (signedIn) router.replace('/complete-profile');
+    } catch (error) {
+      // TODO: surface this in the UI (NoticeModal) once error copy exists
+      console.warn('Google sign-in failed', error);
+    }
   };
+
 
   const handleGuestLogin = () => {
     signInAsGuest();
