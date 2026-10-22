@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "266281420551",
+    "project_id": "qampus-d0718",
+    "storage_bucket": "qampus-d0718.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266281420551:android:8711c300df0c7396b1a7a2",
+        "android_client_info": {
+          "package_name": "com.qampus.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "266281420551-lfnophttper317r6lcbc9nsivh1haod0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.qampus.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "266281420551-54p2jafl29eqs32kkau1govsp6vk8k5s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3gMTa5JEzMgrvVuaXjNzFPDDEQjwKR1g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "266281420551-54p2jafl29eqs32kkau1govsp6vk8k5s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
