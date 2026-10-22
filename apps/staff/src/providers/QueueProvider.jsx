@@ -10,24 +10,39 @@ import {
   ACTIVITY_ACTION,
   OFFENSE_TYPE,
   QUEUE_STATUS,
+  RULES,
   TICKET_STATUS,
 } from '@qampus/core/domain';
 
 import { getRemainingSeconds } from '@qampus/core/ticket';
-import { createContext, useContext, useMemo, useState } from 'react';
+
+import {
+  getPenaltyState,
+  hasActiveNoShowOffense,
+} from '@/utils/penalties';
+
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
+
 import { useSession } from './SessionProvider';
 
 // Staff queue is currently stored in memory.
-// Backend integration will replace mock actions with server requests.
+// Future backend integration will replace mock actions
+// with authorized server requests.
 const QueueContext = createContext(null);
 
+// Verification results.
 export const VerifyResult = Object.freeze({
   OK: 'ok',
   NO_MATCH: 'noMatch',
   EXPIRED: 'expired',
 });
 
-// Fix #1: Explicit results for no-show operations.
+// Fix #1: No-show operation results.
 export const NoShowResult = Object.freeze({
   OK: 'ok',
   INVALID_STATE: 'invalidState',
@@ -40,6 +55,7 @@ let nextId = 0;
 
 const newId = (prefix) => `${prefix}_local_${++nextId}`;
 
+// Creates an activity log entry.
 const logEntry = ({
   action,
   ticket = null,
@@ -70,13 +86,25 @@ export function QueueProvider({ children }) {
   const actor = user?.name ?? 'System';
 
   const value = useMemo(() => {
-    // New activity entries appear first.
-    const log = (...entries) =>
-      setActivity((prev) => [...entries.reverse(), ...prev]);
+    // Newest activity entries appear first.
+    const log = (...entries) => {
+      setActivity((prev) => [
+        ...entries.reverse(),
+        ...prev,
+      ]);
+    };
 
-    // WM01: Call the next ticket or override FIFO.
-    const call = (ticketId, { override = false, reason } = {}) => {
-      const ticket = queue.waiting.find((t) => t.id === ticketId);
+    // =====================================================
+    // WM01: CALL NEXT / OVERRIDE FIFO
+    // =====================================================
+
+    const call = (
+      ticketId,
+      { override = false, reason } = {},
+    ) => {
+      const ticket = queue.waiting.find(
+        (t) => t.id === ticketId,
+      );
 
       if (
         !ticket ||
@@ -95,7 +123,9 @@ export function QueueProvider({ children }) {
       setQueue((q) => ({
         ...q,
         current: called,
-        waiting: q.waiting.filter((t) => t.id !== ticketId),
+        waiting: q.waiting.filter(
+          (t) => t.id !== ticketId,
+        ),
       }));
 
       log(
@@ -120,15 +150,21 @@ export function QueueProvider({ children }) {
       activity,
       notifications: MOCK_STAFF_NOTIFICATIONS,
 
-      // Call the first waiting ticket.
-      callNext: () =>
-        queue.waiting[0] && call(queue.waiting[0].id),
+      // Call the next person in FIFO order.
+      callNext: () => {
+        if (queue.waiting.length === 0) return;
 
-      // Override normal FIFO order.
+        call(queue.waiting[0].id);
+      },
+
+      // Staff-controlled priority override.
       overrideCall: (ticketId) =>
         call(ticketId, { override: true }),
 
-      // WM02: Verify the currently called ticket by ID.
+      // =====================================================
+      // WM02: VERIFY BY ID
+      // =====================================================
+
       verifyById: (idNumber) => {
         const ticket = queue.current;
 
@@ -144,7 +180,10 @@ export function QueueProvider({ children }) {
           idNumber.trim().toUpperCase();
 
         const expired =
-          getRemainingSeconds(ticket.called_at, Date.now()) === 0;
+          getRemainingSeconds(
+            ticket.called_at,
+            Date.now(),
+          ) === 0;
 
         if (!matches || expired) {
           log(
@@ -168,7 +207,8 @@ export function QueueProvider({ children }) {
           current: {
             ...q.current,
             status: TICKET_STATUS.IN_SERVICE,
-            service_started_at: new Date().toISOString(),
+            service_started_at:
+              new Date().toISOString(),
           },
         }));
 
@@ -187,24 +227,25 @@ export function QueueProvider({ children }) {
       },
 
       // =====================================================
-      // FIX #1: NO-SHOW HANDLING
+      // WM03: MARK NO-SHOW
+      // FIX #1 + FIX #2
       // =====================================================
       //
       // CALLED -> NO_SHOW:
-      // Only after the grace period expires.
+      // Allowed only after the grace period.
       //
       // IN_SERVICE -> NO_SHOW:
-      // Allowed when the verified person never arrived
-      // at the service window. A reason is required.
+      // Allowed with a required explanation.
       //
-      // Prevent duplicate offenses and invalid transitions.
-      // The next ticket is never called automatically.
+      // Fix #2:
+      // Ban eligibility is determined from the user's
+      // remaining strikes, not lifetime offense totals.
       // =====================================================
 
       markNoShow: (reason = '') => {
         const ticket = queue.current;
 
-        // Validate the current ticket state.
+        // Only CALLED and IN_SERVICE tickets qualify.
         if (
           !ticket ||
           ![
@@ -220,12 +261,12 @@ export function QueueProvider({ children }) {
 
         const trimmedReason = reason.trim();
 
-        // Reversing a verification requires an explanation.
+        // Reversing a verified arrival requires a reason.
         if (verifiedButAbsent && !trimmedReason) {
           return NoShowResult.REASON_REQUIRED;
         }
 
-        // Called tickets must finish the grace period.
+        // CALLED tickets must exhaust the grace period.
         if (
           !verifiedButAbsent &&
           getRemainingSeconds(
@@ -236,47 +277,55 @@ export function QueueProvider({ children }) {
           return NoShowResult.TOO_EARLY;
         }
 
-        // Never create a second no-show offense
-        // for the same ticket.
-        const alreadyRecorded = offenses.some(
-          (offense) =>
-            offense.ticket_number === ticket.ticket_number &&
-            offense.type === OFFENSE_TYPE.NO_SHOW,
-        );
-
-        if (alreadyRecorded) {
+        // Prevent duplicate active no-show offenses.
+        if (
+          hasActiveNoShowOffense(
+            offenses,
+            ticket.ticket_number,
+          )
+        ) {
           return NoShowResult.ALREADY_RECORDED;
         }
 
-        // Existing mock strike-count calculation.
-        // Full ban management will be addressed in Fix #2.
-        const priorActive = offenses.filter(
-          (offense) =>
-            offense.holder.user_id === ticket.holder.user_id &&
-            !offense.revoked_at,
-        ).length;
+        // =================================================
+        // FIX #2: ACCURATE PENALTY CALCULATION
+        // =================================================
+
+        const penaltyBefore = getPenaltyState(
+          offenses,
+          ticket.holder.user_id,
+        );
+
+        // A ban occurs when this offense completes
+        // the next two-offense penalty cycle.
+        const triggersBan =
+          penaltyBefore.strikeCount + 1 >=
+          RULES.OFFENSES_PER_BAN;
 
         const offense = {
           id: newId('offense'),
           holder: ticket.holder,
           ticket_number: ticket.ticket_number,
           type: OFFENSE_TYPE.NO_SHOW,
-          resulted_in_ban: priorActive + 1 >= 2,
+          resulted_in_ban: triggersBan,
           revoked_at: null,
           created_at: new Date().toISOString(),
         };
 
-        // Remove the current ticket.
-        // The next ticket must be called manually.
+        // Clear current ticket.
+        // Never automatically call the next ticket.
         setQueue((q) => ({
           ...q,
           current: null,
         }));
 
-        // Record exactly one new offense.
-        setOffenses((prev) => [offense, ...prev]);
+        // Save the new mock offense.
+        setOffenses((prev) => [
+          offense,
+          ...prev,
+        ]);
 
-        // Record the actual previous ticket status.
+        // Record both the status transition and offense.
         log(
           logEntry({
             action: ACTIVITY_ACTION.NO_SHOW,
@@ -298,7 +347,10 @@ export function QueueProvider({ children }) {
         return NoShowResult.OK;
       },
 
-      // WM04: Complete a verified service.
+      // =====================================================
+      // WM04: COMPLETE SERVICE
+      // =====================================================
+
       completeService: () => {
         const ticket = queue.current;
 
@@ -325,7 +377,10 @@ export function QueueProvider({ children }) {
         );
       },
 
-      // Open the office queue.
+      // =====================================================
+      // OPEN QUEUE
+      // =====================================================
+
       openQueue: () => {
         setQueue((q) => ({
           ...q,
@@ -340,8 +395,12 @@ export function QueueProvider({ children }) {
         );
       },
 
-      // WM05: Close the queue to new users.
+      // =====================================================
+      // WM05: CLOSE QUEUE
+      // =====================================================
       // Existing tickets remain valid.
+      // Only new joining is blocked.
+
       closeQueue: () => {
         setQueue((q) => ({
           ...q,
@@ -356,7 +415,11 @@ export function QueueProvider({ children }) {
         );
       },
 
-      // WM06: Cancel all tickets without penalties.
+      // =====================================================
+      // WM06: CANCEL QUEUE
+      // =====================================================
+      // Office cancellations never create offenses.
+
       cancelQueue: (reason) => {
         const tickets = [
           queue.current,
@@ -389,7 +452,10 @@ export function QueueProvider({ children }) {
         );
       },
 
-      // WM07: Override the queue cutoff.
+      // =====================================================
+      // WM07: OVERRIDE CUTOFF
+      // =====================================================
+
       overrideCutoff: () => {
         setQueue((q) => ({
           ...q,
@@ -404,8 +470,18 @@ export function QueueProvider({ children }) {
         );
       },
 
-      // WM08: Revoke an existing offense.
-      // Full ban recalculation belongs to Fix #2.
+      // =====================================================
+      // WM08: REVOKE OFFENSE
+      // FIX #2
+      // =====================================================
+      //
+      // Revoked offenses remain in history.
+      // getPenaltyState() ignores revoked records.
+      //
+      // The penalty state is recalculated whenever
+      // the offenses array changes.
+      // =====================================================
+
       revokeOffense: (offenseId, reason) => {
         const offense = offenses.find(
           (o) => o.id === offenseId,
@@ -415,12 +491,14 @@ export function QueueProvider({ children }) {
           return;
         }
 
+        const revokedAt = new Date().toISOString();
+
         setOffenses((prev) =>
           prev.map((o) =>
             o.id === offenseId
               ? {
                   ...o,
-                  revoked_at: new Date().toISOString(),
+                  revoked_at: revokedAt,
                 }
               : o,
           ),
