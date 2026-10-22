@@ -15,7 +15,6 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.qampus.app",
       "googleServicesFile": "./google-services.json"
-
     },
     "web": {
       "output": "static",
@@ -35,11 +34,16 @@
         }
       ],
       "expo-font",
-      "@react-native-google-signin/google-signin"
+      "@react-native-google-signin/google-signin",
+      "expo-dev-client",
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }

@@ -4,7 +4,6 @@
 import { USER_ROLE } from '@/constants';
 import { auth } from '@/lib/firebase';
 import { MOCK_USER_GUEST, MOCK_USER_STUDENT } from '@qampus/core/mock';
-import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut as firebaseSignOut } from 'firebase/auth';
