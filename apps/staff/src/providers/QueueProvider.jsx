@@ -24,25 +24,34 @@ import {
 import {
   createContext,
   useContext,
-  useMemo,
-  useState,
+  useReducer,
 } from 'react';
 
 import { useSession } from './SessionProvider';
 
-// Staff queue is currently stored in memory.
-// Future backend integration will replace mock actions
-// with authorized server requests.
+// =====================================================
+// QAMPUS STAFF QUEUE PROVIDER
+//
+// Fix #1: Correct no-show handling
+// Fix #2: Accurate strike and ban calculations
+// Fix #3: Unified queue state using useReducer
+//
+// Frontend-only implementation.
+// No Firebase or backend integration yet.
+// =====================================================
+
 const QueueContext = createContext(null);
 
-// Verification results.
+// =====================================================
+// ACTION RESULTS
+// =====================================================
+
 export const VerifyResult = Object.freeze({
   OK: 'ok',
   NO_MATCH: 'noMatch',
   EXPIRED: 'expired',
 });
 
-// Fix #1: No-show operation results.
 export const NoShowResult = Object.freeze({
   OK: 'ok',
   INVALID_STATE: 'invalidState',
@@ -51,12 +60,58 @@ export const NoShowResult = Object.freeze({
   ALREADY_RECORDED: 'alreadyRecorded',
 });
 
+// =====================================================
+// REDUCER ACTION TYPES
+// =====================================================
+
+const QueueAction = Object.freeze({
+  CALL: 'CALL',
+  VERIFY: 'VERIFY',
+  INVALID_VERIFY: 'INVALID_VERIFY',
+  NO_SHOW: 'NO_SHOW',
+  COMPLETE: 'COMPLETE',
+  OPEN_QUEUE: 'OPEN_QUEUE',
+  CLOSE_QUEUE: 'CLOSE_QUEUE',
+  CANCEL_QUEUE: 'CANCEL_QUEUE',
+  OVERRIDE_CUTOFF: 'OVERRIDE_CUTOFF',
+  REVOKE_OFFENSE: 'REVOKE_OFFENSE',
+});
+
+// =====================================================
+// INITIAL STATE
+// =====================================================
+
+// Copy the mock collections so the reducer never
+// modifies the original imported mock data.
+function createInitialState() {
+  return {
+    queue: {
+      ...MOCK_STAFF_QUEUE,
+      current: MOCK_STAFF_QUEUE.current
+        ? { ...MOCK_STAFF_QUEUE.current }
+        : null,
+      waiting: [...MOCK_STAFF_QUEUE.waiting],
+    },
+    offenses: [...MOCK_STAFF_OFFENSES],
+    activity: [...MOCK_STAFF_ACTIVITY],
+  };
+}
+
+// =====================================================
+// ACTION IDs AND ACTIVITY LOG HELPERS
+// =====================================================
+
+// IDs are generated outside the reducer.
+// Reducers must not perform external side effects.
 let nextId = 0;
 
-const newId = (prefix) => `${prefix}_local_${++nextId}`;
+const newId = (prefix) =>
+  `${prefix}_local_${++nextId}`;
 
-// Creates an activity log entry.
-const logEntry = ({
+// Pure function: no random values, counters,
+// timestamps, or side effects.
+function makeLog({
+  id,
   action,
   ticket = null,
   actor,
@@ -64,458 +119,783 @@ const logEntry = ({
   to = null,
   reason = null,
   note = null,
-}) => ({
-  id: newId('log'),
-  action,
-  ticket_number: ticket?.ticket_number ?? null,
-  actor,
-  from,
-  to,
-  reason: reason || null,
-  note,
-  created_at: new Date().toISOString(),
-});
+  now,
+}) {
+  return {
+    id,
+    action,
+    ticket_number: ticket?.ticket_number ?? null,
+    actor,
+    from,
+    to,
+    reason: reason || null,
+    note,
+    created_at: now,
+  };
+}
 
-export function QueueProvider({ children }) {
-  const { user } = useSession();
+// Log entries are supplied in chronological order.
+// Store them newest first.
+function prependActivity(activity, entries) {
+  return [
+    ...[...entries].reverse(),
+    ...activity,
+  ];
+}
 
-  const [queue, setQueue] = useState(MOCK_STAFF_QUEUE);
-  const [offenses, setOffenses] = useState(MOCK_STAFF_OFFENSES);
-  const [activity, setActivity] = useState(MOCK_STAFF_ACTIVITY);
+// =====================================================
+// VALIDATION: VERIFY BY ID
+// =====================================================
 
-  const actor = user?.name ?? 'System';
+function validateVerification(state, idNumber, now) {
+  const ticket = state.queue.current;
 
-  const value = useMemo(() => {
-    // Newest activity entries appear first.
-    const log = (...entries) => {
-      setActivity((prev) => [
-        ...entries.reverse(),
-        ...prev,
-      ]);
-    };
+  if (
+    !ticket ||
+    ticket.status !== TICKET_STATUS.CALLED
+  ) {
+    return VerifyResult.NO_MATCH;
+  }
 
-    // =====================================================
+  const expired =
+    getRemainingSeconds(ticket.called_at, now) === 0;
+
+  if (expired) {
+    return VerifyResult.EXPIRED;
+  }
+
+  const expectedId =
+    String(ticket.holder?.id_number ?? '')
+      .trim()
+      .toUpperCase();
+
+  const enteredId =
+    String(idNumber ?? '')
+      .trim()
+      .toUpperCase();
+
+  if (!enteredId || expectedId !== enteredId) {
+    return VerifyResult.NO_MATCH;
+  }
+
+  return VerifyResult.OK;
+}
+
+// =====================================================
+// VALIDATION: MARK NO-SHOW
+//
+// R-12: CALLED -> NO_SHOW after grace period
+// R-23a: IN_SERVICE -> NO_SHOW with a reason
+// =====================================================
+
+function validateNoShow(state, reason, now) {
+  const ticket = state.queue.current;
+
+  if (
+    !ticket ||
+    ![
+      TICKET_STATUS.CALLED,
+      TICKET_STATUS.IN_SERVICE,
+    ].includes(ticket.status)
+  ) {
+    return NoShowResult.INVALID_STATE;
+  }
+
+  const verified =
+    ticket.status === TICKET_STATUS.IN_SERVICE;
+
+  const trimmedReason =
+    String(reason ?? '').trim();
+
+  // Staff must explain why a previous
+  // successful verification is being reversed.
+  if (verified && !trimmedReason) {
+    return NoShowResult.REASON_REQUIRED;
+  }
+
+  // Normal called tickets must wait until
+  // the grace period has expired.
+  if (
+    !verified &&
+    getRemainingSeconds(ticket.called_at, now) > 0
+  ) {
+    return NoShowResult.TOO_EARLY;
+  }
+
+  // Prevent duplicate no-show offenses.
+  if (
+    hasActiveNoShowOffense(
+      state.offenses,
+      ticket.ticket_number,
+    )
+  ) {
+    return NoShowResult.ALREADY_RECORDED;
+  }
+
+  return NoShowResult.OK;
+}
+
+// =====================================================
+// FIX #3: PURE QUEUE REDUCER
+//
+// All queue, offense, and activity changes
+// happen in a single state transition.
+//
+// The reducer never calls Date.now(),
+// generates random IDs, or dispatches actions.
+// =====================================================
+
+function queueReducer(state, event) {
+  const {
+    queue,
+    offenses,
+    activity,
+  } = state;
+
+  const {
+    type,
+    payload = {},
+    actor = 'System',
+    now,
+    id,
+  } = event;
+
+  const timestamp = Date.parse(now);
+
+  // This counter is local to one reducer invocation.
+  // Replaying the same event generates the same IDs.
+  let logIndex = 0;
+
+  const entry = (details) =>
+    makeLog({
+      ...details,
+      id: `${id}_log_${++logIndex}`,
+      actor: details.actor ?? actor,
+      now,
+    });
+
+  switch (type) {
+    // =================================================
     // WM01: CALL NEXT / OVERRIDE FIFO
-    // =====================================================
+    // =================================================
 
-    const call = (
-      ticketId,
-      { override = false, reason } = {},
-    ) => {
+    case QueueAction.CALL: {
+      const {
+        ticketId,
+        override = false,
+        reason,
+      } = payload;
+
       const ticket = queue.waiting.find(
-        (t) => t.id === ticketId,
+        (item) => item.id === ticketId,
       );
 
+      // Cannot call another ticket when
+      // someone is already being served.
       if (
         !ticket ||
         queue.current ||
         queue.status !== QUEUE_STATUS.OPEN
       ) {
-        return;
+        return state;
+      }
+
+      // Normal calls must follow FIFO.
+      // Priority overrides are exempt.
+      if (
+        !override &&
+        queue.waiting[0]?.id !== ticketId
+      ) {
+        return state;
       }
 
       const called = {
         ...ticket,
         status: TICKET_STATUS.CALLED,
-        called_at: new Date().toISOString(),
+        called_at: now,
       };
 
-      setQueue((q) => ({
-        ...q,
-        current: called,
-        waiting: q.waiting.filter(
-          (t) => t.id !== ticketId,
-        ),
-      }));
+      return {
+        ...state,
 
-      log(
-        logEntry({
-          action: override
-            ? ACTIVITY_ACTION.OVERRIDE
-            : ACTIVITY_ACTION.CALLED,
-          ticket,
-          actor,
-          from: TICKET_STATUS.WAITING,
-          to: TICKET_STATUS.CALLED,
-          reason: override
-            ? (reason ?? 'called ahead of FIFO')
-            : null,
-        }),
+        queue: {
+          ...queue,
+          current: called,
+          waiting: queue.waiting.filter(
+            (item) => item.id !== ticketId,
+          ),
+        },
+
+        activity: prependActivity(activity, [
+          entry({
+            action: override
+              ? ACTIVITY_ACTION.OVERRIDE
+              : ACTIVITY_ACTION.CALLED,
+            ticket,
+            from: TICKET_STATUS.WAITING,
+            to: TICKET_STATUS.CALLED,
+            reason: override
+              ? (reason ?? 'called ahead of FIFO')
+              : null,
+          }),
+        ]),
+      };
+    }
+
+    // =================================================
+    // WM02: VERIFY BY ID
+    // =================================================
+
+    case QueueAction.VERIFY: {
+      const ticket = queue.current;
+
+      const result = validateVerification(
+        state,
+        payload.idNumber,
+        timestamp,
       );
-    };
 
-    return {
-      queue,
-      offenses,
-      activity,
-      notifications: MOCK_STAFF_NOTIFICATIONS,
+      if (result !== VerifyResult.OK) {
+        return state;
+      }
 
-      // Call the next person in FIFO order.
-      callNext: () => {
-        if (queue.waiting.length === 0) return;
+      const verifiedTicket = {
+        ...ticket,
+        status: TICKET_STATUS.IN_SERVICE,
+        service_started_at: now,
+      };
 
-        call(queue.waiting[0].id);
-      },
+      return {
+        ...state,
 
-      // Staff-controlled priority override.
-      overrideCall: (ticketId) =>
-        call(ticketId, { override: true }),
+        queue: {
+          ...queue,
+          current: verifiedTicket,
+        },
 
-      // =====================================================
-      // WM02: VERIFY BY ID
-      // =====================================================
-
-      verifyById: (idNumber) => {
-        const ticket = queue.current;
-
-        if (
-          !ticket ||
-          ticket.status !== TICKET_STATUS.CALLED
-        ) {
-          return VerifyResult.NO_MATCH;
-        }
-
-        const matches =
-          ticket.holder.id_number.toUpperCase() ===
-          idNumber.trim().toUpperCase();
-
-        const expired =
-          getRemainingSeconds(
-            ticket.called_at,
-            Date.now(),
-          ) === 0;
-
-        if (!matches || expired) {
-          log(
-            logEntry({
-              action: ACTIVITY_ACTION.INVALID_SCAN,
-              ticket,
-              actor,
-              note: expired
-                ? 'Verify by ID rejected: ticket expired'
-                : 'Verify by ID: no match',
-            }),
-          );
-
-          return expired
-            ? VerifyResult.EXPIRED
-            : VerifyResult.NO_MATCH;
-        }
-
-        setQueue((q) => ({
-          ...q,
-          current: {
-            ...q.current,
-            status: TICKET_STATUS.IN_SERVICE,
-            service_started_at:
-              new Date().toISOString(),
-          },
-        }));
-
-        log(
-          logEntry({
+        activity: prependActivity(activity, [
+          entry({
             action: ACTIVITY_ACTION.SERVICE_STARTED,
             ticket,
-            actor,
             from: TICKET_STATUS.CALLED,
             to: TICKET_STATUS.IN_SERVICE,
             note: 'Verified by ID',
           }),
-        );
+        ]),
+      };
+    }
 
-        return VerifyResult.OK;
-      },
+    // -------------------------------------------------
+    // RECORD INVALID VERIFICATION
+    // -------------------------------------------------
 
-      // =====================================================
-      // WM03: MARK NO-SHOW
-      // FIX #1 + FIX #2
-      // =====================================================
+    case QueueAction.INVALID_VERIFY: {
+      const ticket = queue.current;
+
+      if (
+        !ticket ||
+        ticket.status !== TICKET_STATUS.CALLED
+      ) {
+        return state;
+      }
+
+      const result = validateVerification(
+        state,
+        payload.idNumber,
+        timestamp,
+      );
+
+      // Never log a successful verification
+      // as an invalid scan.
+      if (result === VerifyResult.OK) {
+        return state;
+      }
+
+      return {
+        ...state,
+
+        activity: prependActivity(activity, [
+          entry({
+            action: ACTIVITY_ACTION.INVALID_SCAN,
+            ticket,
+            note:
+              result === VerifyResult.EXPIRED
+                ? 'Verify by ID rejected: ticket expired'
+                : 'Verify by ID: no match',
+          }),
+        ]),
+      };
+    }
+
+    // =================================================
+    // WM03: MARK NO-SHOW
+    // FIXES #1, #2 AND #3
+    // =================================================
+
+    case QueueAction.NO_SHOW: {
+      const ticket = queue.current;
+      const reason = payload.reason ?? '';
+
+      const result = validateNoShow(
+        state,
+        reason,
+        timestamp,
+      );
+
+      // Invalid operations change nothing.
+      if (result !== NoShowResult.OK) {
+        return state;
+      }
+
+      const verified =
+        ticket.status === TICKET_STATUS.IN_SERVICE;
+
+      // Fix #2: Calculate the current remaining
+      // strikes rather than lifetime offense count.
+      const penaltyBefore = getPenaltyState(
+        offenses,
+        ticket.holder.user_id,
+        timestamp,
+      );
+
+      const triggersBan =
+        penaltyBefore.strikeCount + 1 >=
+        RULES.OFFENSES_PER_BAN;
+
+      // The event ID was created before dispatch.
+      // This makes offense creation deterministic.
+      const offense = {
+        id: `${id}_offense`,
+        holder: ticket.holder,
+        ticket_number: ticket.ticket_number,
+        type: OFFENSE_TYPE.NO_SHOW,
+        resulted_in_ban: triggersBan,
+        revoked_at: null,
+        created_at: now,
+      };
+
+      // One state transition:
+      // 1. Clear the current ticket.
+      // 2. Add the offense.
+      // 3. Record both activity entries.
       //
-      // CALLED -> NO_SHOW:
-      // Allowed only after the grace period.
-      //
-      // IN_SERVICE -> NO_SHOW:
-      // Allowed with a required explanation.
-      //
-      // Fix #2:
-      // Ban eligibility is determined from the user's
-      // remaining strikes, not lifetime offense totals.
-      // =====================================================
+      // Call Next remains a separate action.
+      return {
+        ...state,
 
-      markNoShow: (reason = '') => {
-        const ticket = queue.current;
-
-        // Only CALLED and IN_SERVICE tickets qualify.
-        if (
-          !ticket ||
-          ![
-            TICKET_STATUS.CALLED,
-            TICKET_STATUS.IN_SERVICE,
-          ].includes(ticket.status)
-        ) {
-          return NoShowResult.INVALID_STATE;
-        }
-
-        const verifiedButAbsent =
-          ticket.status === TICKET_STATUS.IN_SERVICE;
-
-        const trimmedReason = reason.trim();
-
-        // Reversing a verified arrival requires a reason.
-        if (verifiedButAbsent && !trimmedReason) {
-          return NoShowResult.REASON_REQUIRED;
-        }
-
-        // CALLED tickets must exhaust the grace period.
-        if (
-          !verifiedButAbsent &&
-          getRemainingSeconds(
-            ticket.called_at,
-            Date.now(),
-          ) > 0
-        ) {
-          return NoShowResult.TOO_EARLY;
-        }
-
-        // Prevent duplicate active no-show offenses.
-        if (
-          hasActiveNoShowOffense(
-            offenses,
-            ticket.ticket_number,
-          )
-        ) {
-          return NoShowResult.ALREADY_RECORDED;
-        }
-
-        // =================================================
-        // FIX #2: ACCURATE PENALTY CALCULATION
-        // =================================================
-
-        const penaltyBefore = getPenaltyState(
-          offenses,
-          ticket.holder.user_id,
-        );
-
-        // A ban occurs when this offense completes
-        // the next two-offense penalty cycle.
-        const triggersBan =
-          penaltyBefore.strikeCount + 1 >=
-          RULES.OFFENSES_PER_BAN;
-
-        const offense = {
-          id: newId('offense'),
-          holder: ticket.holder,
-          ticket_number: ticket.ticket_number,
-          type: OFFENSE_TYPE.NO_SHOW,
-          resulted_in_ban: triggersBan,
-          revoked_at: null,
-          created_at: new Date().toISOString(),
-        };
-
-        // Clear current ticket.
-        // Never automatically call the next ticket.
-        setQueue((q) => ({
-          ...q,
+        queue: {
+          ...queue,
           current: null,
-        }));
+        },
 
-        // Save the new mock offense.
-        setOffenses((prev) => [
+        offenses: [
           offense,
-          ...prev,
-        ]);
+          ...offenses,
+        ],
 
-        // Record both the status transition and offense.
-        log(
-          logEntry({
+        activity: prependActivity(activity, [
+          entry({
             action: ACTIVITY_ACTION.NO_SHOW,
             ticket,
-            actor,
             from: ticket.status,
             to: TICKET_STATUS.NO_SHOW,
-            reason: verifiedButAbsent
-              ? trimmedReason
+            reason: verified
+              ? String(reason).trim()
               : 'grace period lapsed',
           }),
-          logEntry({
+
+          entry({
             action: ACTIVITY_ACTION.OFFENSE_RECORDED,
             ticket,
             actor: 'System',
           }),
-        );
+        ]),
+      };
+    }
 
-        return NoShowResult.OK;
-      },
+    // =================================================
+    // WM04: COMPLETE SERVICE
+    // =================================================
 
-      // =====================================================
-      // WM04: COMPLETE SERVICE
-      // =====================================================
+    case QueueAction.COMPLETE: {
+      const ticket = queue.current;
 
-      completeService: () => {
-        const ticket = queue.current;
+      if (
+        !ticket ||
+        ticket.status !== TICKET_STATUS.IN_SERVICE
+      ) {
+        return state;
+      }
 
-        if (
-          !ticket ||
-          ticket.status !== TICKET_STATUS.IN_SERVICE
-        ) {
-          return;
-        }
+      return {
+        ...state,
 
-        setQueue((q) => ({
-          ...q,
+        queue: {
+          ...queue,
           current: null,
-        }));
+        },
 
-        log(
-          logEntry({
+        activity: prependActivity(activity, [
+          entry({
             action: ACTIVITY_ACTION.COMPLETED,
             ticket,
-            actor,
             from: TICKET_STATUS.IN_SERVICE,
             to: TICKET_STATUS.COMPLETED,
           }),
-        );
-      },
+        ]),
+      };
+    }
 
-      // =====================================================
-      // OPEN QUEUE
-      // =====================================================
+    // =================================================
+    // OPEN QUEUE
+    // =================================================
 
-      openQueue: () => {
-        setQueue((q) => ({
-          ...q,
+    case QueueAction.OPEN_QUEUE: {
+      if (queue.status === QUEUE_STATUS.OPEN) {
+        return state;
+      }
+
+      return {
+        ...state,
+
+        queue: {
+          ...queue,
           status: QUEUE_STATUS.OPEN,
-        }));
+        },
 
-        log(
-          logEntry({
+        activity: prependActivity(activity, [
+          entry({
             action: ACTIVITY_ACTION.QUEUE_OPENED,
-            actor,
           }),
-        );
-      },
+        ]),
+      };
+    }
 
-      // =====================================================
-      // WM05: CLOSE QUEUE
-      // =====================================================
-      // Existing tickets remain valid.
-      // Only new joining is blocked.
+    // =================================================
+    // WM05: CLOSE QUEUE
+    // =================================================
 
-      closeQueue: () => {
-        setQueue((q) => ({
-          ...q,
+    case QueueAction.CLOSE_QUEUE: {
+      if (queue.status === QUEUE_STATUS.CLOSED) {
+        return state;
+      }
+
+      return {
+        ...state,
+
+        queue: {
+          ...queue,
           status: QUEUE_STATUS.CLOSED,
-        }));
+        },
 
-        log(
-          logEntry({
+        activity: prependActivity(activity, [
+          entry({
             action: ACTIVITY_ACTION.QUEUE_CLOSED,
-            actor,
           }),
-        );
-      },
+        ]),
+      };
+    }
 
-      // =====================================================
-      // WM06: CANCEL QUEUE
-      // =====================================================
-      // Office cancellations never create offenses.
+    // =================================================
+    // WM06: CANCEL QUEUE
+    //
+    // Cancellation never creates offenses.
+    // =================================================
 
-      cancelQueue: (reason) => {
-        const tickets = [
-          queue.current,
-          ...queue.waiting,
-        ].filter(Boolean);
+    case QueueAction.CANCEL_QUEUE: {
+      const tickets = [
+        queue.current,
+        ...queue.waiting,
+      ].filter(Boolean);
 
-        setQueue((q) => ({
-          ...q,
+      // Ignore repeated cancellation
+      // of an already empty, closed queue.
+      if (
+        queue.status === QUEUE_STATUS.CLOSED &&
+        tickets.length === 0
+      ) {
+        return state;
+      }
+
+      const reason = payload.reason ?? '';
+
+      const cancellationLogs = tickets.map(
+        (ticket) =>
+          entry({
+            action: ACTIVITY_ACTION.CANCELLED,
+            ticket,
+            from: ticket.status,
+            to: TICKET_STATUS.CANCELLED,
+            reason,
+          }),
+      );
+
+      return {
+        ...state,
+
+        queue: {
+          ...queue,
           status: QUEUE_STATUS.CLOSED,
           current: null,
           waiting: [],
-        }));
+        },
 
-        log(
-          ...tickets.map((ticket) =>
-            logEntry({
-              action: ACTIVITY_ACTION.CANCELLED,
-              ticket,
-              actor,
-              from: ticket.status,
-              to: TICKET_STATUS.CANCELLED,
-              reason,
-            }),
-          ),
-          logEntry({
+        // Preserve the existing offense records.
+        offenses,
+
+        activity: prependActivity(activity, [
+          ...cancellationLogs,
+
+          entry({
             action: ACTIVITY_ACTION.QUEUE_CANCELLED,
-            actor,
             reason,
           }),
-        );
-      },
+        ]),
+      };
+    }
 
-      // =====================================================
-      // WM07: OVERRIDE CUTOFF
-      // =====================================================
+    // =================================================
+    // WM07: OVERRIDE CUTOFF
+    // =================================================
 
-      overrideCutoff: () => {
-        setQueue((q) => ({
-          ...q,
+    case QueueAction.OVERRIDE_CUTOFF: {
+      if (queue.cutoff_overridden) {
+        return state;
+      }
+
+      return {
+        ...state,
+
+        queue: {
+          ...queue,
           cutoff_overridden: true,
-        }));
+        },
 
-        log(
-          logEntry({
+        activity: prependActivity(activity, [
+          entry({
             action: ACTIVITY_ACTION.CUTOFF_OVERRIDE,
-            actor,
           }),
-        );
-      },
+        ]),
+      };
+    }
 
-      // =====================================================
-      // WM08: REVOKE OFFENSE
-      // FIX #2
-      // =====================================================
-      //
-      // Revoked offenses remain in history.
-      // getPenaltyState() ignores revoked records.
-      //
-      // The penalty state is recalculated whenever
-      // the offenses array changes.
-      // =====================================================
+    // =================================================
+    // WM08: REVOKE OFFENSE
+    //
+    // Revoked records remain in history.
+    // Penalty calculations automatically exclude
+    // revoked offenses.
+    // =================================================
 
-      revokeOffense: (offenseId, reason) => {
-        const offense = offenses.find(
-          (o) => o.id === offenseId,
-        );
+    case QueueAction.REVOKE_OFFENSE: {
+      const { offenseId, reason } = payload;
 
-        if (!offense || offense.revoked_at) {
-          return;
-        }
+      const offense = offenses.find(
+        (item) => item.id === offenseId,
+      );
 
-        const revokedAt = new Date().toISOString();
+      if (!offense || offense.revoked_at) {
+        return state;
+      }
 
-        setOffenses((prev) =>
-          prev.map((o) =>
-            o.id === offenseId
-              ? {
-                  ...o,
-                  revoked_at: revokedAt,
-                }
-              : o,
-          ),
-        );
+      return {
+        ...state,
 
-        log(
-          logEntry({
+        offenses: offenses.map((item) =>
+          item.id === offenseId
+            ? {
+                ...item,
+                revoked_at: now,
+              }
+            : item,
+        ),
+
+        activity: prependActivity(activity, [
+          entry({
             action: ACTIVITY_ACTION.OFFENSE_REVOKED,
             ticket: offense,
-            actor,
             reason,
             note: offense.holder.name,
           }),
-        );
-      },
-    };
-  }, [queue, offenses, activity, actor]);
+        ]),
+      };
+    }
+
+    default:
+      return state;
+  }
+}
+
+// =====================================================
+// PROVIDER
+//
+// Preserves the existing public API used by:
+//
+// useStaffQueue.js
+// useOffenses.js
+// useActivityLog.js
+// queue.jsx
+// offenses.jsx
+// =====================================================
+
+export function QueueProvider({ children }) {
+  const { user } = useSession();
+
+  // Fix #3: One state instead of three separate states.
+  const [state, dispatch] = useReducer(
+    queueReducer,
+    undefined,
+    createInitialState,
+  );
+
+  const actor = user?.name ?? 'System';
+
+  // IDs and timestamps are generated BEFORE dispatch.
+  // The reducer receives a fully specified event.
+  const send = (type, payload = {}) => {
+    dispatch({
+      type,
+      payload,
+      actor,
+      now: new Date().toISOString(),
+      id: newId('action'),
+    });
+  };
+
+  const { queue, offenses, activity } = state;
+
+  // =================================================
+  // WM01: CALL NEXT / OVERRIDE FIFO
+  // =================================================
+
+  const call = (
+    ticketId,
+    { override = false, reason } = {},
+  ) => {
+    send(QueueAction.CALL, {
+      ticketId,
+      override,
+      reason,
+    });
+  };
+
+  const callNext = () => {
+    const first = queue.waiting[0];
+
+    if (first) {
+      call(first.id);
+    }
+  };
+
+  const overrideCall = (ticketId) => {
+    call(ticketId, { override: true });
+  };
+
+  // =================================================
+  // WM02: VERIFY BY ID
+  // =================================================
+
+  const verifyById = (idNumber) => {
+    const result = validateVerification(
+      state,
+      idNumber,
+      Date.now(),
+    );
+
+    if (result === VerifyResult.OK) {
+      send(QueueAction.VERIFY, {
+        idNumber,
+      });
+    } else if (
+      queue.current?.status === TICKET_STATUS.CALLED
+    ) {
+      send(QueueAction.INVALID_VERIFY, {
+        idNumber,
+      });
+    }
+
+    return result;
+  };
+
+  // =================================================
+  // WM03: MARK NO-SHOW
+  // =================================================
+
+  const markNoShow = (reason = '') => {
+    const result = validateNoShow(
+      state,
+      reason,
+      Date.now(),
+    );
+
+    if (result === NoShowResult.OK) {
+      send(QueueAction.NO_SHOW, {
+        reason,
+      });
+    }
+
+    return result;
+  };
+
+  // =================================================
+  // WM04: COMPLETE SERVICE
+  // =================================================
+
+  const completeService = () => {
+    send(QueueAction.COMPLETE);
+  };
+
+  // =================================================
+  // QUEUE CONTROLS
+  // =================================================
+
+  const openQueue = () => {
+    send(QueueAction.OPEN_QUEUE);
+  };
+
+  const closeQueue = () => {
+    send(QueueAction.CLOSE_QUEUE);
+  };
+
+  const cancelQueue = (reason) => {
+    send(QueueAction.CANCEL_QUEUE, {
+      reason,
+    });
+  };
+
+  const overrideCutoff = () => {
+    send(QueueAction.OVERRIDE_CUTOFF);
+  };
+
+  // =================================================
+  // WM08: REVOKE OFFENSE
+  // =================================================
+
+  const revokeOffense = (offenseId, reason) => {
+    send(QueueAction.REVOKE_OFFENSE, {
+      offenseId,
+      reason,
+    });
+  };
+
+  // Keep existing hook and screen interfaces.
+  const value = {
+    queue,
+    offenses,
+    activity,
+    notifications: MOCK_STAFF_NOTIFICATIONS,
+
+    callNext,
+    overrideCall,
+    verifyById,
+    markNoShow,
+    completeService,
+    openQueue,
+    closeQueue,
+    cancelQueue,
+    overrideCutoff,
+    revokeOffense,
+  };
 
   return (
     <QueueContext.Provider value={value}>
@@ -523,6 +903,10 @@ export function QueueProvider({ children }) {
     </QueueContext.Provider>
   );
 }
+
+// =====================================================
+// QUEUE STORE HOOK
+// =====================================================
 
 export function useQueueStore() {
   const context = useContext(QueueContext);
