@@ -6,6 +6,9 @@ import { auth } from '@/lib/firebase';
 import { MOCK_USER_GUEST, MOCK_USER_STUDENT } from '@qampus/core/mock';
 import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
+import { GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut as firebaseSignOut } from 'firebase/auth';
+
 
 
 const SessionContext = createContext(null);
@@ -50,9 +53,26 @@ export function SessionProvider({ children }) {
       authReady,
       hasOnboarded,
       completeOnboarding: () => setHasOnboarded(true),
-      signInAsStudent: () => setUser(NEW_STUDENT),
+      
+      signInAsStudent: async () => {
+        await GoogleSignin.hasPlayServices();
+        const response = await GoogleSignin.signIn();
+        if (!isSuccessResponse(response)) return false; // user cancelled the picker
+        const credential = GoogleAuthProvider.credential(response.data.idToken);
+        await signInWithCredential(auth, credential);
+        // First sign-in: the student still has to fill in a profile
+        setUser(NEW_STUDENT);
+        return true;
+      },
+
       signInAsGuest: () => setUser(NEW_GUEST),
-      signOut: () => firebaseSignOut(auth),
+
+      signOut: async () => {
+        // Also clear Google's cached account, or the picker is skipped next time
+        await GoogleSignin.signOut().catch(() => {});
+        await firebaseSignOut(auth);
+      },
+
 
 
       // Backend swap: these become Cloud Function calls; the server validates and saves.
