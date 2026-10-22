@@ -46,7 +46,7 @@ export default function CurrentTicketPanel({
       {
         label: CURRENT_TICKET_COPY.markNoShow,
         onPress: onMarkNoShow,
-        enabled: isExpired,
+        enabled: isExpired || state === PanelState.IN_SERVICE,
         type: ButtonType.DESTRUCTIVE,
       },
       { label: CURRENT_TICKET_COPY.completeService, onPress: onComplete, enabled: state === PanelState.IN_SERVICE },
