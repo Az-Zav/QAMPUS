@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "expo": "~57.0.25",
+    "expo-updates": "~57.0.26",
     "react": "19.2.3",
     "react-native": "0.86.3"
   }
