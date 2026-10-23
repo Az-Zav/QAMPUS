@@ -51,6 +51,10 @@
         "projectId": "867b8b05-3f0c-4360-bc86-1876ded46329"
       }
     },
-    "owner": "ejayyyyy18s-team"
+    "owner": "ejayyyyy18s-team",
+    "updates": {
+      "url": "https://u.expo.dev/867b8b05-3f0c-4360-bc86-1876ded46329"
+    },
+    "ios": {}
   }
 }

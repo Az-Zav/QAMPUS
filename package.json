@@ -12,7 +12,7 @@
     "lint": "npm run lint --workspaces --if-present"
   },
   "dependencies": {
-    "expo": "~57.0.25",
+    "expo": "~57.0.31",
     "react": "19.2.3",
     "react-native": "0.86.3"
   }
