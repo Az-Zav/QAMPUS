@@ -20,24 +20,57 @@ import {
 } from '@/constants';
 
 import {
+  createEmptyReasonSelection,
+  REASON_ACTION,
+  REASON_ERROR_MESSAGES,
+  ReasonValidationResult,
+  validateReasonSelection,
+} from '@/constants/reasons';
+
+import {
   useOffenses,
   useStaffOffice,
   useThemedStyles,
 } from '@/hooks';
 
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 
-// W04: Office offenses and calculated mock penalties.
+import {
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+// =====================================================
+// QAMPUS STAFF WEB — OFFENSES
+//
+// Fix #2: Penalty and ban calculations
+// New: Required multi-select revocation reasons
+//
+// All operations currently use frontend mock state.
+// =====================================================
+
 export default function Offenses() {
   const styles = useThemedStyles(makeStyles);
 
   const { office } = useStaffOffice();
 
+  // Existing search state.
   const [search, setSearch] = useState('');
-  const [revoking, setRevoking] = useState(null);
-  const [reason, setReason] = useState('');
 
+  // Offense being revoked.
+  const [revoking, setRevoking] = useState(null);
+
+  // Shared modal error state.
+  const [error, setError] = useState(null);
+
+  // New structured reason selection state.
+  const [
+    reasonSelection,
+    setReasonSelection,
+  ] = useState(createEmptyReasonSelection);
+
+  // Existing offense data and penalty summaries.
   const {
     offenses,
     total,
@@ -45,24 +78,100 @@ export default function Offenses() {
     revokeOffense,
   } = useOffenses(search);
 
+  // Existing QAMPUS confirmation copy.
   const copy = MODAL_COPY.revokeOffense();
 
-  const startRevoke = (offense) => {
-    if (offense.revoked_at) return;
+  // =====================================================
+  // MODAL HELPERS
+  // =====================================================
 
-    setReason('');
+  // Open the revocation modal.
+  const startRevoke = (offense) => {
+    // Revoked offenses cannot be revoked again.
+    if (offense.revoked_at) {
+      return;
+    }
+
     setRevoking(offense);
+
+    // Each revocation begins with a new reason selection.
+    setReasonSelection(createEmptyReasonSelection());
+
+    setError(null);
   };
 
+  // Close the revocation modal.
   const closeRevoke = () => {
     setRevoking(null);
-    setReason('');
+    setReasonSelection(createEmptyReasonSelection());
+    setError(null);
   };
 
-  const handleRevoke = () => {
-    if (!revoking?.id) return;
+  // Update controlled reason fields.
+  const handleReasonChange = (selection) => {
+    setReasonSelection(selection);
+    setError(null);
+  };
 
-    revokeOffense(revoking.id, reason.trim());
+  // =====================================================
+  // OFFENSE REVOCATION
+  //
+  // Requirements:
+  // - At least one reason
+  // - Multiple reasons supported
+  // - Other may be combined with predefined reasons
+  // - Other explanation required when selected
+  // - Optional additional notes
+  // - Maximum 200 characters per text field
+  // =====================================================
+
+  const handleRevoke = () => {
+    if (!revoking?.id) {
+      setError('No offense was selected for revocation.');
+      return;
+    }
+
+    // Validate before dispatching to QueueProvider.
+    const validation = validateReasonSelection(
+      REASON_ACTION.OFFENSE_REVOCATION,
+      reasonSelection,
+    );
+
+    if (validation !== ReasonValidationResult.OK) {
+      setError(
+        REASON_ERROR_MESSAGES[validation] ??
+          'Please select a valid reason.',
+      );
+      return;
+    }
+
+    // File 6 will accept the structured selection,
+    // validate it again, and log the chosen reasons.
+    const result = revokeOffense(
+      revoking.id,
+      reasonSelection,
+    );
+
+    // The frontend provider previously returned
+    // undefined for revocation. File 6 introduces
+    // explicit result codes.
+    if (result !== 'ok') {
+      const errors = {
+        invalidReason:
+          'Please check the selected reasons.',
+        offenseNotFound:
+          'This offense could not be found.',
+        alreadyRevoked:
+          'This offense has already been revoked.',
+      };
+
+      setError(
+        errors[result] ??
+          'Unable to revoke this offense.',
+      );
+      return;
+    }
+
     closeRevoke();
   };
 
@@ -74,6 +183,10 @@ export default function Offenses() {
         right: FOOTER_COPY.offensesNote,
       }}
     >
+      {/* ============================================
+          PAGE HEADER AND SEARCH
+      ============================================ */}
+
       <PageHeader
         title={OFFENSES_COPY.title}
         subtitle={OFFENSES_COPY.subtitle(office)}
@@ -86,9 +199,13 @@ export default function Offenses() {
         />
       </PageHeader>
 
-      {/* Overall penalty summary */}
+      {/* ============================================
+          PENALTY SUMMARY — FIX #2 PRESERVED
+      ============================================ */}
+
       {total > 0 && (
         <View style={styles.summary}>
+
           <View style={styles.stat}>
             <Text style={styles.statValue}>
               {summary.activeOffenses}
@@ -124,10 +241,14 @@ export default function Offenses() {
               Currently banned users
             </Text>
           </View>
+
         </View>
       )}
 
-      {/* Offense records */}
+      {/* ============================================
+          OFFENSE RECORDS
+      ============================================ */}
+
       {total === 0 ? (
         <EmptyState {...EMPTY_COPY.noOffenses} />
       ) : offenses.length === 0 ? (
@@ -148,13 +269,24 @@ export default function Offenses() {
         </View>
       )}
 
-      {/* Existing offense revocation modal */}
+      {/* ============================================
+          OFFENSE REVOCATION MODAL
+      ============================================ */}
+
       <StaffModal
         visible={!!revoking}
         {...copy}
-        field={ModalField.REASON}
-        value={reason}
-        onChangeText={setReason}
+        field={ModalField.REASON_SELECT}
+
+        reasonAction={
+          REASON_ACTION.OFFENSE_REVOCATION
+        }
+        reasonSelection={reasonSelection}
+        onReasonSelectionChange={
+          handleReasonChange
+        }
+
+        error={error}
         cancelLabel={copy.cancel}
         confirmLabel={copy.confirm}
         destructive
@@ -164,6 +296,10 @@ export default function Offenses() {
     </ConsolePage>
   );
 }
+
+// =====================================================
+// STYLES
+// =====================================================
 
 const makeStyles = (c) =>
   StyleSheet.create({

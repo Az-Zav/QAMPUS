@@ -22,6 +22,14 @@ import {
 } from '@/utils/penalties';
 
 import {
+  buildReasonDetails,
+  formatReasonForLog,
+  REASON_ACTION,
+  ReasonValidationResult,
+  validateReasonSelection,
+} from '@/constants/reasons';
+
+import {
   createContext,
   useContext,
   useReducer,
@@ -32,12 +40,14 @@ import { useSession } from './SessionProvider';
 // =====================================================
 // QAMPUS STAFF QUEUE PROVIDER
 //
-// Fix #1: Correct no-show handling
-// Fix #2: Accurate strike and ban calculations
-// Fix #3: Unified queue state using useReducer
+// Fix #1: No-show handling
+// Fix #2: Offense and ban calculations
+// Fix #3: Unified state using useReducer
+// Fix #4: Required FIFO override reasons
 //
-// Frontend-only implementation.
-// No Firebase or backend integration yet.
+// New: Structured multi-select reason system
+//
+// Frontend-only mock implementation.
 // =====================================================
 
 const QueueContext = createContext(null);
@@ -58,6 +68,27 @@ export const NoShowResult = Object.freeze({
   TOO_EARLY: 'tooEarly',
   REASON_REQUIRED: 'reasonRequired',
   ALREADY_RECORDED: 'alreadyRecorded',
+});
+
+export const OverrideResult = Object.freeze({
+  OK: 'ok',
+  REASON_REQUIRED: 'reasonRequired',
+  INVALID_STATE: 'invalidState',
+  TICKET_NOT_FOUND: 'ticketNotFound',
+  ALREADY_NEXT: 'alreadyNext',
+});
+
+export const RevokeResult = Object.freeze({
+  OK: 'ok',
+  INVALID_REASON: 'invalidReason',
+  OFFENSE_NOT_FOUND: 'offenseNotFound',
+  ALREADY_REVOKED: 'alreadyRevoked',
+});
+
+export const CancelResult = Object.freeze({
+  OK: 'ok',
+  INVALID_REASON: 'invalidReason',
+  INVALID_STATE: 'invalidState',
 });
 
 // =====================================================
@@ -81,8 +112,6 @@ const QueueAction = Object.freeze({
 // INITIAL STATE
 // =====================================================
 
-// Copy the mock collections so the reducer never
-// modifies the original imported mock data.
 function createInitialState() {
   return {
     queue: {
@@ -92,24 +121,24 @@ function createInitialState() {
         : null,
       waiting: [...MOCK_STAFF_QUEUE.waiting],
     },
+
     offenses: [...MOCK_STAFF_OFFENSES],
+
     activity: [...MOCK_STAFF_ACTIVITY],
   };
 }
 
 // =====================================================
-// ACTION IDs AND ACTIVITY LOG HELPERS
+// EVENT AND ACTIVITY HELPERS
 // =====================================================
 
-// IDs are generated outside the reducer.
-// Reducers must not perform external side effects.
+// IDs are generated before dispatch.
+// No counters or timestamps are generated in the reducer.
 let nextId = 0;
 
 const newId = (prefix) =>
   `${prefix}_local_${++nextId}`;
 
-// Pure function: no random values, counters,
-// timestamps, or side effects.
 function makeLog({
   id,
   action,
@@ -118,6 +147,7 @@ function makeLog({
   from = null,
   to = null,
   reason = null,
+  reasonDetails = null,
   note = null,
   now,
 }) {
@@ -128,19 +158,49 @@ function makeLog({
     actor,
     from,
     to,
+
+    // Human-readable reason, compatible with
+    // existing Activity Log records.
     reason: reason || null,
+
+    // Structured reason data for future Firebase
+    // integration and richer activity displays.
+    reason_details: reasonDetails,
+
     note,
     created_at: now,
   };
 }
 
-// Log entries are supplied in chronological order.
-// Store them newest first.
+// Input entries are in chronological order.
+// Activity Log displays the newest entry first.
 function prependActivity(activity, entries) {
   return [
     ...[...entries].reverse(),
     ...activity,
   ];
+}
+
+// =====================================================
+// STRUCTURED REASON VALIDATION
+// =====================================================
+
+function isValidReason(action, selection) {
+  return (
+    validateReasonSelection(action, selection) ===
+    ReasonValidationResult.OK
+  );
+}
+
+function getReasonData(action, selection) {
+  if (!isValidReason(action, selection)) {
+    return null;
+  }
+
+  return {
+    text: formatReasonForLog(action, selection),
+    details: buildReasonDetails(action, selection),
+  };
 }
 
 // =====================================================
@@ -157,22 +217,19 @@ function validateVerification(state, idNumber, now) {
     return VerifyResult.NO_MATCH;
   }
 
-  const expired =
-    getRemainingSeconds(ticket.called_at, now) === 0;
-
-  if (expired) {
+  if (
+    getRemainingSeconds(ticket.called_at, now) === 0
+  ) {
     return VerifyResult.EXPIRED;
   }
 
-  const expectedId =
-    String(ticket.holder?.id_number ?? '')
-      .trim()
-      .toUpperCase();
+  const expectedId = String(
+    ticket.holder?.id_number ?? '',
+  ).trim().toUpperCase();
 
-  const enteredId =
-    String(idNumber ?? '')
-      .trim()
-      .toUpperCase();
+  const enteredId = String(
+    idNumber ?? '',
+  ).trim().toUpperCase();
 
   if (!enteredId || expectedId !== enteredId) {
     return VerifyResult.NO_MATCH;
@@ -182,10 +239,13 @@ function validateVerification(state, idNumber, now) {
 }
 
 // =====================================================
-// VALIDATION: MARK NO-SHOW
+// VALIDATION: NO-SHOW
 //
-// R-12: CALLED -> NO_SHOW after grace period
-// R-23a: IN_SERVICE -> NO_SHOW with a reason
+// CALLED:
+// Grace period must have expired.
+//
+// IN_SERVICE:
+// Requires a valid verified-no-show reason selection.
 // =====================================================
 
 function validateNoShow(state, reason, now) {
@@ -204,17 +264,16 @@ function validateNoShow(state, reason, now) {
   const verified =
     ticket.status === TICKET_STATUS.IN_SERVICE;
 
-  const trimmedReason =
-    String(reason ?? '').trim();
-
-  // Staff must explain why a previous
-  // successful verification is being reversed.
-  if (verified && !trimmedReason) {
+  if (
+    verified &&
+    !isValidReason(
+      REASON_ACTION.VERIFIED_NO_SHOW,
+      reason,
+    )
+  ) {
     return NoShowResult.REASON_REQUIRED;
   }
 
-  // Normal called tickets must wait until
-  // the grace period has expired.
   if (
     !verified &&
     getRemainingSeconds(ticket.called_at, now) > 0
@@ -222,7 +281,6 @@ function validateNoShow(state, reason, now) {
     return NoShowResult.TOO_EARLY;
   }
 
-  // Prevent duplicate no-show offenses.
   if (
     hasActiveNoShowOffense(
       state.offenses,
@@ -236,13 +294,107 @@ function validateNoShow(state, reason, now) {
 }
 
 // =====================================================
-// FIX #3: PURE QUEUE REDUCER
+// VALIDATION: FIFO OVERRIDE
+// =====================================================
+
+function validateOverride(state, ticketId, reason) {
+  const { queue } = state;
+
+  if (
+    !isValidReason(
+      REASON_ACTION.FIFO_OVERRIDE,
+      reason,
+    )
+  ) {
+    return OverrideResult.REASON_REQUIRED;
+  }
+
+  if (
+    queue.status !== QUEUE_STATUS.OPEN ||
+    queue.current
+  ) {
+    return OverrideResult.INVALID_STATE;
+  }
+
+  const ticket = queue.waiting.find(
+    (item) => item.id === ticketId,
+  );
+
+  if (!ticket) {
+    return OverrideResult.TICKET_NOT_FOUND;
+  }
+
+  if (queue.waiting[0]?.id === ticketId) {
+    return OverrideResult.ALREADY_NEXT;
+  }
+
+  return OverrideResult.OK;
+}
+
+// =====================================================
+// VALIDATION: QUEUE CANCELLATION
+// =====================================================
+
+function validateCancellation(state, reason) {
+  if (
+    !isValidReason(
+      REASON_ACTION.QUEUE_CANCELLATION,
+      reason,
+    )
+  ) {
+    return CancelResult.INVALID_REASON;
+  }
+
+  const { queue } = state;
+
+  if (
+    queue.status === QUEUE_STATUS.CLOSED &&
+    !queue.current &&
+    queue.waiting.length === 0
+  ) {
+    return CancelResult.INVALID_STATE;
+  }
+
+  return CancelResult.OK;
+}
+
+// =====================================================
+// VALIDATION: OFFENSE REVOCATION
+// =====================================================
+
+function validateRevocation(state, offenseId, reason) {
+  if (
+    !isValidReason(
+      REASON_ACTION.OFFENSE_REVOCATION,
+      reason,
+    )
+  ) {
+    return RevokeResult.INVALID_REASON;
+  }
+
+  const offense = state.offenses.find(
+    (item) => item.id === offenseId,
+  );
+
+  if (!offense) {
+    return RevokeResult.OFFENSE_NOT_FOUND;
+  }
+
+  if (offense.revoked_at) {
+    return RevokeResult.ALREADY_REVOKED;
+  }
+
+  return RevokeResult.OK;
+}
+
+// =====================================================
+// PURE QUEUE REDUCER
 //
-// All queue, offense, and activity changes
-// happen in a single state transition.
+// Queue, offenses and activity are updated through
+// one state transition for every successful action.
 //
-// The reducer never calls Date.now(),
-// generates random IDs, or dispatches actions.
+// This is local React state consistency, not a
+// database transaction or server authorization.
 // =====================================================
 
 function queueReducer(state, event) {
@@ -262,8 +414,7 @@ function queueReducer(state, event) {
 
   const timestamp = Date.parse(now);
 
-  // This counter is local to one reducer invocation.
-  // Replaying the same event generates the same IDs.
+  // Deterministic log IDs derived from the event ID.
   let logIndex = 0;
 
   const entry = (details) =>
@@ -275,8 +426,9 @@ function queueReducer(state, event) {
     });
 
   switch (type) {
+
     // =================================================
-    // WM01: CALL NEXT / OVERRIDE FIFO
+    // WM01: CALL NEXT / FIFO OVERRIDE
     // =================================================
 
     case QueueAction.CALL: {
@@ -290,8 +442,6 @@ function queueReducer(state, event) {
         (item) => item.id === ticketId,
       );
 
-      // Cannot call another ticket when
-      // someone is already being served.
       if (
         !ticket ||
         queue.current ||
@@ -300,14 +450,32 @@ function queueReducer(state, event) {
         return state;
       }
 
-      // Normal calls must follow FIFO.
-      // Priority overrides are exempt.
+      // Normal calls must follow FIFO order.
       if (
         !override &&
         queue.waiting[0]?.id !== ticketId
       ) {
         return state;
       }
+
+      // Priority overrides require valid reasons.
+      if (
+        override &&
+        validateOverride(
+          state,
+          ticketId,
+          reason,
+        ) !== OverrideResult.OK
+      ) {
+        return state;
+      }
+
+      const reasonData = override
+        ? getReasonData(
+            REASON_ACTION.FIFO_OVERRIDE,
+            reason,
+          )
+        : null;
 
       const called = {
         ...ticket,
@@ -331,12 +499,13 @@ function queueReducer(state, event) {
             action: override
               ? ACTIVITY_ACTION.OVERRIDE
               : ACTIVITY_ACTION.CALLED,
+
             ticket,
             from: TICKET_STATUS.WAITING,
             to: TICKET_STATUS.CALLED,
-            reason: override
-              ? (reason ?? 'called ahead of FIFO')
-              : null,
+
+            reason: reasonData?.text ?? null,
+            reasonDetails: reasonData?.details ?? null,
           }),
         ]),
       };
@@ -349,28 +518,26 @@ function queueReducer(state, event) {
     case QueueAction.VERIFY: {
       const ticket = queue.current;
 
-      const result = validateVerification(
-        state,
-        payload.idNumber,
-        timestamp,
-      );
-
-      if (result !== VerifyResult.OK) {
+      if (
+        validateVerification(
+          state,
+          payload.idNumber,
+          timestamp,
+        ) !== VerifyResult.OK
+      ) {
         return state;
       }
-
-      const verifiedTicket = {
-        ...ticket,
-        status: TICKET_STATUS.IN_SERVICE,
-        service_started_at: now,
-      };
 
       return {
         ...state,
 
         queue: {
           ...queue,
-          current: verifiedTicket,
+          current: {
+            ...ticket,
+            status: TICKET_STATUS.IN_SERVICE,
+            service_started_at: now,
+          },
         },
 
         activity: prependActivity(activity, [
@@ -385,9 +552,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // -------------------------------------------------
+    // =================================================
     // RECORD INVALID VERIFICATION
-    // -------------------------------------------------
+    // =================================================
 
     case QueueAction.INVALID_VERIFY: {
       const ticket = queue.current;
@@ -405,8 +572,6 @@ function queueReducer(state, event) {
         timestamp,
       );
 
-      // Never log a successful verification
-      // as an invalid scan.
       if (result === VerifyResult.OK) {
         return state;
       }
@@ -429,29 +594,37 @@ function queueReducer(state, event) {
 
     // =================================================
     // WM03: MARK NO-SHOW
-    // FIXES #1, #2 AND #3
+    //
+    // Preserves Fixes #1 and #2.
+    // Adds structured reasons only when reversing
+    // a previously verified IN_SERVICE ticket.
     // =================================================
 
     case QueueAction.NO_SHOW: {
       const ticket = queue.current;
       const reason = payload.reason ?? '';
 
-      const result = validateNoShow(
-        state,
-        reason,
-        timestamp,
-      );
-
-      // Invalid operations change nothing.
-      if (result !== NoShowResult.OK) {
+      if (
+        validateNoShow(
+          state,
+          reason,
+          timestamp,
+        ) !== NoShowResult.OK
+      ) {
         return state;
       }
 
       const verified =
         ticket.status === TICKET_STATUS.IN_SERVICE;
 
-      // Fix #2: Calculate the current remaining
-      // strikes rather than lifetime offense count.
+      const reasonData = verified
+        ? getReasonData(
+            REASON_ACTION.VERIFIED_NO_SHOW,
+            reason,
+          )
+        : null;
+
+      // Existing penalty calculation.
       const penaltyBefore = getPenaltyState(
         offenses,
         ticket.holder.user_id,
@@ -462,8 +635,6 @@ function queueReducer(state, event) {
         penaltyBefore.strikeCount + 1 >=
         RULES.OFFENSES_PER_BAN;
 
-      // The event ID was created before dispatch.
-      // This makes offense creation deterministic.
       const offense = {
         id: `${id}_offense`,
         holder: ticket.holder,
@@ -474,15 +645,10 @@ function queueReducer(state, event) {
         created_at: now,
       };
 
-      // One state transition:
-      // 1. Clear the current ticket.
-      // 2. Add the offense.
-      // 3. Record both activity entries.
-      //
-      // Call Next remains a separate action.
       return {
         ...state,
 
+        // Staff must call the next ticket separately.
         queue: {
           ...queue,
           current: null,
@@ -499,9 +665,14 @@ function queueReducer(state, event) {
             ticket,
             from: ticket.status,
             to: TICKET_STATUS.NO_SHOW,
+
             reason: verified
-              ? String(reason).trim()
+              ? reasonData.text
               : 'grace period lapsed',
+
+            reasonDetails: verified
+              ? reasonData.details
+              : null,
           }),
 
           entry({
@@ -573,6 +744,9 @@ function queueReducer(state, event) {
 
     // =================================================
     // WM05: CLOSE QUEUE
+    //
+    // Existing issued tickets stay valid.
+    // No reason dropdown is required.
     // =================================================
 
     case QueueAction.CLOSE_QUEUE: {
@@ -597,28 +771,36 @@ function queueReducer(state, event) {
     }
 
     // =================================================
-    // WM06: CANCEL QUEUE
+    // WM06: CANCEL ENTIRE QUEUE
     //
-    // Cancellation never creates offenses.
+    // Requires structured reasons.
+    // Creates no offenses.
     // =================================================
 
     case QueueAction.CANCEL_QUEUE: {
+      const reason = payload.reason;
+
+      if (
+        validateCancellation(
+          state,
+          reason,
+        ) !== CancelResult.OK
+      ) {
+        return state;
+      }
+
+      const reasonData = getReasonData(
+        REASON_ACTION.QUEUE_CANCELLATION,
+        reason,
+      );
+
       const tickets = [
         queue.current,
         ...queue.waiting,
       ].filter(Boolean);
 
-      // Ignore repeated cancellation
-      // of an already empty, closed queue.
-      if (
-        queue.status === QUEUE_STATUS.CLOSED &&
-        tickets.length === 0
-      ) {
-        return state;
-      }
-
-      const reason = payload.reason ?? '';
-
+      // The selected reasons belong to the entire
+      // queue cancellation action.
       const cancellationLogs = tickets.map(
         (ticket) =>
           entry({
@@ -626,7 +808,8 @@ function queueReducer(state, event) {
             ticket,
             from: ticket.status,
             to: TICKET_STATUS.CANCELLED,
-            reason,
+            reason: reasonData.text,
+            reasonDetails: reasonData.details,
           }),
       );
 
@@ -640,15 +823,14 @@ function queueReducer(state, event) {
           waiting: [],
         },
 
-        // Preserve the existing offense records.
-        offenses,
-
+        // Office cancellations never add penalties.
         activity: prependActivity(activity, [
           ...cancellationLogs,
 
           entry({
             action: ACTIVITY_ACTION.QUEUE_CANCELLED,
-            reason,
+            reason: reasonData.text,
+            reasonDetails: reasonData.details,
           }),
         ]),
       };
@@ -682,21 +864,31 @@ function queueReducer(state, event) {
     // =================================================
     // WM08: REVOKE OFFENSE
     //
-    // Revoked records remain in history.
-    // Penalty calculations automatically exclude
-    // revoked offenses.
+    // Requires structured reasons.
+    // Revoked offenses remain in history.
     // =================================================
 
     case QueueAction.REVOKE_OFFENSE: {
       const { offenseId, reason } = payload;
 
+      if (
+        validateRevocation(
+          state,
+          offenseId,
+          reason,
+        ) !== RevokeResult.OK
+      ) {
+        return state;
+      }
+
       const offense = offenses.find(
         (item) => item.id === offenseId,
       );
 
-      if (!offense || offense.revoked_at) {
-        return state;
-      }
+      const reasonData = getReasonData(
+        REASON_ACTION.OFFENSE_REVOCATION,
+        reason,
+      );
 
       return {
         ...state,
@@ -714,7 +906,8 @@ function queueReducer(state, event) {
           entry({
             action: ACTIVITY_ACTION.OFFENSE_REVOKED,
             ticket: offense,
-            reason,
+            reason: reasonData.text,
+            reasonDetails: reasonData.details,
             note: offense.holder.name,
           }),
         ]),
@@ -729,19 +922,17 @@ function queueReducer(state, event) {
 // =====================================================
 // PROVIDER
 //
-// Preserves the existing public API used by:
-//
-// useStaffQueue.js
-// useOffenses.js
-// useActivityLog.js
-// queue.jsx
-// offenses.jsx
+// Public API remains compatible with:
+// - useStaffQueue.js
+// - useOffenses.js
+// - useActivityLog.js
+// - queue.jsx
+// - offenses.jsx
 // =====================================================
 
 export function QueueProvider({ children }) {
   const { user } = useSession();
 
-  // Fix #3: One state instead of three separate states.
   const [state, dispatch] = useReducer(
     queueReducer,
     undefined,
@@ -750,8 +941,7 @@ export function QueueProvider({ children }) {
 
   const actor = user?.name ?? 'System';
 
-  // IDs and timestamps are generated BEFORE dispatch.
-  // The reducer receives a fully specified event.
+  // IDs and timestamps are generated before dispatch.
   const send = (type, payload = {}) => {
     dispatch({
       type,
@@ -765,7 +955,7 @@ export function QueueProvider({ children }) {
   const { queue, offenses, activity } = state;
 
   // =================================================
-  // WM01: CALL NEXT / OVERRIDE FIFO
+  // WM01: CALL NEXT / OVERRIDE
   // =================================================
 
   const call = (
@@ -787,8 +977,23 @@ export function QueueProvider({ children }) {
     }
   };
 
-  const overrideCall = (ticketId) => {
-    call(ticketId, { override: true });
+  const overrideCall = (ticketId, reasonSelection) => {
+    const result = validateOverride(
+      state,
+      ticketId,
+      reasonSelection,
+    );
+
+    if (result !== OverrideResult.OK) {
+      return result;
+    }
+
+    call(ticketId, {
+      override: true,
+      reason: reasonSelection,
+    });
+
+    return OverrideResult.OK;
   };
 
   // =================================================
@@ -803,15 +1008,11 @@ export function QueueProvider({ children }) {
     );
 
     if (result === VerifyResult.OK) {
-      send(QueueAction.VERIFY, {
-        idNumber,
-      });
+      send(QueueAction.VERIFY, { idNumber });
     } else if (
       queue.current?.status === TICKET_STATUS.CALLED
     ) {
-      send(QueueAction.INVALID_VERIFY, {
-        idNumber,
-      });
+      send(QueueAction.INVALID_VERIFY, { idNumber });
     }
 
     return result;
@@ -829,9 +1030,7 @@ export function QueueProvider({ children }) {
     );
 
     if (result === NoShowResult.OK) {
-      send(QueueAction.NO_SHOW, {
-        reason,
-      });
+      send(QueueAction.NO_SHOW, { reason });
     }
 
     return result;
@@ -857,10 +1056,21 @@ export function QueueProvider({ children }) {
     send(QueueAction.CLOSE_QUEUE);
   };
 
-  const cancelQueue = (reason) => {
+  const cancelQueue = (reasonSelection) => {
+    const result = validateCancellation(
+      state,
+      reasonSelection,
+    );
+
+    if (result !== CancelResult.OK) {
+      return result;
+    }
+
     send(QueueAction.CANCEL_QUEUE, {
-      reason,
+      reason: reasonSelection,
     });
+
+    return CancelResult.OK;
   };
 
   const overrideCutoff = () => {
@@ -871,14 +1081,32 @@ export function QueueProvider({ children }) {
   // WM08: REVOKE OFFENSE
   // =================================================
 
-  const revokeOffense = (offenseId, reason) => {
+  const revokeOffense = (
+    offenseId,
+    reasonSelection,
+  ) => {
+    const result = validateRevocation(
+      state,
+      offenseId,
+      reasonSelection,
+    );
+
+    if (result !== RevokeResult.OK) {
+      return result;
+    }
+
     send(QueueAction.REVOKE_OFFENSE, {
       offenseId,
-      reason,
+      reason: reasonSelection,
     });
+
+    return RevokeResult.OK;
   };
 
-  // Keep existing hook and screen interfaces.
+  // =================================================
+  // CONTEXT VALUE
+  // =================================================
+
   const value = {
     queue,
     offenses,
