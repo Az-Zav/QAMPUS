@@ -1,5 +1,18 @@
 {
   "android": {
     "package": "com.anonymous.qampusmonorepo"
-  }
+  },
+  "extra": {
+    "eas": {
+      "projectId": "a363a28d-fbc0-4bcd-8d8b-64fc44e4abe0"
+    }
+  },
+  "owner": "azzav",
+  "runtimeVersion": {
+    "policy": "appVersion"
+  },
+  "updates": {
+    "url": "https://u.expo.dev/a363a28d-fbc0-4bcd-8d8b-64fc44e4abe0"
+  },
+  "ios": {}
 }
