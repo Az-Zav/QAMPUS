@@ -37,3 +37,36 @@ Each hook is swapped for the real one as its feature lands; `mock.js` is deleted
 
 ## 2026-10-24 Project docs live in `docs/` and are updated every session
 `STATUS.md` is overwritten; `DECISIONS.md` is append-only. `AGENTS.md` tells every session to read and update them.
+
+## 2026-10-24 Final slice-1 data model (supersedes "Slice 1 data model" above)
+Reconciled against the mock shapes and what the view mappers read. Field names follow the mock/TDD (`daily_sequence`, `short_name`, snake_case). Times are Firestore timestamps and must equal `request.time` on write.
+
+```text
+users/{uid}                     role STUDENT|GUEST, name, email, institutional_id, program, guest_type,
+                                push_enabled, push_token, strike_count, banned_until, active_count, created_at
+offices/{officeId}              code, name, short_name, location, counter_label ("Window 2"), status ACTIVE|INACTIVE,
+                                default_service_minutes, utc_offset_minutes,
+                                hours { MON..SUN: { open_min, close_min } }  (minutes since local midnight; missing day = closed)
+officeCodes/{officeId}          qr_code (= office code, what the QR encodes), manual_code (6 digits). Locked: only rules read it
+staff/{email-lowercase}         office_id, role STAFF|SUPER_ADMIN, name ("N. Reyes"), full_name
+queues/{officeId}_{yyyymmdd}    office_id, queue_date (int yyyymmdd), status, last_seq, last_called_seq,
+                                current_ticket_id, current_ticket_number (short, for "Now serving"), created_at, updated_at
+tickets/{queueId}_{seq}         queue_id, office_id, office_code, office_name, queue_date, user_id,
+                                holder_name, holder_institutional_id, holder_role,        (snapshot so staff never read users/)
+                                daily_sequence, ticket_number (CODE-MM-DD-SEQ), short_ticket_number (CODE-SEQ),
+                                status, cancelled_by USER|OFFICE|SYSTEM,
+                                joined_at, called_at, service_started_at, completed_at, cancelled_at, no_show_at
+```
+
+- **Not stored, derived on the client:** position, `ahead_count`, estimated wait, waiting count. Waiting is approximated as `last_seq - last_called_seq` (cancel gaps overcount slightly); an exact counter comes later if needed. Estimated wait = waiting x `default_service_minutes` until a measured average exists.
+- **Manual code** is the static 6-digit check-in code printed beside the office QR. It is the fallback when the camera fails (R-21) and is checked the same way as a scan: verification accepts either the QR payload (`qr_code`) or `manual_code`. Static by design (PRD R-20); it proves possession of the code, not presence (known limitation 9). Kept in `officeCodes` so the app cannot read it from Firestore.
+- **Hours** are a per-day map in minutes (not the mock's single `operating_hours` object) so rules can compare against local time computed from `utc_offset_minutes`. UI formats them for display.
+- **Queue open/close:** in slice 1 the queue doc is created `OPEN` by the first join of the day, and only when now is inside today's hours. Manual open/close is a later slice.
+- **Staff office list:** each office's "now serving / waiting / wait" comes from its own queue doc, so the offices screen listens to one queue doc per office. No queue doc today means "open if inside hours, nobody waiting".
+- **Programs list** stays hardcoded in app constants for now.
+- **Reserved shapes, not written in slice 1:**
+  - `users/{uid}/notifications/{id}`: type, title, message, ticket_id, office_id, is_read, created_at, read_at
+  - `offenses/{id}`: user_id, ticket_id, office_name, ticket_number, type, resulted_in_ban, revoked_by_user_id, revoked_at, created_at
+  - `events/{id}`: entity_type, entity_id, action, from_status, to_status, actor_uid, actor_name, reason, ticket_number, office_id, created_at
+- **Known gaps accepted for slice 1:** no limit on active tickets per user or office; tickets from earlier days that were never closed still exist, so Home shows only active tickets whose `queue_date` is today; the existing client-side `users` create must be locked down by rules (role `STUDENT`, `strike_count` 0, `banned_until` null, `active_count` 0).
+- **UI mapper changes this implies:** `toOfficeView` reads today's entry of `hours` and the office's queue doc instead of `office.queue`; `toTicketView` takes the counter label from the office and computes position/ahead/wait from the queue doc.

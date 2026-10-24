@@ -21,7 +21,7 @@ _Last updated: 2026-10-24_
 Nothing active.
 
 ## Next (ticketing slice 1, real Firebase project, no emulator)
-A. Seed `offices/{id}` and `staff/{email}` by hand in the console. Staff app: Firebase config + Google popup sign-in + `staff/{email}` lookup (Not Assigned if missing).
+A. Seed `offices/{id}`, `officeCodes/{id}` and `staff/{email}` by hand in the console (shapes in DECISIONS.md, "Final slice-1 data model"). Staff app: Firebase config + Google popup sign-in + `staff/{email}` lookup (Not Assigned if missing).
 B. Join (student): rules + `joinQueue` + offices list + Home ticket live.
 C. Call next (staff).
 D. Verify arrival (student): 60 s window, office code.
@@ -36,8 +36,8 @@ Each step ends with a manual check on phone (student) and browser (staff). Rules
 - The `ui-mock-final` tag (a snapshot of the working mock app) was proposed but not created yet.
 
 ## Open questions
-- Office timezone offset for the daily queue key.
+- Office timezone offset (`utc_offset_minutes`) for the daily queue key. +480 if the campus is in the Philippines.
 - First office to seed, its manual code, and the staff emails.
 - Dev Firebase project separate from the real one?
 - Student ID editable in Profile? PRD R-01 says locked, DoD #22 says editable.
-- Manual code format; program list source; push option (relay vs in-app only).
+- Push option (relay vs in-app only). Program list stays hardcoded for now.
