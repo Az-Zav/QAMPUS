@@ -1,9 +1,18 @@
-import { MOCK_OFFICES } from '@qampus/core/mock';
-import { toOfficeView } from '@/utils';
 import { useMemo } from 'react';
+import { useQueueData } from '@/providers/QueueDataProvider';
+import { toOfficeView } from '@/utils';
 
-// All offices as OfficeCard/InfoCard views.
-// Backend swap: replace MOCK_OFFICES with a Firestore `offices` subscription; keep the return shape.
+// All active offices as OfficeCard/InfoCard views, with today's queue state.
 export function useOffices() {
-  return useMemo(() => ({ offices: MOCK_OFFICES.map(toOfficeView) }), []);
+  const { board } = useQueueData();
+
+  return useMemo(
+    () => ({
+      offices: board.offices
+        .filter((office) => office.status !== 'INACTIVE')
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((office) => toOfficeView(office, board.queues[office.id])),
+    }),
+    [board],
+  );
 }

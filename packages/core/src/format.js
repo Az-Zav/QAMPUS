@@ -94,3 +94,12 @@ export function todayHours(hours, now = new Date()) {
   const campus = new Date(now.getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);
   return hours?.[DAY_KEYS[campus.getUTCDay()]] ?? null;
 }
+
+// Campus calendar date for `now`: { key: 20261024, month: 10, day: 24 }. `key` names the daily queue.
+export function campusDate(now = new Date()) {
+  const campus = new Date(new Date(now).getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);
+  const year = campus.getUTCFullYear();
+  const month = campus.getUTCMonth() + 1;
+  const day = campus.getUTCDate();
+  return { key: year * 10000 + month * 100 + day, month, day };
+}

@@ -280,6 +280,18 @@ export const MODAL_COPY = Object.freeze({
     body: (code) => `Your ${code} queue ticket has been issued. Check Home for your position and updates.`,
     buttonLabel: 'Done',
   },
+  joinFailed: {
+    icon: 'alert-circle-outline',
+    title: "Couldn't join the queue",
+    body: (reason) =>
+      ({
+        QUEUE_CLOSED: 'This queue is closed right now. Try again when the office opens it.',
+        PROFILE_INCOMPLETE: 'Add your student ID and program in your profile before joining.',
+        OFFICE_INACTIVE: 'This office is not taking tickets right now.',
+        DENIED: "The queue didn't accept your ticket. Check your connection and try again.",
+      })[reason] ?? 'Something went wrong. Try again in a moment.',
+    buttonLabel: 'OK',
+  },
   called: {
     icon: 'notifications',
     title: "It's your turn",

@@ -28,3 +28,10 @@ export function toTicketStatus(ticket, now) {
       return TicketStatus.WAITING;
   }
 }
+
+// "R-10-24-003" -> "R-003" (the short number shown on the student's ticket, R-08a)
+export function toShortTicketNumber(ticketNumber) {
+  if (!ticketNumber) return '';
+  const [code, , , seq] = ticketNumber.split('-');
+  return `${code}-${seq}`;
+}

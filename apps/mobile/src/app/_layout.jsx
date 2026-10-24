@@ -1,5 +1,6 @@
 import { THEMES } from '@/constants';
 import { useTheme } from '@/hooks';
+import { QueueDataProvider } from '@/providers/QueueDataProvider';
 import { SessionProvider } from '@/providers/SessionProvider';
 import { ThemeProvider } from '@qampus/ui';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold, useFonts } from '@expo-google-fonts/dm-sans';
@@ -38,7 +39,9 @@ export default function RootLayout() {
     <SafeAreaProvider style={{ flex: 1 }}>
       <ThemeProvider themes={THEMES}>
         <SessionProvider>
-          <ThemedRoot />
+          <QueueDataProvider>
+            <ThemedRoot />
+          </QueueDataProvider>
         </SessionProvider>
       </ThemeProvider>
     </SafeAreaProvider>

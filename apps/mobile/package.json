@@ -6,6 +6,7 @@
     "@expo-google-fonts/dm-sans": "^0.4.2",
     "@expo/ui": "~57.0.20",
     "@expo/vector-icons": "^15.0.2",
+    "@qampus/backend": "*",
     "@qampus/core": "*",
     "@qampus/ui": "*",
     "@react-native-async-storage/async-storage": "2.2.0",

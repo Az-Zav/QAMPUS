@@ -11,10 +11,10 @@ import Header from '@/components/shell/Header';
 import ListRow from '@/components/shell/ListRow';
 import NoticeModal from '@/components/modals/NoticeModal';
 import { EmptyStateType, ListRowType, MODAL_COPY, QueueView, SPACING, TYPOGRAPHY } from '@/constants';
-import { useMyTickets, useNotifications, useOffices, useThemedStyles } from '@/hooks';
+import { useJoinQueue, useMyTickets, useNotifications, useOffices, useThemedStyles } from '@/hooks';
 import { groupHistory, matchesOfficeQuery } from '@/utils';
 
-const QueueModal = Object.freeze({ JOIN_CONFIRM: 'join', SUCCESS: 'success' });
+const QueueModal = Object.freeze({ JOIN_CONFIRM: 'join', SUCCESS: 'success', FAILED: 'failed' });
 
 export default function Queue() {
   const styles = useThemedStyles(makeStyles);
@@ -22,12 +22,14 @@ export default function Queue() {
   const { offices } = useOffices();
   const { history, now } = useMyTickets();
   const { unreadCount } = useNotifications();
+  const { join, joining } = useJoinQueue();
 
   const [view, setView] = useState(QueueView.JOIN);
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null);
   // Persists after close so the modal keeps its content while fading out
   const [selectedOffice, setSelectedOffice] = useState(null);
+  const [joinError, setJoinError] = useState(null);
 
   const filteredOffices = useMemo(
     () => offices.filter((office) => matchesOfficeQuery(office, search)),
@@ -48,6 +50,12 @@ export default function Queue() {
   };
 
   const closeModal = () => setModal(null);
+
+  const confirmJoin = async () => {
+    const error = await join(selectedOffice);
+    setJoinError(error);
+    setModal(error ? QueueModal.FAILED : QueueModal.SUCCESS);
+  };
 
   return (
     <View style={styles.screen}>
@@ -106,8 +114,18 @@ export default function Queue() {
       <JoinConfirmModal
         visible={modal === QueueModal.JOIN_CONFIRM}
         office={selectedOffice}
+        busy={joining}
         onClose={closeModal}
-        onConfirm={() => setModal(QueueModal.SUCCESS)}
+        onConfirm={confirmJoin}
+      />
+
+      <NoticeModal
+        visible={modal === QueueModal.FAILED}
+        icon={MODAL_COPY.joinFailed.icon}
+        title={MODAL_COPY.joinFailed.title}
+        body={MODAL_COPY.joinFailed.body(joinError)}
+        buttonLabel={MODAL_COPY.joinFailed.buttonLabel}
+        onClose={closeModal}
       />
 
       <NoticeModal

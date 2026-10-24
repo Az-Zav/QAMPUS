@@ -2,26 +2,31 @@
 // components render. Components never read raw records.
 
 import { HistoryGroup, TicketStatus } from '@/constants';
-import { daysBetween, formatDateTime, getRemainingSeconds, toTicketStatus } from '@qampus/core';
+import { estimatedWaitMinutes, nowServing, peopleAhead } from '@qampus/backend';
+import { daysBetween, formatDateTime, getRemainingSeconds, toShortTicketNumber, toTicketStatus } from '@qampus/core';
 
 // Grace-period and status derivation are shared with the staff app
 export { getRemainingSeconds, toTicketStatus };
 
-// Active ticket (Home, TicketModal, CalledModal) — short number per R-08a
-export function toTicketView(ticket, office, now) {
+// Active ticket (Home, TicketModal, CalledModal) — short number per R-08a.
+// `office` is the stored office record (location, wait default); `queue` is today's queue doc.
+// Position, people ahead and the wait estimate are not stored; they come from the queue doc.
+export function toTicketView(ticket, office, queue, now) {
   const status = toTicketStatus(ticket, now);
+  const ahead = peopleAhead(ticket, queue);
+  const officeCode = ticket.ticket_number.split('-')[0];
 
   return {
     id: ticket.id,
-    shortNumber: ticket.short_ticket_number,
+    shortNumber: toShortTicketNumber(ticket.ticket_number),
     fullNumber: ticket.ticket_number,
     officeName: ticket.office_name,
     location: office?.location ?? '',
-    nowServing: office?.queue?.current_ticket_number ?? '—',
+    nowServing: nowServing({ code: officeCode }, queue) ?? '—',
     status,
-    position: ticket.position_in_queue,
-    peopleAhead: ticket.ahead_count,
-    estimatedWaitMinutes: ticket.estimated_wait_minutes,
+    position: ahead + 1,
+    peopleAhead: ahead,
+    estimatedWaitMinutes: estimatedWaitMinutes(ahead, office),
     remainingSeconds:
       status === TicketStatus.YOUR_TURN || status === TicketStatus.EXPIRED
         ? getRemainingSeconds(ticket.called_at, now)

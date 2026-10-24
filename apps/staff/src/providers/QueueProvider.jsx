@@ -27,6 +27,10 @@ import {
   useReducer,
 } from 'react';
 
+import { useTodayQueue } from '@/hooks/useTodayQueue';
+import { db } from '@/lib/firebase';
+import { closeQueue as closeQueueDoc, openQueue as openQueueDoc } from '@qampus/backend';
+import { useOffice } from './OfficeProvider';
 import { useSession } from './SessionProvider';
 
 // =====================================================
@@ -762,7 +766,16 @@ export function QueueProvider({ children }) {
     });
   };
 
-  const { queue, offenses, activity } = state;
+  const { queue: mockQueue, offenses, activity } = state;
+
+  // Open/closed is real (today's queue doc); the waiting list and current ticket are still mock
+  // until the call-next slice. No doc for today means staff have not opened the queue.
+  const { office } = useOffice();
+  const todayQueue = useTodayQueue(office?.id);
+  const queue = {
+    ...mockQueue,
+    status: todayQueue?.status === QUEUE_STATUS.OPEN ? QUEUE_STATUS.OPEN : QUEUE_STATUS.CLOSED,
+  };
 
   // =================================================
   // WM01: CALL NEXT / OVERRIDE FIFO
@@ -849,12 +862,13 @@ export function QueueProvider({ children }) {
   // QUEUE CONTROLS
   // =================================================
 
+  // The listener on today's queue doc flips the console state; a refused write only logs for now
   const openQueue = () => {
-    send(QueueAction.OPEN_QUEUE);
+    if (office) openQueueDoc(db, office).catch((error) => console.warn('Could not open the queue', error));
   };
 
   const closeQueue = () => {
-    send(QueueAction.CLOSE_QUEUE);
+    if (office) closeQueueDoc(db, office).catch((error) => console.warn('Could not close the queue', error));
   };
 
   const cancelQueue = (reason) => {
