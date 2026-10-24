@@ -4,7 +4,7 @@ Living snapshot. Overwrite sections as things change; keep it under ~60 lines.
 Decisions and their reasons live in `DECISIONS.md`. Product spec: `KnowledgeBase/QAMPUS_PRD.md`.
 
 _Last updated: 2026-10-24_
-_Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tickets locked)._
+_Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tickets, offenses locked)._
 
 ## Built
 - **Mobile Google sign-in** (native `@react-native-google-signin`, school domain only via `SCHOOL_EMAIL_DOMAIN`), then Firebase `signInWithCredential`. Sign-out works.
@@ -37,9 +37,8 @@ Each step ends with a manual check on phone (student) and browser (staff). Rules
 - The `ui-mock-final` tag (a snapshot of the working mock app) was proposed but not created yet.
 
 ## Open questions
-- Offenses: separate collection or four fields on `tickets`? Decide before slice 2 (schema status in `docs/SCHEMA.md`).
-- Office timezone offset (`utc_offset_minutes`) for the daily queue key. +480 if the campus is in the Philippines.
-- First office to seed, its manual code, and the staff emails.
+- Confirm the campus constant is UTC+8 (used for the daily queue key).
+- First office to seed, its `check_in_code`, and the staff emails.
 - Dev Firebase project separate from the real one?
 - Student ID editable in Profile? PRD R-01 says locked, DoD #22 says editable.
 - Push option (relay vs in-app only). Program list stays hardcoded for now.

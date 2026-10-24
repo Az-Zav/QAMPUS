@@ -80,3 +80,6 @@ Field sets in `docs/SCHEMA.md` are fixed per collection. Locking is about the sh
 - `tickets` keeps both `user_id` (the uid, used by rules and student queries) and the `holder_*` snapshot (staff cannot read other users' profiles, and rules cannot query for the ticket's owner). One timestamp per status. No push token and no offense fields.
 - Still draft: `offenses` (decide fold-into-tickets vs separate before slice 2), `events`, `notifications`, `announcements`.
 
+## 2026-10-24 Offenses stay a separate collection (locked)
+Not folded into `tickets`. An offense is a record with its own lifecycle (revoke, Bans & Warnings list, staff offenses screen), matches the PRD's "OFFENSE is the penalty record" (R-26), and keeps offense fields out of the ticket doc the student owns, so the ticket rules stay simple. Implemented in slice 2. `tickets` stays as locked, with no offense fields.
+

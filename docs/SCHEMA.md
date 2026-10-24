@@ -9,8 +9,8 @@ Final shape for V1, locked one collection at a time. Locking a collection fixes 
 | `offices` | **LOCKED** | keeps `short_name` and `check_in_code` |
 | `staff` | **LOCKED** | |
 | `queues` | **LOCKED** | |
-| `tickets` | **LOCKED** | no push token and no offense fields (see open items) |
-| `offenses` | draft | finalize with slice 2; may fold into tickets |
+| `tickets` | **LOCKED** | no push token and no offense fields |
+| `offenses` | **LOCKED** | separate collection, not folded into tickets; implemented in slice 2 |
 | `events` | draft | finalize when implemented |
 | `users/{uid}/notifications` | draft | finalize when implemented |
 | `announcements` | draft | finalize when implemented |
@@ -175,6 +175,5 @@ erDiagram
 | 5 Guests | `institutionalIds` claims for guests, anonymous `users` |
 
 ## Open items
-1. `offenses`: keep as its own collection (PRD design) or fold into `tickets` as four fields? Folding would amend the locked `tickets` fields, so decide before slice 2.
-2. Push: where the holder's token lives depends on the push option (relay or in-app only). If it needs a ticket field, add it by a new decision.
-3. `events`, `notifications`, `announcements`: shapes above are drafts until their slices.
+1. Push: where the holder's token lives depends on the push option (relay or in-app only). If it needs a ticket field, add it by a new decision.
+2. `events`, `notifications`, `announcements`: shapes above are drafts until their slices.
