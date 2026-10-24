@@ -1,6 +1,6 @@
 # QAMPUS — Technical Design Document
  
-**Version:** 2.0 · **Scope:** Version 1 · **Status:** Authoritative for architecture, data model, and implementation.
+**Version:** 2.0 · **Scope:** Version 1 · **Status:** Superseded by PRD v1.3 (Firebase on the Spark plan; see `docs/DECISIONS.md`). Kept for its ERD and concurrency ideas only.
  
 Companion documents: `QAMPUS_PRD.md` (product behavior) and `QAMPUS_UIUX.md` (screens and visual system). Rule IDs continue the PRD's sequence; this document owns `R-32` to `R-56`.
  

@@ -39,3 +39,14 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Working agreement
+
+Project state lives in `docs/`, not in chat history. Current status:
+
+@docs/STATUS.md
+
+- At the start of a session, read the status above; read `docs/DECISIONS.md` when you touch an area it covers.
+- Before finishing a session, update `docs/STATUS.md` (overwrite: built / in progress / next / known issues) and append any new decision to `docs/DECISIONS.md` with the reason.
+- Commit doc updates together with the code they describe. Never put secrets in `docs/`.
+- Product spec is `KnowledgeBase/QAMPUS_PRD.md`; the backend is Firebase on the Spark plan (see decisions), so the TDD's Express/Postgres design is superseded.
