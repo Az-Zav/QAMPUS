@@ -83,3 +83,9 @@ Field sets in `docs/SCHEMA.md` are fixed per collection. Locking is about the sh
 ## 2026-10-24 Offenses stay a separate collection (locked)
 Not folded into `tickets`. An offense is a record with its own lifecycle (revoke, Bans & Warnings list, staff offenses screen), matches the PRD's "OFFENSE is the penalty record" (R-26), and keeps offense fields out of the ticket doc the student owns, so the ticket rules stay simple. Implemented in slice 2. `tickets` stays as locked, with no offense fields.
 
+## 2026-10-24 Staff access is the `staff/{email}` doc, not the email domain
+Staff sign-in does not check the school domain. A person is staff only if `staff/{lowercase email}` exists; its `office_id` and `role` come from the doc, and a missing doc means Not Assigned. This lets a personal Gmail be seeded as staff for testing while the student app keeps its `@tip.edu.ph` check. `name` in the doc is optional: the app shows `staff.name`, else the Google `displayName`. Only seed emails you trust, since the doc is the whole gate. Rules already let a user read only the doc whose ID is their own email and let nobody write it.
+
+## 2026-10-24 Empty Firebase Auth users from unmatched staff logins are accepted
+Rules govern Firestore, not Auth, so a Google account with no `staff` doc still creates an Auth user; it has no data access. Blocking creation needs Identity Platform and Cloud Functions (not on Spark). A client-side `deleteUser` after the popup is possible but bypassable and was declined for now. Revisit if the Auth user list becomes noisy.
+

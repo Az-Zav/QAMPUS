@@ -2,6 +2,8 @@ import { THEMES } from '@/constants';
 import { useSession } from '@/hooks';
 import { QueueProvider } from '@/providers/QueueProvider';
 import { SessionProvider } from '@/providers/SessionProvider';
+import { OfficeProvider } from '@/providers/OfficeProvider';
+
 import {
   DMSans_400Regular,
   DMSans_500Medium,
@@ -35,9 +37,11 @@ export default function RootLayout() {
     <SafeAreaProvider style={{ flex: 1 }}>
       <ThemeProvider themes={THEMES}>
         <SessionProvider>
-          <QueueProvider>
-            <ThemedRoot />
-          </QueueProvider>
+          <OfficeProvider>
+            <QueueProvider>
+              <ThemedRoot />
+            </QueueProvider>
+          </OfficeProvider>
         </SessionProvider>
       </ThemeProvider>
     </SafeAreaProvider>

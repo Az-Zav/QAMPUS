@@ -1,16 +1,11 @@
 import { MOCK_OFFICES } from '@qampus/core/mock';
-import { useMemo } from 'react';
-import { useSession } from '@/providers/SessionProvider';
+import { useOffice } from '@/providers/OfficeProvider';
 import { toOfficeView } from '@/utils/office';
+import { useMemo } from 'react';
 
-// The office the signed-in staff member is assigned to (null when unassigned).
-// Backend swap: subscribe to the office document for user.office_id; keep the return shape.
+// The office the signed-in staff member is assigned to: { office, loading }.
 export function useStaffOffice() {
-  const { user } = useSession();
-  return useMemo(
-    () => ({ office: toOfficeView(MOCK_OFFICES.find((office) => office.id === user?.office_id)) }),
-    [user?.office_id],
-  );
+  return useOffice();
 }
 
 // Public display (D01) looks the office up by its code, with no session
