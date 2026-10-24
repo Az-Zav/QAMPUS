@@ -8,6 +8,7 @@ export const TicketingError = Object.freeze({
   PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
   OFFICE_INACTIVE: 'OFFICE_INACTIVE',
   QUEUE_CLOSED: 'QUEUE_CLOSED',
+  BANNED: 'BANNED',
   ALREADY_QUEUED: 'ALREADY_QUEUED',
   LIMIT_REACHED: 'LIMIT_REACHED',
   WINDOW_BUSY: 'WINDOW_BUSY',
@@ -33,10 +34,12 @@ export class TicketingFailure extends Error {
 
 // Returns null when the user may join `office`, else the reason (a TicketingError).
 // `queue` is today's queue doc data, or null when staff have not opened the queue.
+// `bannedUntil` is the end of the user's ban (R-14: a ban blocks joining only).
 // `activeCount` is the user's counter of active tickets across all offices (R-07). `activeOffices` is the map
 // of offices where the user already holds an active ticket: one active ticket per office at a time.
-export function checkJoin({ user, office, queue, activeCount = 0, activeOffices = {} }) {
+export function checkJoin({ user, office, queue, activeCount = 0, activeOffices = {}, bannedUntil = null, now = new Date() }) {
   if (!user?.institutional_id || !user?.name) return TicketingError.PROFILE_INCOMPLETE;
+  if (bannedUntil && new Date(bannedUntil).getTime() > new Date(now).getTime()) return TicketingError.BANNED;
   if (office.status === 'INACTIVE') return TicketingError.OFFICE_INACTIVE;
   if (activeOffices[office.id]) return TicketingError.ALREADY_QUEUED;
   if (activeCount >= RULES.MAX_ACTIVE_TICKETS) return TicketingError.LIMIT_REACHED;

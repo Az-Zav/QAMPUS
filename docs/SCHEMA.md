@@ -99,16 +99,19 @@ erDiagram
   }
 
   OFFENSES {
-    string id PK
+    string id PK "doc id = the ticket id, so a ticket causes one offense"
     string user_id FK
     string ticket_id FK
     string office_id FK
     string office_name
     string ticket_number
+    string holder_name "snapshot so staff need no user read"
+    string holder_institutional_id "snapshot"
     string type "NO_SHOW or CANCELLED_AFTER_CALL"
     boolean resulted_in_ban
     string revoked_by FK
     timestamp revoked_at "null means active"
+    string revoke_reason "set when staff revoke"
     timestamp created_at
   }
 

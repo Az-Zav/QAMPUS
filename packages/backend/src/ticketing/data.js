@@ -3,16 +3,8 @@
 
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
 import { campusDate } from '@qampus/core/format';
+import { toPlain } from '../plain.js';
 import { queueIdFor } from './ids.js';
-
-function toPlain(snap) {
-  const data = snap.data({ serverTimestamps: 'estimate' });
-  const plain = { id: snap.id };
-  for (const [key, value] of Object.entries(data)) {
-    plain[key] = typeof value?.toDate === 'function' ? value.toDate().toISOString() : value;
-  }
-  return plain;
-}
 
 // Today's queue doc for one office; null when staff have not opened the queue
 export function watchQueue(db, officeId, now, onData, onError) {

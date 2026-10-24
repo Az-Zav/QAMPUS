@@ -19,17 +19,19 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Slice F (cleanup + office cancels the queue) tested on device and staff browser**: staff "Cancel entire queue" is real; the dead mock reducer paths and ticket-flow mock data are deleted (`QueueProvider` 946 -> ~450 lines).
 - **Three-ticket limit (R-07) tested on device and staff browser**: `users.active_count` is raised by a join (rules require it) and lowered by every finish/cancel. Join is refused with a message at three; the Join button is disabled at three. A hand-made client could cheat the counter (accepted for the prototype). Office cancel runs in small transactions.
 - **One active ticket per office tested on device and staff browser**: `users.active_offices` (office id -> true) is set by a join and cleared by every finish/cancel. A second join of the same office is refused with a message, and its Join button is disabled.
-- **UI**: all screens exist. The whole ticket flow is real. Still mock: offenses and strikes, activity log (no entries are added by real actions yet), notifications and push, guests, programs, public display (`MOCK_OFFICES`).
+- **Penalties tested on device and staff browser**: offenses (`offenses/{ticketId}`), strikes and a 24-hour ban after the second, recorded with the no-show and the cancel-while-called in the same transaction; a ban blocks joining; the student's Bans & Warnings screen and the staff Offenses screen read real data; staff revoke with a reason. `MOCK_OFFENSES` and `MOCK_STAFF_OFFENSES` are deleted.
+- **UI**: all screens exist. The whole ticket flow is real. Still mock: the staff activity log (no entries are added by real actions yet), notifications and push, guests, programs, public display (`MOCK_OFFICES`).
 
 ## In progress
-Nothing active. The ticket rules from the PRD (flow, three-ticket limit, one active ticket per office) passed manual testing. Next slice to be chosen.
+Nothing active. Penalties (offenses, strikes, 24-hour ban, revoke) passed manual testing. Next slice to be chosen.
 
 ## Next
-The ticket flow is complete (join, call, verify, finish, cancel). Planned slices, each with a commit after the developer tests:
-- Penalties: offenses, strikes and bans for no-show and cancel-after-call; `events` for the activity log. Needs a design that works without Cloud Functions (Spark).
-- Limits and capacity: three-ticket limit (`active_count`), capacity cutoff, service-time average.
-- Notifications: in-app list, push (open question), announcements.
-- Guests, public display, QR scan (needs `expo-camera` and a new dev build).
+Planned slices, each with a commit after the developer tests:
+- Activity log (`events`): real entries when staff and students act, replacing the mock log.
+- Notifications: in-app list (your turn, no-show, cancelled by office, offense revoked); push needs a decision (relay or in-app only).
+- Capacity cutoff and wait times: refuse joins near closing, staff override, real service-time average (`completed_count`, `service_seconds_total` are already stored).
+- Public display (needs rules for reads without a login), QR scan (`expo-camera`, new dev build), guests.
+- Small issues: Edit Profile save, on-screen messages for refused staff actions.
 
 ## Known issues
 - `edit-profile.jsx` calls `updateProfile`, which `SessionProvider` does not define; saving a profile throws.

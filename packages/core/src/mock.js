@@ -142,20 +142,6 @@ export const MOCK_NOTIFICATIONS = Object.freeze([
   },
 ]);
 
-export const MOCK_OFFENSES = Object.freeze([
-  {
-    id: 'offense_001',
-    user_id: 'usr_gst_002',
-    ticket_id: 'tkt_hist_003',
-    office_name: 'Cashier & Student Accounts',
-    ticket_number: 'C-09-25-031',
-    type: 'NO_SHOW',
-    resulted_in_ban: false,
-    revoked_at: null,
-    created_at: '2026-09-25T11:47:00Z',
-  },
-]);
-
 
 // ---------------------------------------------------------------------------
 // Staff web (apps/staff) — the Registrar's live queue, offenses and activity log
@@ -168,46 +154,6 @@ const fullTicketNumber = (code, seq, days = 0) => {
   const pad = (n, width = 2) => String(n).padStart(width, '0');
   return `${code}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(seq, 3)}`;
 };
-
-// `id_number` is the student ID or Guest ID staff type into Verify by ID (WM02)
-const HOLDERS = Object.freeze({
-  nina: { user_id: 'usr_std_101', name: 'Nina dela Cruz', role: 'STUDENT', id_number: '2512269', program: 'Computer Science' },
-  paolo: { user_id: 'usr_std_102', name: 'Paolo Garcia', role: 'STUDENT', id_number: '2410388', program: 'Accountancy' },
-  maria: { user_id: 'usr_gst_002', name: 'Maria Santos', role: 'GUEST', id_number: 'G104728', guest_type: 'PARENT_GUARDIAN' },
-  ramirez: { user_id: 'usr_std_103', name: 'J. Ramirez', role: 'STUDENT', id_number: '2320415', program: 'Civil Engineering' },
-  bautista: { user_id: 'usr_std_104', name: 'A. Bautista', role: 'STUDENT', id_number: '2511902', program: 'Psychology' },
-  lopez: { user_id: 'usr_std_105', name: 'K. Lopez', role: 'STUDENT', id_number: '2430117', program: 'Architecture' },
-});
-
-export const MOCK_STAFF_OFFENSES = Object.freeze([
-  {
-    id: 'offense_reg_001',
-    holder: HOLDERS.nina,
-    ticket_number: fullTicketNumber('R', 5, 2),
-    type: 'NO_SHOW',
-    resulted_in_ban: true,
-    revoked_at: null,
-    created_at: daysAgo(2, 10, 12),
-  },
-  {
-    id: 'offense_reg_002',
-    holder: HOLDERS.maria,
-    ticket_number: fullTicketNumber('R', 12, 4),
-    type: 'CANCELLED_AFTER_CALL',
-    resulted_in_ban: false,
-    revoked_at: daysAgo(3, 9, 0),
-    created_at: daysAgo(4, 14, 40),
-  },
-  {
-    id: 'offense_reg_003',
-    holder: HOLDERS.ramirez,
-    ticket_number: fullTicketNumber('R', 31, 8),
-    type: 'CANCELLED_AFTER_CALL',
-    resulted_in_ban: false,
-    revoked_at: null,
-    created_at: daysAgo(8, 15, 5),
-  },
-]);
 
 // Newest first. `from`/`to` are TICKET_STATUS values; entries without them are queue-level actions.
 export const MOCK_STAFF_ACTIVITY = Object.freeze([

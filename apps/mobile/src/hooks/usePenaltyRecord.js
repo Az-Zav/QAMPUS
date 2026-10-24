@@ -1,17 +1,17 @@
-import { MOCK_OFFENSES } from '@qampus/core/mock';
-import { useSession } from '@/providers/SessionProvider';
+import { useQueueData } from '@/providers/QueueDataProvider';
 import { useMemo } from 'react';
 
-// The signed-in user's strike count, ban and offense history, newest first (R-10 – R-14).
-// Backend swap: replace MOCK_OFFENSES with a Firestore `offenses` query on user_id.
+// The signed-in student's strike count, ban and offense history, newest first (R-10 – R-14).
+// Strikes and the ban come from the live profile; the history from the offense records.
 export function usePenaltyRecord() {
-  const { user } = useSession();
+  const { profile, offenses } = useQueueData();
 
-  return useMemo(() => ({
-    strikeCount: user?.strike_count ?? 0,
-    bannedUntil: user?.banned_until ?? null,
-    offenses: MOCK_OFFENSES
-      .filter((o) => o.user_id === user?.id)
-      .sort((a, b) => b.created_at.localeCompare(a.created_at)),
-  }), [user]);
+  return useMemo(
+    () => ({
+      strikeCount: profile?.strike_count ?? 0,
+      bannedUntil: profile?.banned_until ?? null,
+      offenses: [...offenses].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    }),
+    [profile, offenses],
+  );
 }

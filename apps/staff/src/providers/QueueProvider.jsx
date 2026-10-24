@@ -2,7 +2,6 @@
 import {
   MOCK_STAFF_ACTIVITY,
   MOCK_STAFF_NOTIFICATIONS,
-  MOCK_STAFF_OFFENSES,
 } from '@qampus/core/mock';
 
 import {
@@ -16,9 +15,11 @@ import { toShortTicketNumber } from '@qampus/core/ticket';
 import {
   createContext,
   useContext,
+  useMemo,
   useReducer,
 } from 'react';
 
+import { useOfficeOffenses } from '@/hooks/useOfficeOffenses';
 import { useOfficeTickets } from '@/hooks/useOfficeTickets';
 import { useTodayQueue } from '@/hooks/useTodayQueue';
 import { db } from '@/lib/firebase';
@@ -30,6 +31,7 @@ import {
   completeTicket,
   markTicketNoShow,
   openQueue as openQueueDoc,
+  revokeOffense as revokeOffenseDoc,
   TicketingError,
   verifyByHolderId,
   waitingTickets,
@@ -44,8 +46,8 @@ import { useSession } from './SessionProvider';
 // Fix #2: Accurate strike and ban calculations
 // Fix #3: Unified queue state using useReducer
 //
-// The ticket flow (queue, tickets) reads and writes Firestore through @qampus/backend.
-// Offenses and the activity log are still local mock state.
+// The ticket flow (queue, tickets) and the offenses read and write Firestore through @qampus/backend.
+// The activity log is still local mock state.
 // =====================================================
 
 const QueueContext = createContext(null);
@@ -74,7 +76,6 @@ export const NoShowResult = Object.freeze({
 
 const QueueAction = Object.freeze({
   OVERRIDE_CUTOFF: 'OVERRIDE_CUTOFF',
-  REVOKE_OFFENSE: 'REVOKE_OFFENSE',
 });
 
 // =====================================================
@@ -86,7 +87,6 @@ const QueueAction = Object.freeze({
 function createInitialState() {
   return {
     queue: { cutoff_overridden: false },
-    offenses: [...MOCK_STAFF_OFFENSES],
     activity: [...MOCK_STAFF_ACTIVITY],
   };
 }
@@ -140,7 +140,7 @@ function prependActivity(activity, entries) {
 // =====================================================
 // FIX #3: PURE QUEUE REDUCER
 //
-// All queue, offense, and activity changes
+// Queue cutoff and activity changes
 // happen in a single state transition.
 //
 // The reducer never calls Date.now(),
@@ -150,13 +150,11 @@ function prependActivity(activity, entries) {
 function queueReducer(state, event) {
   const {
     queue,
-    offenses,
     activity,
   } = state;
 
   const {
     type,
-    payload = {},
     actor = 'System',
     now,
     id,
@@ -195,48 +193,6 @@ function queueReducer(state, event) {
         activity: prependActivity(activity, [
           entry({
             action: ACTIVITY_ACTION.CUTOFF_OVERRIDE,
-          }),
-        ]),
-      };
-    }
-
-    // =================================================
-    // WM08: REVOKE OFFENSE
-    //
-    // Revoked records remain in history.
-    // Penalty calculations automatically exclude
-    // revoked offenses.
-    // =================================================
-
-    case QueueAction.REVOKE_OFFENSE: {
-      const { offenseId, reason } = payload;
-
-      const offense = offenses.find(
-        (item) => item.id === offenseId,
-      );
-
-      if (!offense || offense.revoked_at) {
-        return state;
-      }
-
-      return {
-        ...state,
-
-        offenses: offenses.map((item) =>
-          item.id === offenseId
-            ? {
-                ...item,
-                revoked_at: now,
-              }
-            : item,
-        ),
-
-        activity: prependActivity(activity, [
-          entry({
-            action: ACTIVITY_ACTION.OFFENSE_REVOKED,
-            ticket: offense,
-            reason,
-            note: offense.holder.name,
           }),
         ]),
       };
@@ -293,14 +249,24 @@ export function QueueProvider({ children }) {
     });
   };
 
-  const { offenses, activity } = state;
+  const { activity } = state;
 
-  // The whole ticket flow is real (Firestore). Offenses, the activity log and notifications are still mock
-  // until their slices.
+  // The whole ticket flow and the offenses are real (Firestore). The activity log and notifications are still
+  // mock until their slices.
   // No queue doc for today means staff have not opened the queue.
   const { office } = useOffice();
   const todayQueue = useTodayQueue(office?.id);
   const officeTickets = useOfficeTickets(office?.id);
+  // Offenses recorded at this office, as the Offenses screen reads them (holder block)
+  const officeOffenses = useOfficeOffenses(office?.id);
+  const offenses = useMemo(
+    () =>
+      officeOffenses.map((offense) => ({
+        ...offense,
+        holder: { user_id: offense.user_id, name: offense.holder_name, id_number: offense.holder_institutional_id },
+      })),
+    [officeOffenses],
+  );
   const currentTicket = officeTickets.find(
     (ticket) =>
       ticket.id === todayQueue?.current_ticket_id &&
@@ -351,7 +317,7 @@ export function QueueProvider({ children }) {
 
   // Staff mark the ticket at the window a no-show: a CALLED ticket after its grace period, an IN_SERVICE
   // one (verification reversed) with a reason. Resolves to a NoShowResult for the modal.
-  // No offense is recorded yet; penalties come in their own slice.
+  // The offense and the student's strike or ban are recorded in the same transaction.
   const markNoShow = async (reason = '') => {
     if (!currentTicket) return NoShowResult.INVALID_STATE;
     try {
@@ -401,11 +367,14 @@ export function QueueProvider({ children }) {
   // WM08: REVOKE OFFENSE
   // =================================================
 
+  // Revoke an offense of this office (R-15): it stays on record, marked revoked, and the student's strikes
+  // and ban are corrected. A refused write only logs for now.
   const revokeOffense = (offenseId, reason) => {
-    send(QueueAction.REVOKE_OFFENSE, {
-      offenseId,
-      reason,
-    });
+    const offense = officeOffenses.find((item) => item.id === offenseId);
+    if (!offense) return;
+    revokeOffenseDoc(db, { offense, reason, staffEmail: user.email }).catch((error) =>
+      console.warn('Could not revoke the offense', error),
+    );
   };
 
   // Keep existing hook and screen interfaces.

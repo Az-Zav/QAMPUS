@@ -21,6 +21,8 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { buildOffense, OFFENSE_TYPE } from '../penalties/offense.js';
+import { nextPenalty } from '../penalties/progress.js';
 import { chunkByHolder, isActiveTicket, waitingTickets } from './derive.js';
 import { queueIdFor, ticketIdFor, ticketNumberFor } from './ids.js';
 import {
@@ -43,10 +45,26 @@ function asFailure(error) {
 
 // A ticket leaves the active states: give its holder's slot back and clear the office from their active
 // offices (inside the same transaction)
-function releaseHolder(db, tx, ticket) {
+// `extra` carries the strike and ban fields when the ticket ends in an offense.
+function releaseHolder(db, tx, ticket, extra = {}) {
   tx.update(doc(db, 'users', ticket.user_id), {
     active_count: increment(-1),
     [`active_offices.${ticket.office_id}`]: deleteField(),
+    ...extra,
+  });
+}
+
+// The strike and ban fields of a student's profile after one more offense (banned_until only when it causes a ban)
+const penaltyFields = (penalty) => ({
+  strike_count: penalty.strike_count,
+  ...(penalty.banned_until ? { banned_until: penalty.banned_until } : {}),
+});
+
+// The offense document, created with the ticket change that causes it (same id as the ticket)
+function recordOffense(db, tx, ticket, type, penalty) {
+  tx.set(doc(db, 'offenses', ticket.id), {
+    ...buildOffense({ ticket, type, resultedInBan: penalty.resulted_in_ban }),
+    created_at: serverTimestamp(),
   });
 }
 
@@ -107,6 +125,8 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
         queue: snap.exists() ? snap.data() : null,
         activeCount,
         activeOffices: profile.active_offices ?? {},
+        bannedUntil: profile.banned_until?.toDate?.() ?? null,
+        now,
       });
       if (reason) throw new TicketingFailure(reason);
 
@@ -225,22 +245,26 @@ export async function completeTicket(db, { office, ticket, now = new Date() }) {
   }
 }
 
-// Staff: mark the current ticket a no-show, free the window and release the holder's slot.
-// No offense is recorded yet (penalties slice).
+// Staff: mark the current ticket a no-show, free the window, release the holder's slot and record the offense
+// (R-11, R-12, R-23a): the holder's strikes move in the same transaction, and the second offense sets the ban.
 export async function markTicketNoShow(db, { office, ticket, reason = '', now = new Date() }) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticket.id);
+  const userRef = doc(db, 'users', ticket.user_id);
   try {
     await runTransaction(db, async (tx) => {
       const queueSnap = await tx.get(queueRef);
       const ticketSnap = await tx.get(ticketRef);
+      const userSnap = await tx.get(userRef);
       const current = ticketSnap.exists() ? { id: ticketSnap.id, ...ticketSnap.data() } : null;
       const failure = checkNoShow({ ticket: current, queue: queueSnap.exists() ? queueSnap.data() : null, reason, now });
       if (failure) throw new TicketingFailure(failure);
 
+      const penalty = nextPenalty(userSnap.exists() ? userSnap.data() : null, now);
       const trimmed = reason.trim();
       tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
-      releaseHolder(db, tx, current);
+      releaseHolder(db, tx, current, penaltyFields(penalty));
+      recordOffense(db, tx, current, OFFENSE_TYPE.NO_SHOW, penalty);
       tx.update(ticketRef, {
         status: TICKET_STATUS.NO_SHOW,
         no_show_at: serverTimestamp(),
@@ -252,13 +276,15 @@ export async function markTicketNoShow(db, { office, ticket, reason = '', now = 
   }
 }
 
-// Student: cancel their own ticket and give the slot back. A CALLED ticket is at the window, so the same write
-// also frees the window. The offense for cancelling after the call is recorded by the penalties slice.
-export async function cancelOwnTicket(db, { ticket }) {
+// Student: cancel their own ticket and give the slot back. Cancelling while WAITING is free. A CALLED ticket is
+// at the window, so the same write also frees the window, and it is an offense (R-11): the offense and the
+// student's strikes and ban are written in the same transaction.
+export async function cancelOwnTicket(db, { ticket, now = new Date() }) {
   const failure = checkCancel({ ticket });
   if (failure) throw new TicketingFailure(failure);
 
   const ticketRef = doc(db, 'tickets', ticket.id);
+  const userRef = doc(db, 'users', ticket.user_id);
   const cancelled = { status: TICKET_STATUS.CANCELLED, cancelled_by: CANCELLED_BY.USER, cancelled_at: serverTimestamp() };
   try {
     await runTransaction(db, async (tx) => {
@@ -270,12 +296,17 @@ export async function cancelOwnTicket(db, { ticket }) {
       if (current.status === TICKET_STATUS.CALLED) {
         const queueRef = doc(db, 'queues', `${current.office_id}_${current.queue_date}`);
         const queueSnap = await tx.get(queueRef);
+        const userSnap = await tx.get(userRef);
         if (!queueSnap.exists() || queueSnap.data().current_ticket_id !== current.id) {
           throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
         }
+        const penalty = nextPenalty(userSnap.exists() ? userSnap.data() : null, now);
         tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
+        releaseHolder(db, tx, current, penaltyFields(penalty));
+        recordOffense(db, tx, current, OFFENSE_TYPE.CANCELLED_AFTER_CALL, penalty);
+      } else {
+        releaseHolder(db, tx, current);
       }
-      releaseHolder(db, tx, current);
       tx.update(ticketRef, cancelled);
     });
   } catch (error) {

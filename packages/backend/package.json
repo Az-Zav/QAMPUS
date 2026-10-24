@@ -6,7 +6,8 @@
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./ticketing": "./src/ticketing/index.js"
+    "./ticketing": "./src/ticketing/index.js",
+    "./penalties": "./src/penalties/index.js"
   },
   "scripts": {
     "test": "node --test"

@@ -15,7 +15,9 @@ const getTimestamp = (value) => {
  * The second offense triggers a flat 24-hour ban.
  * The strike count then resets to zero.
  *
- * This is mock frontend logic, not production authorization.
+ * A display-only summary of the offenses this office can see. The strike and ban that actually count are
+ * stored on the student's profile and written with each offense, so a student with offenses at another
+ * office can differ from this view.
  */
 export function getPenaltyState(
   offenses = [],
@@ -80,22 +82,6 @@ export function getPenaltyState(
     banOffenseIds: isBanned ? latestBanOffenseIds : [],
     triggerOffenseIds,
   };
-}
-
-/**
- * Returns true when this ticket already has an
- * existing, non-revoked no-show offense.
- */
-export function hasActiveNoShowOffense(
-  offenses = [],
-  ticketNumber,
-) {
-  return offenses.some(
-    (offense) =>
-      offense.ticket_number === ticketNumber &&
-      offense.type === OFFENSE_TYPE.NO_SHOW &&
-      !offense.revoked_at,
-  );
 }
 
 /**

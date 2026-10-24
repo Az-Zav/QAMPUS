@@ -27,6 +27,34 @@ service cloud.firestore {
 
     function ticketDoc(ticketId) { return /databases/$(db)/documents/tickets/$(ticketId); }
 
+    // An offense has the same id as its ticket, so a ticket can produce one offense and rules can find it.
+    function offenseDoc(ticketId) { return /databases/$(db)/documents/offenses/$(ticketId); }
+
+    // A ban lasts 24 hours from the offense. The ban end is written by the app (rules cannot add 24 h to the
+    // server time inside a write), so rules accept it within half an hour of request.time + 24 h.
+    function banWindow(t) {
+      return t > request.time + duration.value(1410, 'm') && t < request.time + duration.value(1470, 'm');
+    }
+
+    // How a student's strikes may move (R-13): the first offense is a strike; the second resets the count to 0
+    // and sets the 24-hour ban. Only moves toward a penalty are allowed here (staff revoke separately), so a
+    // hand-made client can only hurt the student it belongs to.
+    function penaltyMoveOk(before, after) {
+      let changed = after.diff(before).affectedKeys();
+      let strikes = before.get('strike_count', 0);
+      return !changed.hasAny(['strike_count', 'banned_until'])
+        || (changed.hasAny(['strike_count']) && !changed.hasAny(['banned_until'])
+            && strikes < 1 && after.strike_count == strikes + 1)
+        || (changed.hasAll(['strike_count', 'banned_until'])
+            && strikes >= 1 && after.strike_count == 0 && banWindow(after.banned_until));
+    }
+
+    // Staff revoking an offense may lower the strikes to 0 or 1 and lift the ban, never extend it.
+    function revokeMoveOk(before, after) {
+      return after.strike_count >= 0 && after.strike_count <= 1
+        && (after.get('banned_until', null) == null || after.banned_until == before.get('banned_until', null));
+    }
+
     // Staff calling a WAITING ticket of their office: the ticket becomes CALLED and, in the same write,
     // the queue's current ticket points at it. Only while the queue is OPEN and the window is free.
     function validCall(ticketId, before, after) {
@@ -67,6 +95,7 @@ service cloud.firestore {
              && after.diff(before).affectedKeys().hasOnly(['status', 'completed_at']))
             || (after.status == 'NO_SHOW'
                 && after.no_show_at == request.time
+                && existsAfter(offenseDoc(ticketId))
                 && after.diff(before).affectedKeys().hasOnly(['status', 'no_show_at', 'reason'])
                 && ((before.status == 'CALLED' && request.time > before.called_at + duration.value(60, 's'))
                     || (before.status == 'IN_SERVICE' && after.get('reason', '').size() > 0))));
@@ -88,7 +117,7 @@ service cloud.firestore {
     }
 
     // A student cancels their own ticket: free while WAITING; once CALLED it is the ticket at the window, so
-    // the queue's current ticket becomes null in the same write (an offense, recorded by a later slice).
+    // the queue's current ticket becomes null in the same write, together with the offense (R-11).
     function validCancel(ticketId, before, after) {
       let queuePath = /databases/$(db)/documents/queues/$(before.office_id + '_' + string(before.queue_date));
       return before.user_id == request.auth.uid
@@ -99,7 +128,8 @@ service cloud.firestore {
         && (before.status == 'WAITING'
             || (before.status == 'CALLED'
                 && get(queuePath).data.current_ticket_id == ticketId
-                && getAfter(queuePath).data.current_ticket_id == null));
+                && getAfter(queuePath).data.current_ticket_id == null
+                && existsAfter(offenseDoc(ticketId))));
     }
 
     // A student joining: the ticket takes exactly the next number of an OPEN queue, in the same write
@@ -122,6 +152,7 @@ service cloud.firestore {
         && profile.get('institutional_id', null) != null
         && d.holder_institutional_id == profile.institutional_id
         && d.holder_name == profile.name
+        && (profile.get('banned_until', null) == null || profile.banned_until <= request.time)
         && profile.get('active_count', 0) < 3
         && !(d.office_id in profile.get('active_offices', {}))
         && d.office_id in getAfter(/databases/$(db)/documents/users/$(request.auth.uid)).data.active_offices
@@ -131,10 +162,57 @@ service cloud.firestore {
         && d.ticket_number.matches('^' + office.code + '-[0-9]{2}-[0-9]{2}-[0-9]{3,}$');
     }
 
-    // Students and guests: own document only. Role, strikes and bans are fixed at create and never writable
-    // by the client (docs/SCHEMA.md, users). The open-ticket count moves only by one at a time (see below).
+    // An offense is created only together with the ticket change that causes it (R-11): the holder cancelling a
+    // CALLED ticket, or staff of the office marking a CALLED or IN_SERVICE ticket a no-show. It copies the
+    // ticket's fields, says whether it caused a ban, and the holder's strikes move accordingly in the same write.
+    function validOffense(ticketId, d) {
+      let t = get(ticketDoc(ticketId)).data;
+      let tAfter = getAfter(ticketDoc(ticketId)).data;
+      let holder = /databases/$(db)/documents/users/$(t.user_id);
+      let strikes = get(holder).data.get('strike_count', 0);
+      return d.keys().hasOnly(['user_id', 'ticket_id', 'office_id', 'office_name', 'ticket_number', 'holder_name',
+                               'holder_institutional_id', 'type', 'resulted_in_ban', 'revoked_by', 'revoked_at',
+                               'created_at'])
+        && d.ticket_id == ticketId
+        && d.user_id == t.user_id
+        && d.office_id == t.office_id
+        && d.office_name == t.office_name
+        && d.ticket_number == t.ticket_number
+        && d.holder_name == t.holder_name
+        && d.holder_institutional_id == t.holder_institutional_id
+        && d.created_at == request.time
+        && d.revoked_at == null
+        && d.revoked_by == null
+        && d.resulted_in_ban == (strikes >= 1)
+        && getAfter(holder).data.strike_count == (d.resulted_in_ban ? 0 : strikes + 1)
+        && ((d.type == 'CANCELLED_AFTER_CALL'
+             && request.auth.uid == t.user_id
+             && t.status == 'CALLED'
+             && tAfter.status == 'CANCELLED')
+            || (d.type == 'NO_SHOW'
+                && isStaff()
+                && t.office_id == staffOfficeId()
+                && t.status in ['CALLED', 'IN_SERVICE']
+                && tAfter.status == 'NO_SHOW'));
+    }
+
+    // Staff of the office revoke one of its offenses (R-15) with a reason; the record stays.
+    function validRevoke(before, after) {
+      return before.office_id == staffOfficeId()
+        && before.get('revoked_at', null) == null
+        && after.diff(before).affectedKeys().hasOnly(['revoked_at', 'revoked_by', 'revoke_reason'])
+        && after.revoked_at == request.time
+        && after.revoked_by == request.auth.token.email
+        && after.get('revoke_reason', '').size() > 0;
+    }
+
+    // Students and guests: own document only. Role is fixed at create. Strikes and bans start at 0 and null and
+    // move only as penaltyMoveOk allows (toward a penalty) or when staff revoke an offense. The open-ticket
+    // count moves only by one at a time (see below).
     match /users/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
+      // Staff read one student profile at a time (never a list): recording an offense needs the strike count.
+      allow get: if isStaff();
       allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.strike_count == 0 && request.resource.data.banned_until == null
         && request.resource.data.active_count == 0
@@ -150,16 +228,23 @@ service cloud.firestore {
         // rules); finishing or cancelling lowers it and clears the office. Rules cannot tell why they moved, so a
         // hand-made client could cheat; fine for a prototype.
         || (signedIn() && request.auth.uid == uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count', 'active_offices'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count', 'active_offices', 'strike_count', 'banned_until'])
             && request.resource.data.active_count >= 0
             && request.resource.data.active_count <= 3
             && (request.resource.data.active_count == resource.data.get('active_count', 0) + 1
-                || request.resource.data.active_count == resource.data.get('active_count', 0) - 1))
-        // Staff give a slot back when they finish a ticket (complete, no-show, office cancel).
+                || request.resource.data.active_count == resource.data.get('active_count', 0) - 1)
+            && penaltyMoveOk(resource.data, request.resource.data))
+        // Staff give a slot back when they finish a ticket (complete, no-show, office cancel); a no-show also
+        // moves the student's strikes.
         || (isStaff()
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count', 'active_offices'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count', 'active_offices', 'strike_count', 'banned_until'])
             && request.resource.data.active_count >= 0
-            && request.resource.data.active_count == resource.data.get('active_count', 0) - 1);
+            && request.resource.data.active_count == resource.data.get('active_count', 0) - 1
+            && penaltyMoveOk(resource.data, request.resource.data))
+        // Staff revoke an offense: strikes down and the ban lifted (R-15).
+        || (isStaff()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['strike_count', 'banned_until'])
+            && revokeMoveOk(resource.data, request.resource.data));
     }
 
     // A user reads only the doc whose id is their own email.
@@ -270,6 +355,16 @@ service cloud.firestore {
         || (isStaff() && validFinish(ticketId, resource.data, request.resource.data))
         || (signedIn() && validCancel(ticketId, resource.data, request.resource.data))
         || (isStaff() && validOfficeCancel(resource.data, request.resource.data));
+    }
+
+    // offenses/{ticketId}. The holder reads their own; staff read their office's. Created with the ticket change
+    // that causes it, revoked (not deleted) by staff of the office.
+    match /offenses/{ticketId} {
+      allow read: if signedIn()
+        && (resource.data.user_id == request.auth.uid
+            || (isStaff() && resource.data.office_id == staffOfficeId()));
+      allow create: if signedIn() && validOffense(ticketId, request.resource.data);
+      allow update: if isStaff() && validRevoke(resource.data, request.resource.data);
     }
   }
 }

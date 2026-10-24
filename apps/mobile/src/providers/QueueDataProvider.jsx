@@ -5,7 +5,7 @@
 import { USER_ROLE } from '@/constants';
 import { db } from '@/lib/firebase';
 import { useSession } from '@/providers/SessionProvider';
-import { watchBoard, watchMyTickets } from '@qampus/backend';
+import { watchBoard, watchMyOffenses, watchMyTickets, watchProfile } from '@qampus/backend';
 import { campusDate } from '@qampus/core/format';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -13,6 +13,7 @@ const QueueDataContext = createContext(null);
 
 const EMPTY_BOARD = Object.freeze({ offices: [], queues: {} });
 const EMPTY_TICKETS = Object.freeze([]);
+const EMPTY_OFFENSES = Object.freeze([]);
 
 const warn = (label) => (error) => console.warn(label, error);
 
@@ -29,6 +30,9 @@ export function QueueDataProvider({ children }) {
 
   const [board, setBoard] = useState(EMPTY_BOARD);
   const [tickets, setTickets] = useState(EMPTY_TICKETS);
+  const [offenses, setOffenses] = useState(EMPTY_OFFENSES);
+  // The student's own profile, live: the session copy is read once at sign-in, so strikes and bans would be stale
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     if (!uid) return undefined;
@@ -40,10 +44,25 @@ export function QueueDataProvider({ children }) {
     return watchMyTickets(db, uid, setTickets, warn('Could not load tickets'));
   }, [uid]);
 
+  useEffect(() => {
+    if (!uid) return undefined;
+    return watchMyOffenses(db, uid, setOffenses, warn('Could not load offenses'));
+  }, [uid]);
+
+  useEffect(() => {
+    if (!uid) return undefined;
+    return watchProfile(db, uid, setProfile, warn('Could not load the profile'));
+  }, [uid]);
+
   // Signed out (or a guest): show nothing, whatever the last student left in state
   const value = useMemo(
-    () => ({ board: uid ? board : EMPTY_BOARD, tickets: uid ? tickets : EMPTY_TICKETS }),
-    [uid, board, tickets],
+    () => ({
+      board: uid ? board : EMPTY_BOARD,
+      tickets: uid ? tickets : EMPTY_TICKETS,
+      offenses: uid ? offenses : EMPTY_OFFENSES,
+      profile: uid ? profile : null,
+    }),
+    [uid, board, tickets, offenses, profile],
   );
 
   return <QueueDataContext.Provider value={value}>{children}</QueueDataContext.Provider>;
