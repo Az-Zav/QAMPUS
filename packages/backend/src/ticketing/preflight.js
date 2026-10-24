@@ -95,7 +95,9 @@ export function checkNoShow({ ticket, queue, reason, now }) {
   return TicketingError.TICKET_UNAVAILABLE;
 }
 
-// A student may cancel only a ticket that is still WAITING. Cancelling after the call is an offense (later slice).
+// A student may cancel a WAITING ticket (free) or a CALLED one, expired or not (an offense, R-11).
+// An IN_SERVICE ticket is already being served and cannot be cancelled.
 export function checkCancel({ ticket }) {
-  return ticket?.status === TICKET_STATUS.WAITING ? null : TicketingError.TICKET_UNAVAILABLE;
+  const cancellable = ticket?.status === TICKET_STATUS.WAITING || ticket?.status === TICKET_STATUS.CALLED;
+  return cancellable ? null : TicketingError.TICKET_UNAVAILABLE;
 }

@@ -19,7 +19,7 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **UI**: all screens exist. Still mock: staff waiting list and current ticket, offenses, activity log, notifications, guests, programs, display.
 
 ## In progress
-Nothing active. Slice E passed manual testing. Open: whether a student may cancel after the call (see PRD R-16/R-13); slice F cleanup is next.
+Nothing active. Slices B to E passed manual testing, including student cancel of a CALLED ticket (PRD R-11). Slice F (cleanup) is next.
 
 ## Next (end-to-end ticket flow, one commit per slice, developer tests between)
 F. Remove leftover mock paths for the ticket flow. Offenses, notifications, activity log, guests stay mock until their slices.

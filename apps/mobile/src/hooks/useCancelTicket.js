@@ -1,9 +1,9 @@
 import { db } from '@/lib/firebase';
 import { useQueueData } from '@/providers/QueueDataProvider';
-import { cancelWaitingTicket, TicketingError } from '@qampus/backend';
+import { cancelOwnTicket, TicketingError } from '@qampus/backend';
 import { useCallback, useState } from 'react';
 
-// Cancels one of the student's own tickets while it is still WAITING.
+// Cancels one of the student's own tickets: WAITING (free) or CALLED (an offense once penalties exist).
 // cancel(ticketId) resolves to null on success, or a TicketingError code the screen maps to copy.
 export function useCancelTicket() {
   const { tickets } = useQueueData();
@@ -15,7 +15,7 @@ export function useCancelTicket() {
       if (!ticket) return TicketingError.TICKET_UNAVAILABLE;
       setCancelling(true);
       try {
-        await cancelWaitingTicket(db, { ticket });
+        await cancelOwnTicket(db, { ticket });
         return null;
       } catch (error) {
         console.warn('Cancel failed', error);

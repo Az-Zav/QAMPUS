@@ -36,9 +36,10 @@ test('no-show only applies to the ticket at the window', () => {
   );
 });
 
-test('a student can cancel only a WAITING ticket', () => {
+test('a student can cancel a WAITING or CALLED ticket, not one in service or finished', () => {
   assert.equal(checkCancel({ ticket: { status: 'WAITING' } }), null);
-  assert.equal(checkCancel({ ticket: { status: 'CALLED' } }), TicketingError.TICKET_UNAVAILABLE);
+  assert.equal(checkCancel({ ticket: { status: 'CALLED' } }), null);
   assert.equal(checkCancel({ ticket: { status: 'IN_SERVICE' } }), TicketingError.TICKET_UNAVAILABLE);
+  assert.equal(checkCancel({ ticket: { status: 'COMPLETED' } }), TicketingError.TICKET_UNAVAILABLE);
   assert.equal(checkCancel({ ticket: null }), TicketingError.TICKET_UNAVAILABLE);
 });

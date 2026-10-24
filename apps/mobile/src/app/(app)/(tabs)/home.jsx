@@ -11,7 +11,7 @@ import InfoCard from '@/components/shell/InfoCard';
 import TicketModal from '@/components/modals/TicketModal';
 import TicketStubCard from '@/components/tickets/TicketStubCard';
 
-import { EmptyStateType, IconSet, InfoCardType, MODAL_COPY, ModalTone, SPACING, TYPOGRAPHY } from '@/constants';
+import { EmptyStateType, IconSet, InfoCardType, MODAL_COPY, ModalTone, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
 import {
   useCancelTicket,
@@ -170,7 +170,7 @@ export default function HomeScreen() {
       />
 
       <ConfirmModal
-        {...MODAL_COPY.cancelTicket}
+        {...(selectedTicket?.status === TicketStatus.WAITING ? MODAL_COPY.cancelTicket : MODAL_COPY.cancelCalledTicket)}
         tone={ModalTone.DESTRUCTIVE}
         visible={modal === HomeModal.CANCEL}
         onConfirm={confirmCancel}

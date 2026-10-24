@@ -299,12 +299,19 @@ export const MODAL_COPY = Object.freeze({
     confirmLabel: 'Cancel ticket',
     cancelLabel: 'Keep my place',
   },
+  cancelCalledTicket: {
+    icon: 'warning-outline',
+    title: 'Cancel your called ticket?',
+    body: `Your turn has already been called, so cancelling counts as an offense on your record. ${RULES.OFFENSES_PER_BAN} offenses lead to a ${RULES.BAN_HOURS}-hour ban.`,
+    confirmLabel: 'Cancel and accept offense',
+    cancelLabel: 'Keep my ticket',
+  },
   cancelFailed: {
     icon: 'alert-circle-outline',
     title: "Couldn't cancel",
     body: (reason) =>
       ({
-        TICKET_UNAVAILABLE: 'This ticket can no longer be cancelled. It may already have been called.',
+        TICKET_UNAVAILABLE: 'This ticket can no longer be cancelled. It may already be in service or finished.',
         DENIED: "The cancellation wasn't accepted. Check your connection and try again.",
       })[reason] ?? 'Something went wrong. Try again in a moment.',
     buttonLabel: 'OK',

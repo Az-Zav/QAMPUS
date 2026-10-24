@@ -212,15 +212,30 @@ export async function markTicketNoShow(db, { office, ticket, reason = '', now = 
   }
 }
 
-// Student: cancel their own ticket while it is still WAITING. Cancelling after the call is not allowed yet.
-export async function cancelWaitingTicket(db, { ticket }) {
+// Student: cancel their own ticket. A WAITING ticket is a single write. A CALLED ticket is at the window, so
+// the same write also frees the window. The offense for cancelling after the call is recorded by the
+// penalties slice; nothing is recorded yet.
+export async function cancelOwnTicket(db, { ticket }) {
   const failure = checkCancel({ ticket });
   if (failure) throw new TicketingFailure(failure);
+
+  const ticketRef = doc(db, 'tickets', ticket.id);
+  const cancelled = { status: TICKET_STATUS.CANCELLED, cancelled_by: CANCELLED_BY.USER, cancelled_at: serverTimestamp() };
   try {
-    await updateDoc(doc(db, 'tickets', ticket.id), {
-      status: TICKET_STATUS.CANCELLED,
-      cancelled_by: CANCELLED_BY.USER,
-      cancelled_at: serverTimestamp(),
+    if (ticket.status === TICKET_STATUS.WAITING) {
+      await updateDoc(ticketRef, cancelled);
+      return;
+    }
+    const queueRef = doc(db, 'queues', `${ticket.office_id}_${ticket.queue_date}`);
+    await runTransaction(db, async (tx) => {
+      const queueSnap = await tx.get(queueRef);
+      const ticketSnap = await tx.get(ticketRef);
+      const atWindow = queueSnap.exists() && queueSnap.data().current_ticket_id === ticket.id;
+      if (!ticketSnap.exists() || ticketSnap.data().status !== TICKET_STATUS.CALLED || !atWindow) {
+        throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
+      }
+      tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
+      tx.update(ticketRef, cancelled);
     });
   } catch (error) {
     throw asFailure(error);
