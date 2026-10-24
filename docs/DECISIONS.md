@@ -89,3 +89,6 @@ Staff sign-in does not check the school domain. A person is staff only if `staff
 ## 2026-10-24 Empty Firebase Auth users from unmatched staff logins are accepted
 Rules govern Firestore, not Auth, so a Google account with no `staff` doc still creates an Auth user; it has no data access. Blocking creation needs Identity Platform and Cloud Functions (not on Spark). A client-side `deleteUser` after the popup is possible but bypassable and was declined for now. Revisit if the Auth user list becomes noisy.
 
+## 2026-10-24 Firestore rules are deployed from the repo
+`firestore.rules` is the only source of truth; `firebase deploy --only firestore:rules --project qampus-d0718` replaces the whole active ruleset, so the file must always hold every rule. Never edit rules in the console (the next deploy would wipe the edit). `active_count` joins `role`, `strike_count` and `banned_until` as fixed at create (must be 0) and never client-writable; mobile now writes `active_count: 0` on the first profile. `.firebaserc` pins the default project so a deploy cannot hit another one.
+

@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAnon() { return request.auth.token.firebase.sign_in_provider == 'anonymous'; }
+    function schoolEmail() {
+      return signedIn() && !isAnon() && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@tip[.]edu[.]ph');
+    }
+
+    // Students and guests: own document only. Role, strikes, bans and the open-ticket count are
+    // fixed at create and never writable by the client (docs/SCHEMA.md, users).
+    match /users/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.strike_count == 0 && request.resource.data.banned_until == null
+        && request.resource.data.active_count == 0
+        && ((isAnon() && request.resource.data.role == 'GUEST')
+         || (schoolEmail() && request.resource.data.role == 'STUDENT'));
+      allow update: if signedIn() && request.auth.uid == uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'strike_count', 'banned_until', 'active_count'])
+        && (resource.data.get('institutional_id', null) == null
+        || request.resource.data.get('institutional_id', null) == resource.data.get('institutional_id', null));
+    }
+
+    // Staff assignments are seeded by hand in the console; a user reads only their own email's doc.
+    match /staff/{email} {
+      allow read: if signedIn() && request.auth.token.email == email;
+    }
+
+    // Offices are seeded by hand; any signed-in user may read them, nobody writes from a client.
+    match /offices/{officeId} {
+      allow read: if signedIn();
+    }
+  }
+}

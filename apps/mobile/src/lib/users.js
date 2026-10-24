@@ -1,5 +1,5 @@
 // Student profile in Firestore: users/{uid}. Security Rules let a user create and edit only their own
-// document, and never `role`, `strike_count` or `banned_until`.
+// document, and never `role`, `strike_count`, `banned_until` or `active_count`.
 
 import { USER_ROLE } from '@/constants';
 import { db } from '@/lib/firebase';
@@ -21,6 +21,7 @@ export async function loadOrCreateStudent(firebaseUser) {
     push_enabled: true,
     strike_count: 0,
     banned_until: null,
+    active_count: 0,
   };
   await setDoc(ref, { ...profile, created_at: serverTimestamp() });
   return { id: ref.id, ...profile };
