@@ -6,7 +6,7 @@ import { campusDate } from '@qampus/core/format';
 import { doc, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { queueIdFor, ticketIdFor, ticketNumberFor } from './ids.js';
 import { waitingTickets } from './derive.js';
-import { checkCall, checkJoin, TicketingError, TicketingFailure } from './preflight.js';
+import { checkCall, checkCheckIn, checkJoin, checkVerifyById, TicketingError, TicketingFailure } from './preflight.js';
 
 // Firestore refusals become a TicketingFailure with a code the UI can map to copy
 function asFailure(error) {
@@ -118,4 +118,31 @@ export async function callNext(db, { office, tickets, now = new Date() }) {
   const [first] = waitingTickets(tickets);
   if (!first) throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
   await callTicket(db, { office, ticketId: first.id, now });
+}
+
+// CALLED -> IN_SERVICE. Rules allow it only inside the grace period (called_at + 60 s, by server time).
+async function startService(db, ticketId) {
+  try {
+    await updateDoc(doc(db, 'tickets', ticketId), {
+      status: TICKET_STATUS.IN_SERVICE,
+      service_started_at: serverTimestamp(),
+    });
+  } catch (error) {
+    throw asFailure(error);
+  }
+}
+
+// Student: check in with the office code (QR payload or typed digits). `ticket` is the user's CALLED
+// ticket and `office` its office record. The code is not secret (R-20), so the check here is a courtesy.
+export async function checkInByCode(db, { ticket, office, code, now = new Date() }) {
+  const reason = checkCheckIn({ ticket, office, code, now });
+  if (reason) throw new TicketingFailure(reason);
+  await startService(db, ticket.id);
+}
+
+// Staff: verify the called ticket by the holder's student or guest ID.
+export async function verifyByHolderId(db, { ticket, idNumber, now = new Date() }) {
+  const reason = checkVerifyById({ ticket, idNumber, now });
+  if (reason) throw new TicketingFailure(reason);
+  await startService(db, ticket.id);
 }

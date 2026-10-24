@@ -2,6 +2,7 @@
 // conditions; these only give a readable reason. Pure: no Firebase.
 
 import { QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
+import { getRemainingSeconds } from '@qampus/core/ticket';
 
 export const TicketingError = Object.freeze({
   PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
@@ -9,6 +10,10 @@ export const TicketingError = Object.freeze({
   QUEUE_CLOSED: 'QUEUE_CLOSED',
   WINDOW_BUSY: 'WINDOW_BUSY',
   TICKET_UNAVAILABLE: 'TICKET_UNAVAILABLE',
+  NOT_CALLED: 'NOT_CALLED',
+  GRACE_EXPIRED: 'GRACE_EXPIRED',
+  INVALID_CODE: 'INVALID_CODE',
+  ID_MISMATCH: 'ID_MISMATCH',
   DENIED: 'DENIED',
   UNKNOWN: 'UNKNOWN',
 });
@@ -38,5 +43,30 @@ export function checkCall({ officeId, queue, ticket }) {
   if (!ticket || ticket.office_id !== officeId || ticket.status !== TICKET_STATUS.WAITING) {
     return TicketingError.TICKET_UNAVAILABLE;
   }
+  return null;
+}
+
+// A CALLED ticket can start service only inside the grace period (R-12). `now` is in ms or a Date.
+function checkArrival({ ticket, now }) {
+  if (!ticket || ticket.status !== TICKET_STATUS.CALLED) return TicketingError.NOT_CALLED;
+  if (getRemainingSeconds(ticket.called_at, new Date(now).getTime()) === 0) return TicketingError.GRACE_EXPIRED;
+  return null;
+}
+
+// Student checks in with the office code (the QR payload or the 6 digits typed by hand)
+export function checkCheckIn({ ticket, office, code, now }) {
+  const early = checkArrival({ ticket, now });
+  if (early) return early;
+  const typed = String(code ?? '').replace(/\D/g, '');
+  if (!typed || typed !== String(office?.check_in_code ?? '')) return TicketingError.INVALID_CODE;
+  return null;
+}
+
+// Staff verify the called ticket by the holder's student or guest ID
+export function checkVerifyById({ ticket, idNumber, now }) {
+  const early = checkArrival({ ticket, now });
+  if (early) return early;
+  const norm = (value) => String(value ?? '').trim().toUpperCase();
+  if (!norm(idNumber) || norm(idNumber) !== norm(ticket.holder_institutional_id)) return TicketingError.ID_MISMATCH;
   return null;
 }

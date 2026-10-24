@@ -107,8 +107,8 @@ export default function Queue() {
           field: ModalField.ID,
           confirmDisabled: !input.trim(),
 
-          onConfirm: () => {
-            const result = queue.verifyById(input);
+          onConfirm: async () => {
+            const result = await queue.verifyById(input);
 
             if (result === VerifyResult.OK) {
               close();

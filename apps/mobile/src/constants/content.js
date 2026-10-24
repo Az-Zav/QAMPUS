@@ -292,6 +292,22 @@ export const MODAL_COPY = Object.freeze({
       })[reason] ?? 'Something went wrong. Try again in a moment.',
     buttonLabel: 'OK',
   },
+  checkIn: {
+    successIcon: 'checkmark-circle-outline',
+    successTitle: "You're checked in",
+    successBody: 'Head to the counter. Staff will serve you now.',
+    successButton: 'Done',
+    failedIcon: 'alert-circle-outline',
+    failedTitle: "Couldn't check in",
+    failedBody: (reason) =>
+      ({
+        NOT_CALLED: "You don't have a ticket being called right now.",
+        GRACE_EXPIRED: 'Your time to check in has passed. Staff will update your ticket.',
+        INVALID_CODE: "That code doesn't match your office. Check the code posted at the counter.",
+        DENIED: "Check-in wasn't accepted. Your time may have just run out.",
+      })[reason] ?? 'Something went wrong. Try again in a moment.',
+    failedButton: 'OK',
+  },
   called: {
     icon: 'notifications',
     title: "It's your turn",

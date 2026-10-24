@@ -41,6 +41,18 @@ service cloud.firestore {
         && getAfter(queuePath).data.current_ticket_id == ticketId;
     }
 
+    // A CALLED ticket starts service (IN_SERVICE) inside the 60 s grace period, by server time. The holder
+    // does it by checking in with the office code; staff of the office do it by verifying the holder's ID.
+    // The code and the ID are checked by the apps; the rules fix who, when and which fields change.
+    function validArrival(before, after) {
+      return (before.user_id == request.auth.uid || (isStaff() && before.office_id == staffOfficeId()))
+        && before.status == 'CALLED'
+        && request.time <= before.called_at + duration.value(60, 's')
+        && after.diff(before).affectedKeys().hasOnly(['status', 'service_started_at'])
+        && after.status == 'IN_SERVICE'
+        && after.service_started_at == request.time;
+    }
+
     // A student joining: the ticket takes exactly the next number of an OPEN queue, in the same write
     // that bumps the queue (checked with getAfter), and its snapshot fields match the real docs.
     function validJoin(ticketId, d) {
@@ -143,13 +155,14 @@ service cloud.firestore {
                   : resource.data.last_called_seq));
     }
 
-    // tickets/{queueId}_{seq}. Students create (join); staff call. Nothing else can change a ticket yet.
+    // tickets/{queueId}_{seq}. Students create (join); staff call; the holder or staff start service. Nothing else yet.
     match /tickets/{ticketId} {
       allow read: if signedIn()
         && (resource.data.user_id == request.auth.uid
             || (isStaff() && resource.data.office_id == staffOfficeId()));
       allow create: if signedIn() && validJoin(ticketId, request.resource.data);
-      allow update: if isStaff() && validCall(ticketId, resource.data, request.resource.data);
+      allow update: if (isStaff() && validCall(ticketId, resource.data, request.resource.data))
+        || (signedIn() && validArrival(resource.data, request.resource.data));
     }
   }
 }

@@ -35,6 +35,8 @@ import {
   callTicket,
   closeQueue as closeQueueDoc,
   openQueue as openQueueDoc,
+  TicketingError,
+  verifyByHolderId,
   waitingTickets,
 } from '@qampus/backend';
 import { useOffice } from './OfficeProvider';
@@ -823,8 +825,17 @@ export function QueueProvider({ children }) {
   // WM02: VERIFY BY ID
   // =================================================
 
-  // Arrives with the verify-arrival slice
-  const verifyById = () => VerifyResult.NO_MATCH;
+  // Staff verify the called ticket by the holder's ID: CALLED -> IN_SERVICE inside the grace period.
+  // Resolves to a VerifyResult for the modal (a refused write also reads as no match).
+  const verifyById = async (idNumber) => {
+    if (!currentTicket) return VerifyResult.NO_MATCH;
+    try {
+      await verifyByHolderId(db, { ticket: currentTicket, idNumber });
+      return VerifyResult.OK;
+    } catch (error) {
+      return error.code === TicketingError.GRACE_EXPIRED ? VerifyResult.EXPIRED : VerifyResult.NO_MATCH;
+    }
+  };
 
   // =================================================
   // WM03: MARK NO-SHOW

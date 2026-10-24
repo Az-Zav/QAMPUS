@@ -1,7 +1,9 @@
+import CalledModal from '@/components/modals/CalledModal';
 import BottomNav from '@/components/shell/BottomNav';
-import { AppTab } from '@/constants';
-import { useTheme, useThemedStyles } from '@/hooks';
+import { AppTab, TicketStatus } from '@/constants';
+import { useMyTickets, useTheme, useThemedStyles } from '@/hooks';
 import { Stack, usePathname, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 const TAB_PATHS = { '/home': AppTab.HOME, '/scan': AppTab.SCAN, '/queue': AppTab.QUEUE };
@@ -14,6 +16,16 @@ export default function AppLayout() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const pathname = usePathname();
+  const { active } = useMyTickets();
+
+  // "It's your turn": shown on any screen while a ticket is being called, until the student dismisses
+  // it or opens the scanner. A ticket is only announced once; it is not shown on the scanner itself.
+  const [dismissedIds, setDismissedIds] = useState(() => new Set());
+  const calledTicket =
+    pathname === '/scan'
+      ? null
+      : (active.find((t) => t.status === TicketStatus.YOUR_TURN && !dismissedIds.has(t.id)) ?? null);
+  const dismiss = (id) => setDismissedIds((prev) => new Set(prev).add(id));
 
   return (
     <View style={styles.container}>
@@ -25,6 +37,15 @@ export default function AppLayout() {
         }}
       />
       <BottomNav active={TAB_PATHS[pathname]} onNavigate={(tab) => router.navigate(`/${tab}`)} />
+      <CalledModal
+        visible={!!calledTicket}
+        ticket={calledTicket}
+        onClose={() => calledTicket && dismiss(calledTicket.id)}
+        onOpenScanner={() => {
+          if (calledTicket) dismiss(calledTicket.id);
+          router.navigate('/scan');
+        }}
+      />
     </View>
   );
 }

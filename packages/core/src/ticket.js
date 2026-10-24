@@ -1,6 +1,6 @@
 // Ticket state derivation shared by student and staff apps.
 
-import { CANCELLED_BY, RULES, TICKET_STATUS, TicketStatus } from './domain';
+import { CANCELLED_BY, RULES, TICKET_STATUS, TicketStatus } from './domain.js';
 
 // Seconds left in the grace period (R-12); 0 once lapsed
 export function getRemainingSeconds(calledAt, now) {

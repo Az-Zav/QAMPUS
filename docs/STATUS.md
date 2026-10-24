@@ -13,14 +13,14 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **`packages/backend`** (`@qampus/backend`): shared by both apps. Ticketing ids/derive/preflight (13 unit tests, `npm test`), listeners (`watchBoard`, `watchQueue`, `watchMyTickets`), writes (`openQueue`, `closeQueue`, `joinQueue`).
 - **Slice B (student joins) tested on device and staff browser**: staff Open/Close queue is real (today's `queues` doc). Mobile Offices list, Home ticket and My Tickets read Firestore through `QueueDataProvider`; Confirm join calls `joinQueue` with failure messages.
 - **Slice C (call next) tested on device and staff browser**: staff waiting list and current ticket are real (`useOfficeTickets` plus today's queue doc). Call next and Override write through `callNext`/`callTicket`. Verify, no-show and complete are stubs until slices D and E. A student's Home ticket shows YOUR_TURN with the countdown once called.
+- **Slice D (verify arrival) tested on device and staff browser**: the student checks in on the Scan tab by typing the 6-digit office code (`useCheckIn`, `checkInByCode`); staff Verify by ID is real (`verifyByHolderId`). Both do CALLED -> IN_SERVICE inside the 60 s grace period. QR scanning is not built (needs `expo-camera` and a new dev build). An app-wide "It's your turn" dialog (`CalledModal` in the signed-in layout) opens while a ticket is being called.
 - **EAS**: dev build works; testing through `expo start --dev-client --tunnel`. JS-only changes reload without a rebuild.
 - **UI**: all screens exist. Still mock: staff waiting list and current ticket, offenses, activity log, notifications, guests, programs, display.
 
 ## In progress
-Nothing active. Slice C passed manual testing (call next, current ticket, student sees it). Slice D is next.
+Nothing active. Slice D passed manual testing (check-in by code, staff verify by ID, called dialog). Slice E is next.
 
 ## Next (end-to-end ticket flow, one commit per slice, developer tests between)
-D. Verify arrival (student): 60 s window, office `check_in_code` (QR or manual).
 E. Complete, cancel (WAITING only), no-show (after 60 s). Removes `MOCK_HISTORY_TICKETS`.
 F. Remove leftover mock paths for the ticket flow. Offenses, notifications, activity log, guests stay mock until their slices.
 
