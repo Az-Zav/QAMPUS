@@ -79,3 +79,18 @@ export function daysBetween(from, to) {
   end.setHours(0, 0, 0, 0);
   return Math.round((end - start) / 86400000);
 }
+
+// Campus runs on one timezone (UTC+8); "today" comes from it, not the device clock
+const CAMPUS_UTC_OFFSET_MINUTES = 8 * 60;
+const DAY_KEYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+// 480 -> "08:00"
+export function formatMinutes(minutes) {
+  return `${pad2(Math.floor(minutes / 60))}:${pad2(minutes % 60)}`;
+}
+
+// Office `hours` map -> { open_min, close_min } for today on campus, or null when closed
+export function todayHours(hours, now = new Date()) {
+  const campus = new Date(now.getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);
+  return hours?.[DAY_KEYS[campus.getUTCDay()]] ?? null;
+}

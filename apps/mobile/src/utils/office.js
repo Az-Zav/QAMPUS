@@ -2,17 +2,18 @@
 // InfoCard (office hours) and JoinConfirmModal.
 
 import { QUEUE_STATUS } from '@/constants';
-import { formatClock } from '@qampus/core';
+import { formatMinutes, todayHours } from '@qampus/core';
 
 export function toOfficeView(office) {
   const queue = office.queue ?? {};
+  const today = todayHours(office.hours);
 
   return {
     id: office.id,
     code: office.code,
     name: office.name,
     location: office.location,
-    hours: `${formatClock(office.operating_hours.open_time)} - ${formatClock(office.operating_hours.close_time)}`,
+    hours: today ? `${formatMinutes(today.open_min)} - ${formatMinutes(today.close_min)}` : 'Closed today',
     open: queue.status === QUEUE_STATUS.OPEN,
     nowServing: queue.current_ticket_number ?? '—',
     waiting: queue.waiting_count ?? 0,

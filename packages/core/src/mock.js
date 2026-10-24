@@ -77,21 +77,23 @@ export const MOCK_PROGRAMS = Object.freeze([
   'BS Psychology',
 ]);
 
+// Mon–Fri with the same hours; matches the Firestore `hours` shape (minutes since midnight, missing day = closed)
+const weekdays = (open_min, close_min) =>
+  Object.freeze(
+    Object.fromEntries(['MON', 'TUE', 'WED', 'THU', 'FRI'].map((day) => [day, { open_min, close_min }])),
+  );
+
 export const MOCK_OFFICES = Object.freeze([
   {
     id: 'off_reg_001',
     code: 'R',
     short_name: 'University Registrar',
-    manual_code: '418902', // 6-digit check-in code shown beside the office QR
+    check_in_code: '418902', // 6-digit check-in code, shown beside the office QR and used for manual entry
     name: 'Office of the University Registrar',
     location: 'Administration Building, 1st Floor, Room 101',
     status: 'ACTIVE',
     default_service_minutes: 5,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '08:00:00',
-      close_time: '17:00:00',
-    },
+    hours: weekdays(480, 1020), // 08:00–17:00
     queue: {
       status: 'OPEN',
       current_ticket_number: 'R-012',
@@ -103,16 +105,12 @@ export const MOCK_OFFICES = Object.freeze([
     id: 'off_csh_002',
     code: 'C',
     short_name: 'Cashier',
-    manual_code: '205117',
+    check_in_code: '205117',
     name: 'Cashier & Student Accounts',
     location: 'Finance Hall, Ground Floor, Windows 1-4',
     status: 'ACTIVE',
     default_service_minutes: 3,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '08:00:00',
-      close_time: '16:30:00',
-    },
+    hours: weekdays(480, 990), // 08:00–16:30
     queue: {
       status: 'OPEN',
       current_ticket_number: 'C-045',
@@ -124,16 +122,12 @@ export const MOCK_OFFICES = Object.freeze([
     id: 'off_adm_003',
     code: 'A',
     short_name: 'Admissions',
-    manual_code: '730264',
+    check_in_code: '730264',
     name: 'Admissions & Scholarships Office',
     location: 'Student Center, 2nd Floor, Room 204',
     status: 'ACTIVE',
     default_service_minutes: 7,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '09:00:00',
-      close_time: '16:00:00',
-    },
+    hours: weekdays(540, 960), // 09:00–16:00
     queue: {
       status: 'CLOSED',
       current_ticket_number: null,
@@ -145,16 +139,12 @@ export const MOCK_OFFICES = Object.freeze([
     id: 'off_gdc_004',
     code: 'G',
     short_name: 'Guidance',
-    manual_code: '561839',
+    check_in_code: '561839',
     name: 'Guidance & Counseling Services',
     location: 'Student Well-being Center, 3rd Floor',
     status: 'ACTIVE',
     default_service_minutes: 15,
-    operating_hours: {
-      day_of_week: 'MON',
-      open_time: '08:00:00',
-      close_time: '17:00:00',
-    },
+    hours: weekdays(480, 1020), // 08:00–17:00
     queue: {
       status: 'OPEN',
       current_ticket_number: 'G-003',

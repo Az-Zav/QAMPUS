@@ -257,7 +257,7 @@ export default function Queue() {
 
       {/* Queue controls */}
       <HeaderStrip
-        manualCode={office.manual_code}
+        manualCode={office.check_in_code}
         waitingCount={queue.waiting.length}
         averageServiceMinutes={
           queue.averageServiceMinutes

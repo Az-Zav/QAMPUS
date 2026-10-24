@@ -61,7 +61,7 @@ export default function Display() {
               </View>
               <Text style={[styles.centered, styles.scan]}>{DISPLAY_COPY.scanToCheckIn}</Text>
               <Text style={[styles.centered, styles.orCode]}>{DISPLAY_COPY.orEnterCode}</Text>
-              <Text style={[styles.centered, styles.code]}>{formatManualCode(office.manual_code)}</Text>
+              <Text style={[styles.centered, styles.code]}>{formatManualCode(office.check_in_code)}</Text>
             </>
           ) : (
             <>
