@@ -43,11 +43,7 @@ erDiagram
     string status "ACTIVE or INACTIVE"
     int default_service_minutes
     map hours "MON..SUN each open_min and close_min"
-  }
-
-  OFFICE_CODES {
-    string office_id PK "doc id = office id, locked from clients"
-    string check_in_code "same value in the QR and for manual entry"
+    string check_in_code "6 digits, same value in the QR and for manual entry"
   }
 
   STAFF {
@@ -144,7 +140,6 @@ erDiagram
   USERS ||--o{ TICKETS : holds
   USERS ||--o{ OFFENSES : receives
   USERS ||--o{ NOTIFICATIONS : "mailbox"
-  OFFICES ||--|| OFFICE_CODES : "has code"
   OFFICES ||--o{ STAFF : "assigned"
   OFFICES ||--o{ QUEUES : "one per day"
   QUEUES ||--o{ TICKETS : "issues"
@@ -163,7 +158,7 @@ erDiagram
 ## Which slice implements what
 | Slice | Collections used |
 |---|---|
-| 1 Ticketing | `users` (profile), `offices`, `officeCodes`, `staff`, `queues`, `tickets` |
+| 1 Ticketing | `users` (profile), `offices`, `staff`, `queues`, `tickets` |
 | 2 Penalties | `offenses`, strike and ban fields on `users`, `events` |
 | 3 Limits and capacity | `active_count`, queue service totals, office hours checks |
 | 4 Notifications | `notifications`, `announcements`, push token fields |

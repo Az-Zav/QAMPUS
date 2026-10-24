@@ -21,7 +21,7 @@ _Last updated: 2026-10-24_
 Nothing active.
 
 ## Next (ticketing slice 1, real Firebase project, no emulator)
-A. Seed `offices/{id}`, `officeCodes/{id}` and `staff/{email}` by hand in the console (shapes in DECISIONS.md, "Final slice-1 data model"). Staff app: Firebase config + Google popup sign-in + `staff/{email}` lookup (Not Assigned if missing).
+A. Seed `offices/{id}` (with `check_in_code`) and `staff/{email}` by hand in the console (shapes in DECISIONS.md, "Final slice-1 data model"). Staff app: Firebase config + Google popup sign-in + `staff/{email}` lookup (Not Assigned if missing).
 B. Join (student): rules + `joinQueue` + offices list + Home ticket live.
 C. Call next (staff).
 D. Verify arrival (student): 60 s window, office code.

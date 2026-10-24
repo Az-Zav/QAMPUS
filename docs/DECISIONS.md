@@ -70,3 +70,7 @@ tickets/{queueId}_{seq}         queue_id, office_id, office_code, office_name, q
   - `events/{id}`: entity_type, entity_id, action, from_status, to_status, actor_uid, actor_name, reason, ticket_number, office_id, created_at
 - **Known gaps accepted for slice 1:** no limit on active tickets per user or office; tickets from earlier days that were never closed still exist, so Home shows only active tickets whose `queue_date` is today; the existing client-side `users` create must be locked down by rules (role `STUDENT`, `strike_count` 0, `banned_until` null, `active_count` 0).
 - **UI mapper changes this implies:** `toOfficeView` reads today's entry of `hours` and the office's queue doc instead of `office.queue`; `toTicketView` takes the counter label from the office and computes position/ahead/wait from the queue doc.
+
+## 2026-10-24 Check-in code lives on the office doc; no `officeCodes` collection
+One 6-digit `check_in_code` on `offices/{id}` serves both the QR and manual entry. The QR is posted publicly and a photo can be shared, so hiding the code from the app only stops the laziest remote check-in; staff no-show (including `IN_SERVICE → NO_SHOW`, R-23a) covers abuse. Saves a collection, a seed doc and a rules lookup. Supersedes the `officeCodes` parts of the earlier data-model entries. A rolling QR (rejected in PRD R-20) would need its own doc for the rotating secret.
+
