@@ -49,7 +49,9 @@ export default function RootLayout() {
 // The public display (D01) needs no session.
 function ThemedRoot() {
   const { colors, isDark } = useTheme();
-  const { isSignedIn, hasOffice } = useSession();
+  const { isSignedIn, hasOffice, authReady } = useSession();
+  if (!authReady) return null;
+
 
   return (
     <>

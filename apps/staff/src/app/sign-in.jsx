@@ -4,7 +4,6 @@ import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { ShieldCheck, Timer, UserRoundCheck } from '@/icons';
 import { SignInStatus } from '@/providers/SessionProvider';
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 const HIGHLIGHT_ICONS = { timer: Timer, userCheck: UserRoundCheck, shield: ShieldCheck };
@@ -15,9 +14,7 @@ export default function SignIn() {
   const { colors } = useTheme();
   const { width } = useWindowDimensions();
   const { signIn, signInStatus } = useSession();
-  // Dev aid until real auth: /sign-in?as=unassigned signs in an account with no office,
-  // /sign-in?as=error shows the off-domain error
-  const { as } = useLocalSearchParams();
+
   const loading = signInStatus === SignInStatus.LOADING;
 
   return (
@@ -57,7 +54,7 @@ export default function SignIn() {
           <ActionButton
             label={loading ? SIGN_IN_COPY.ctaLoading : SIGN_IN_COPY.cta}
             disabled={loading}
-            onPress={() => signIn({ variant: as })}
+            onPress={signIn}
             style={styles.cta}
           />
           {signInStatus === SignInStatus.ERROR && (
