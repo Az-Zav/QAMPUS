@@ -241,3 +241,39 @@ export async function cancelOwnTicket(db, { ticket }) {
     throw asFailure(error);
   }
 }
+
+// Staff: cancel the whole queue (R-16). Every unfinished ticket becomes CANCELLED by the office with the
+// reason, the window is cleared and the queue is closed, in one transaction. It reads every ticket number
+// the queue ever issued today (1..last_seq), so a student joining at the same moment cannot be missed.
+// Cancelling by the office never penalizes anyone.
+export async function cancelOfficeQueue(db, { office, reason, now = new Date() }) {
+  const trimmed = String(reason ?? '').trim();
+  if (!trimmed) throw new TicketingFailure(TicketingError.REASON_REQUIRED);
+
+  const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
+  const unfinished = [TICKET_STATUS.WAITING, TICKET_STATUS.CALLED, TICKET_STATUS.IN_SERVICE];
+  try {
+    await runTransaction(db, async (tx) => {
+      const queueSnap = await tx.get(queueRef);
+      if (!queueSnap.exists()) return; // never opened today: nothing to cancel
+
+      const refs = Array.from({ length: queueSnap.data().last_seq }, (_, i) =>
+        doc(db, 'tickets', ticketIdFor(queueRef.id, i + 1)),
+      );
+      const snaps = await Promise.all(refs.map((ref) => tx.get(ref)));
+      for (const snap of snaps) {
+        if (snap.exists() && unfinished.includes(snap.data().status)) {
+          tx.update(snap.ref, {
+            status: TICKET_STATUS.CANCELLED,
+            cancelled_by: CANCELLED_BY.OFFICE,
+            cancelled_at: serverTimestamp(),
+            reason: trimmed,
+          });
+        }
+      }
+      tx.update(queueRef, { status: QUEUE_STATUS.CLOSED, current_ticket_id: null, updated_at: serverTimestamp() });
+    });
+  } catch (error) {
+    throw asFailure(error);
+  }
+}

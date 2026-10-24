@@ -3,23 +3,15 @@ import {
   MOCK_STAFF_ACTIVITY,
   MOCK_STAFF_NOTIFICATIONS,
   MOCK_STAFF_OFFENSES,
-  MOCK_STAFF_QUEUE,
 } from '@qampus/core/mock';
 
 import {
   ACTIVITY_ACTION,
-  OFFENSE_TYPE,
   QUEUE_STATUS,
-  RULES,
   TICKET_STATUS,
 } from '@qampus/core/domain';
 
-import { getRemainingSeconds, toShortTicketNumber } from '@qampus/core/ticket';
-
-import {
-  getPenaltyState,
-  hasActiveNoShowOffense,
-} from '@/utils/penalties';
+import { toShortTicketNumber } from '@qampus/core/ticket';
 
 import {
   createContext,
@@ -33,6 +25,7 @@ import { db } from '@/lib/firebase';
 import {
   callNext as callNextTicket,
   callTicket,
+  cancelOfficeQueue,
   closeQueue as closeQueueDoc,
   completeTicket,
   markTicketNoShow,
@@ -51,8 +44,8 @@ import { useSession } from './SessionProvider';
 // Fix #2: Accurate strike and ban calculations
 // Fix #3: Unified queue state using useReducer
 //
-// Frontend-only implementation.
-// No Firebase or backend integration yet.
+// The ticket flow (queue, tickets) reads and writes Firestore through @qampus/backend.
+// Offenses and the activity log are still local mock state.
 // =====================================================
 
 const QueueContext = createContext(null);
@@ -80,14 +73,6 @@ export const NoShowResult = Object.freeze({
 // =====================================================
 
 const QueueAction = Object.freeze({
-  CALL: 'CALL',
-  VERIFY: 'VERIFY',
-  INVALID_VERIFY: 'INVALID_VERIFY',
-  NO_SHOW: 'NO_SHOW',
-  COMPLETE: 'COMPLETE',
-  OPEN_QUEUE: 'OPEN_QUEUE',
-  CLOSE_QUEUE: 'CLOSE_QUEUE',
-  CANCEL_QUEUE: 'CANCEL_QUEUE',
   OVERRIDE_CUTOFF: 'OVERRIDE_CUTOFF',
   REVOKE_OFFENSE: 'REVOKE_OFFENSE',
 });
@@ -100,13 +85,7 @@ const QueueAction = Object.freeze({
 // modifies the original imported mock data.
 function createInitialState() {
   return {
-    queue: {
-      ...MOCK_STAFF_QUEUE,
-      current: MOCK_STAFF_QUEUE.current
-        ? { ...MOCK_STAFF_QUEUE.current }
-        : null,
-      waiting: [...MOCK_STAFF_QUEUE.waiting],
-    },
+    queue: { cutoff_overridden: false },
     offenses: [...MOCK_STAFF_OFFENSES],
     activity: [...MOCK_STAFF_ACTIVITY],
   };
@@ -159,98 +138,6 @@ function prependActivity(activity, entries) {
 }
 
 // =====================================================
-// VALIDATION: VERIFY BY ID
-// =====================================================
-
-function validateVerification(state, idNumber, now) {
-  const ticket = state.queue.current;
-
-  if (
-    !ticket ||
-    ticket.status !== TICKET_STATUS.CALLED
-  ) {
-    return VerifyResult.NO_MATCH;
-  }
-
-  const expired =
-    getRemainingSeconds(ticket.called_at, now) === 0;
-
-  if (expired) {
-    return VerifyResult.EXPIRED;
-  }
-
-  const expectedId =
-    String(ticket.holder?.id_number ?? '')
-      .trim()
-      .toUpperCase();
-
-  const enteredId =
-    String(idNumber ?? '')
-      .trim()
-      .toUpperCase();
-
-  if (!enteredId || expectedId !== enteredId) {
-    return VerifyResult.NO_MATCH;
-  }
-
-  return VerifyResult.OK;
-}
-
-// =====================================================
-// VALIDATION: MARK NO-SHOW
-//
-// R-12: CALLED -> NO_SHOW after grace period
-// R-23a: IN_SERVICE -> NO_SHOW with a reason
-// =====================================================
-
-function validateNoShow(state, reason, now) {
-  const ticket = state.queue.current;
-
-  if (
-    !ticket ||
-    ![
-      TICKET_STATUS.CALLED,
-      TICKET_STATUS.IN_SERVICE,
-    ].includes(ticket.status)
-  ) {
-    return NoShowResult.INVALID_STATE;
-  }
-
-  const verified =
-    ticket.status === TICKET_STATUS.IN_SERVICE;
-
-  const trimmedReason =
-    String(reason ?? '').trim();
-
-  // Staff must explain why a previous
-  // successful verification is being reversed.
-  if (verified && !trimmedReason) {
-    return NoShowResult.REASON_REQUIRED;
-  }
-
-  // Normal called tickets must wait until
-  // the grace period has expired.
-  if (
-    !verified &&
-    getRemainingSeconds(ticket.called_at, now) > 0
-  ) {
-    return NoShowResult.TOO_EARLY;
-  }
-
-  // Prevent duplicate no-show offenses.
-  if (
-    hasActiveNoShowOffense(
-      state.offenses,
-      ticket.ticket_number,
-    )
-  ) {
-    return NoShowResult.ALREADY_RECORDED;
-  }
-
-  return NoShowResult.OK;
-}
-
-// =====================================================
 // FIX #3: PURE QUEUE REDUCER
 //
 // All queue, offense, and activity changes
@@ -275,8 +162,6 @@ function queueReducer(state, event) {
     id,
   } = event;
 
-  const timestamp = Date.parse(now);
-
   // This counter is local to one reducer invocation.
   // Replaying the same event generates the same IDs.
   let logIndex = 0;
@@ -290,385 +175,6 @@ function queueReducer(state, event) {
     });
 
   switch (type) {
-    // =================================================
-    // WM01: CALL NEXT / OVERRIDE FIFO
-    // =================================================
-
-    case QueueAction.CALL: {
-      const {
-        ticketId,
-        override = false,
-        reason,
-      } = payload;
-
-      const ticket = queue.waiting.find(
-        (item) => item.id === ticketId,
-      );
-
-      // Cannot call another ticket when
-      // someone is already being served.
-      if (
-        !ticket ||
-        queue.current ||
-        queue.status !== QUEUE_STATUS.OPEN
-      ) {
-        return state;
-      }
-
-      // Normal calls must follow FIFO.
-      // Priority overrides are exempt.
-      if (
-        !override &&
-        queue.waiting[0]?.id !== ticketId
-      ) {
-        return state;
-      }
-
-      const called = {
-        ...ticket,
-        status: TICKET_STATUS.CALLED,
-        called_at: now,
-      };
-
-      return {
-        ...state,
-
-        queue: {
-          ...queue,
-          current: called,
-          waiting: queue.waiting.filter(
-            (item) => item.id !== ticketId,
-          ),
-        },
-
-        activity: prependActivity(activity, [
-          entry({
-            action: override
-              ? ACTIVITY_ACTION.OVERRIDE
-              : ACTIVITY_ACTION.CALLED,
-            ticket,
-            from: TICKET_STATUS.WAITING,
-            to: TICKET_STATUS.CALLED,
-            reason: override
-              ? (reason ?? 'called ahead of FIFO')
-              : null,
-          }),
-        ]),
-      };
-    }
-
-    // =================================================
-    // WM02: VERIFY BY ID
-    // =================================================
-
-    case QueueAction.VERIFY: {
-      const ticket = queue.current;
-
-      const result = validateVerification(
-        state,
-        payload.idNumber,
-        timestamp,
-      );
-
-      if (result !== VerifyResult.OK) {
-        return state;
-      }
-
-      const verifiedTicket = {
-        ...ticket,
-        status: TICKET_STATUS.IN_SERVICE,
-        service_started_at: now,
-      };
-
-      return {
-        ...state,
-
-        queue: {
-          ...queue,
-          current: verifiedTicket,
-        },
-
-        activity: prependActivity(activity, [
-          entry({
-            action: ACTIVITY_ACTION.SERVICE_STARTED,
-            ticket,
-            from: TICKET_STATUS.CALLED,
-            to: TICKET_STATUS.IN_SERVICE,
-            note: 'Verified by ID',
-          }),
-        ]),
-      };
-    }
-
-    // -------------------------------------------------
-    // RECORD INVALID VERIFICATION
-    // -------------------------------------------------
-
-    case QueueAction.INVALID_VERIFY: {
-      const ticket = queue.current;
-
-      if (
-        !ticket ||
-        ticket.status !== TICKET_STATUS.CALLED
-      ) {
-        return state;
-      }
-
-      const result = validateVerification(
-        state,
-        payload.idNumber,
-        timestamp,
-      );
-
-      // Never log a successful verification
-      // as an invalid scan.
-      if (result === VerifyResult.OK) {
-        return state;
-      }
-
-      return {
-        ...state,
-
-        activity: prependActivity(activity, [
-          entry({
-            action: ACTIVITY_ACTION.INVALID_SCAN,
-            ticket,
-            note:
-              result === VerifyResult.EXPIRED
-                ? 'Verify by ID rejected: ticket expired'
-                : 'Verify by ID: no match',
-          }),
-        ]),
-      };
-    }
-
-    // =================================================
-    // WM03: MARK NO-SHOW
-    // FIXES #1, #2 AND #3
-    // =================================================
-
-    case QueueAction.NO_SHOW: {
-      const ticket = queue.current;
-      const reason = payload.reason ?? '';
-
-      const result = validateNoShow(
-        state,
-        reason,
-        timestamp,
-      );
-
-      // Invalid operations change nothing.
-      if (result !== NoShowResult.OK) {
-        return state;
-      }
-
-      const verified =
-        ticket.status === TICKET_STATUS.IN_SERVICE;
-
-      // Fix #2: Calculate the current remaining
-      // strikes rather than lifetime offense count.
-      const penaltyBefore = getPenaltyState(
-        offenses,
-        ticket.holder.user_id,
-        timestamp,
-      );
-
-      const triggersBan =
-        penaltyBefore.strikeCount + 1 >=
-        RULES.OFFENSES_PER_BAN;
-
-      // The event ID was created before dispatch.
-      // This makes offense creation deterministic.
-      const offense = {
-        id: `${id}_offense`,
-        holder: ticket.holder,
-        ticket_number: ticket.ticket_number,
-        type: OFFENSE_TYPE.NO_SHOW,
-        resulted_in_ban: triggersBan,
-        revoked_at: null,
-        created_at: now,
-      };
-
-      // One state transition:
-      // 1. Clear the current ticket.
-      // 2. Add the offense.
-      // 3. Record both activity entries.
-      //
-      // Call Next remains a separate action.
-      return {
-        ...state,
-
-        queue: {
-          ...queue,
-          current: null,
-        },
-
-        offenses: [
-          offense,
-          ...offenses,
-        ],
-
-        activity: prependActivity(activity, [
-          entry({
-            action: ACTIVITY_ACTION.NO_SHOW,
-            ticket,
-            from: ticket.status,
-            to: TICKET_STATUS.NO_SHOW,
-            reason: verified
-              ? String(reason).trim()
-              : 'grace period lapsed',
-          }),
-
-          entry({
-            action: ACTIVITY_ACTION.OFFENSE_RECORDED,
-            ticket,
-            actor: 'System',
-          }),
-        ]),
-      };
-    }
-
-    // =================================================
-    // WM04: COMPLETE SERVICE
-    // =================================================
-
-    case QueueAction.COMPLETE: {
-      const ticket = queue.current;
-
-      if (
-        !ticket ||
-        ticket.status !== TICKET_STATUS.IN_SERVICE
-      ) {
-        return state;
-      }
-
-      return {
-        ...state,
-
-        queue: {
-          ...queue,
-          current: null,
-        },
-
-        activity: prependActivity(activity, [
-          entry({
-            action: ACTIVITY_ACTION.COMPLETED,
-            ticket,
-            from: TICKET_STATUS.IN_SERVICE,
-            to: TICKET_STATUS.COMPLETED,
-          }),
-        ]),
-      };
-    }
-
-    // =================================================
-    // OPEN QUEUE
-    // =================================================
-
-    case QueueAction.OPEN_QUEUE: {
-      if (queue.status === QUEUE_STATUS.OPEN) {
-        return state;
-      }
-
-      return {
-        ...state,
-
-        queue: {
-          ...queue,
-          status: QUEUE_STATUS.OPEN,
-        },
-
-        activity: prependActivity(activity, [
-          entry({
-            action: ACTIVITY_ACTION.QUEUE_OPENED,
-          }),
-        ]),
-      };
-    }
-
-    // =================================================
-    // WM05: CLOSE QUEUE
-    // =================================================
-
-    case QueueAction.CLOSE_QUEUE: {
-      if (queue.status === QUEUE_STATUS.CLOSED) {
-        return state;
-      }
-
-      return {
-        ...state,
-
-        queue: {
-          ...queue,
-          status: QUEUE_STATUS.CLOSED,
-        },
-
-        activity: prependActivity(activity, [
-          entry({
-            action: ACTIVITY_ACTION.QUEUE_CLOSED,
-          }),
-        ]),
-      };
-    }
-
-    // =================================================
-    // WM06: CANCEL QUEUE
-    //
-    // Cancellation never creates offenses.
-    // =================================================
-
-    case QueueAction.CANCEL_QUEUE: {
-      const tickets = [
-        queue.current,
-        ...queue.waiting,
-      ].filter(Boolean);
-
-      // Ignore repeated cancellation
-      // of an already empty, closed queue.
-      if (
-        queue.status === QUEUE_STATUS.CLOSED &&
-        tickets.length === 0
-      ) {
-        return state;
-      }
-
-      const reason = payload.reason ?? '';
-
-      const cancellationLogs = tickets.map(
-        (ticket) =>
-          entry({
-            action: ACTIVITY_ACTION.CANCELLED,
-            ticket,
-            from: ticket.status,
-            to: TICKET_STATUS.CANCELLED,
-            reason,
-          }),
-      );
-
-      return {
-        ...state,
-
-        queue: {
-          ...queue,
-          status: QUEUE_STATUS.CLOSED,
-          current: null,
-          waiting: [],
-        },
-
-        // Preserve the existing offense records.
-        offenses,
-
-        activity: prependActivity(activity, [
-          ...cancellationLogs,
-
-          entry({
-            action: ACTIVITY_ACTION.QUEUE_CANCELLED,
-            reason,
-          }),
-        ]),
-      };
-    }
-
     // =================================================
     // WM07: OVERRIDE CUTOFF
     // =================================================
@@ -787,10 +293,10 @@ export function QueueProvider({ children }) {
     });
   };
 
-  const { queue: mockQueue, offenses, activity } = state;
+  const { offenses, activity } = state;
 
-  // Open/closed, the waiting list and the current ticket are real (Firestore). Verify, no-show,
-  // complete, cancel-queue, offenses and the activity log are still mock until their slices.
+  // The whole ticket flow is real (Firestore). Offenses, the activity log and notifications are still mock
+  // until their slices.
   // No queue doc for today means staff have not opened the queue.
   const { office } = useOffice();
   const todayQueue = useTodayQueue(office?.id);
@@ -801,12 +307,12 @@ export function QueueProvider({ children }) {
       (ticket.status === TICKET_STATUS.CALLED || ticket.status === TICKET_STATUS.IN_SERVICE),
   );
   const queue = {
-    ...mockQueue,
     status: todayQueue?.status === QUEUE_STATUS.OPEN ? QUEUE_STATUS.OPEN : QUEUE_STATUS.CLOSED,
     current: currentTicket ? toStaffTicket(currentTicket) : null,
     waiting: waitingTickets(officeTickets).map(toStaffTicket),
-    average_service_minutes: office?.default_service_minutes ?? mockQueue.average_service_minutes,
-    // The real capacity cutoff arrives with the limits slice; this silences the mock cutoff banner
+    average_service_minutes: office?.default_service_minutes ?? 0,
+    // The capacity cutoff arrives with the limits slice; until then joining stays open while the queue is open
+    cutoff_at: null,
     cutoff_overridden: true,
   };
 
@@ -882,10 +388,9 @@ export function QueueProvider({ children }) {
     if (office) closeQueueDoc(db, office).catch((error) => console.warn('Could not close the queue', error));
   };
 
+  // Office cancels the whole queue (R-16): every unfinished ticket is cancelled by the office, nobody is penalized
   const cancelQueue = (reason) => {
-    send(QueueAction.CANCEL_QUEUE, {
-      reason,
-    });
+    if (office) cancelOfficeQueue(db, { office, reason }).catch((error) => console.warn('Could not cancel the queue', error));
   };
 
   const overrideCutoff = () => {

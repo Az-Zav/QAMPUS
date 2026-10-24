@@ -72,6 +72,21 @@ service cloud.firestore {
                     || (before.status == 'IN_SERVICE' && after.get('reason', '').size() > 0))));
     }
 
+    // Staff cancel the whole queue: each unfinished ticket of their office becomes CANCELLED by the OFFICE with
+    // a reason, in the same write that closes the queue and clears the window.
+    function validOfficeCancel(before, after) {
+      let queuePath = /databases/$(db)/documents/queues/$(before.office_id + '_' + string(before.queue_date));
+      return before.office_id == staffOfficeId()
+        && before.status in ['WAITING', 'CALLED', 'IN_SERVICE']
+        && after.diff(before).affectedKeys().hasOnly(['status', 'cancelled_by', 'cancelled_at', 'reason'])
+        && after.status == 'CANCELLED'
+        && after.cancelled_by == 'OFFICE'
+        && after.cancelled_at == request.time
+        && after.get('reason', '').size() > 0
+        && getAfter(queuePath).data.status == 'CLOSED'
+        && getAfter(queuePath).data.current_ticket_id == null;
+    }
+
     // A student cancels their own ticket: free while WAITING; once CALLED it is the ticket at the window, so
     // the queue's current ticket becomes null in the same write (an offense, recorded by a later slice).
     function validCancel(ticketId, before, after) {
@@ -212,10 +227,19 @@ service cloud.firestore {
             && request.resource.data.current_ticket_id == null
             && request.resource.data.updated_at == request.time
             && get(ticketDoc(resource.data.current_ticket_id)).data.user_id == request.auth.uid
-            && getAfter(ticketDoc(resource.data.current_ticket_id)).data.status == 'CANCELLED');
+            && getAfter(ticketDoc(resource.data.current_ticket_id)).data.status == 'CANCELLED')
+        // Staff cancel the whole queue: it closes and the window clears (the current ticket is cancelled too).
+        || (isStaff()
+            && queueId.matches(staffOfficeId() + '_[0-9]{8}')
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'current_ticket_id', 'updated_at'])
+            && request.resource.data.status == 'CLOSED'
+            && request.resource.data.current_ticket_id == null
+            && request.resource.data.updated_at == request.time
+            && (resource.data.current_ticket_id == null
+                || getAfter(ticketDoc(resource.data.current_ticket_id)).data.status == 'CANCELLED'));
     }
 
-    // tickets/{queueId}_{seq}. Students join and cancel (WAITING or CALLED); staff call, finish; the holder or staff start service.
+    // tickets/{queueId}_{seq}. Students join and cancel (WAITING or CALLED); staff call, finish, cancel the queue; the holder or staff start service.
     match /tickets/{ticketId} {
       allow read: if signedIn()
         && (resource.data.user_id == request.auth.uid
@@ -224,7 +248,8 @@ service cloud.firestore {
       allow update: if (isStaff() && validCall(ticketId, resource.data, request.resource.data))
         || (signedIn() && validArrival(resource.data, request.resource.data))
         || (isStaff() && validFinish(ticketId, resource.data, request.resource.data))
-        || (signedIn() && validCancel(ticketId, resource.data, request.resource.data));
+        || (signedIn() && validCancel(ticketId, resource.data, request.resource.data))
+        || (isStaff() && validOfficeCancel(resource.data, request.resource.data));
     }
   }
 }

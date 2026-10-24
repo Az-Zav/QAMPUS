@@ -16,13 +16,18 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Slice D (verify arrival) tested on device and staff browser**: the student checks in on the Scan tab by typing the 6-digit office code (`useCheckIn`, `checkInByCode`); staff Verify by ID is real (`verifyByHolderId`). Both do CALLED -> IN_SERVICE inside the 60 s grace period. QR scanning is not built (needs `expo-camera` and a new dev build). An app-wide "It's your turn" dialog (`CalledModal` in the signed-in layout) opens while a ticket is being called.
 - **Slice E (complete, no-show, student cancel) tested on device and staff browser**: staff Complete and No-show free the window in one atomic write; a student cancels a WAITING ticket from the Home ticket modal (with confirm). Finished tickets appear in the student's History through the live listener. No offenses or strikes are recorded yet.
 - **EAS**: dev build works; testing through `expo start --dev-client --tunnel`. JS-only changes reload without a rebuild.
-- **UI**: all screens exist. Still mock: staff waiting list and current ticket, offenses, activity log, notifications, guests, programs, display.
+- **Slice F (cleanup + office cancels the queue) tested on device and staff browser**: staff "Cancel entire queue" is real; the dead mock reducer paths and ticket-flow mock data are deleted (`QueueProvider` 946 -> ~450 lines).
+- **UI**: all screens exist. The whole ticket flow is real. Still mock: offenses and strikes, activity log (no entries are added by real actions yet), notifications and push, guests, programs, public display (`MOCK_OFFICES`).
 
 ## In progress
-Nothing active. Slices B to E passed manual testing, including student cancel of a CALLED ticket (PRD R-11). Slice F (cleanup) is next.
+Nothing active. The ticket flow (slices B to F) passed manual testing. Next: enforce the three-ticket limit (PRD R-07), then no double join of the same queue.
 
-## Next (end-to-end ticket flow, one commit per slice, developer tests between)
-F. Remove leftover mock paths for the ticket flow. Offenses, notifications, activity log, guests stay mock until their slices.
+## Next
+The ticket flow is complete (join, call, verify, finish, cancel). Planned slices, each with a commit after the developer tests:
+- Penalties: offenses, strikes and bans for no-show and cancel-after-call; `events` for the activity log. Needs a design that works without Cloud Functions (Spark).
+- Limits and capacity: three-ticket limit (`active_count`), capacity cutoff, service-time average.
+- Notifications: in-app list, push (open question), announcements.
+- Guests, public display, QR scan (needs `expo-camera` and a new dev build).
 
 ## Known issues
 - `edit-profile.jsx` calls `updateProfile`, which `SessionProvider` does not define; saving a profile throws.
@@ -31,7 +36,7 @@ F. Remove leftover mock paths for the ticket flow. Offenses, notifications, acti
 - Any Google account that signs in on the staff app leaves an empty Firebase Auth user (no Firestore access). Accepted.
 - An unfinished ticket from an earlier day is not shown on the student's Home (known gap, slice 1).
 - A refused open/close/call/complete on staff only logs to the console (no on-screen message yet).
-- Staff "Cancel entire queue" and "Override cutoff" still only change mock state.
+- Staff "Override cutoff" only changes mock state (the cutoff is not real yet).
 - Stray root `app.json`; root README is still the Expo template.
 
 ## Open questions
