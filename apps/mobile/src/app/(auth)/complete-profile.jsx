@@ -3,10 +3,11 @@ import Picker from '@/components/primitives/Picker';
 import { InputType, lineHeightFor, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
 import { usePrograms, useSession, useThemedStyles } from '@/hooks';
 import { isValidStudentId } from '@/utils';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect, useRouter } from 'expo-router';
+
 
 const COPY = PROFILE_COPY.student;
 
@@ -14,22 +15,32 @@ const COPY = PROFILE_COPY.student;
 export default function CompleteProfileScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const { completeStudentProfile } = useSession();
+  const {user, completeStudentProfile } = useSession();
   const { programs } = usePrograms();
 
   const [studentId, setStudentId] = useState('');
   const [program, setProgram] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  
+  // Already filled in: nothing to collect (R-01 locks the student ID after first entry)
+  if (user?.institutional_id && user?.program) return <Redirect href="/home" />;
+
 
   // Errors show only after the first Continue press
   const studentIdError = submitted && !isValidStudentId(studentId) ? COPY.studentIdError : null;
   const programError = submitted && !program ? COPY.programError : null;
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     setSubmitted(true);
     if (!isValidStudentId(studentId) || !program) return;
-    completeStudentProfile({ studentId: studentId.trim(), program });
-    router.replace('/home');
+    try {
+      await completeStudentProfile({ studentId: studentId.trim(), program });
+      router.replace('/home');
+    } catch (error) {
+      // TODO: swap Alert for NoticeModal once error copy exists
+      console.warn('Saving profile failed', error);
+      Alert.alert('Could not save', 'Check your connection and try again.');
+    }
   };
 
   return (

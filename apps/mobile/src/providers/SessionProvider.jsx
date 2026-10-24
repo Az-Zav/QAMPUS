@@ -1,19 +1,17 @@
-// Session: who is signed in. In-memory for now; later backed by Firebase Auth
-// (onAuthStateChanged) with the same value shape.
+// Session: who is signed in. Students are backed by Firebase Auth (Google) and a Firestore
+// profile (lib/users.js). Guests are still mock until their backend slice exists.
 
 import { USER_ROLE } from '@/constants';
-import { auth } from '@/lib/firebase';
-import { MOCK_USER_GUEST, MOCK_USER_STUDENT } from '@qampus/core/mock';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { auth, SCHOOL_EMAIL_DOMAIN } from '@/lib/firebase';
+import { loadOrCreateStudent, saveStudentProfile } from '@/lib/users';
+import { MOCK_USER_GUEST } from '@qampus/core/mock';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut as firebaseSignOut } from 'firebase/auth';
 
-
-
 const SessionContext = createContext(null);
 
-// First sign-in accounts: profile fields not filled yet (R-01, R-02)
-const NEW_STUDENT = { ...MOCK_USER_STUDENT, institutional_id: null, program: null };
+// First sign-in guest: profile fields not filled yet (R-02)
 const NEW_GUEST = { ...MOCK_USER_GUEST, name: null, email: null, guest_type: null, institutional_id: null };
 
 function profileIncomplete(user) {
@@ -30,15 +28,20 @@ export function SessionProvider({ children }) {
     // False until Firebase has read the persisted session, so the app doesn't flash Login
   const [authReady, setAuthReady] = useState(false);
 
+  // Set while signInAsStudent runs, so the listener doesn't load the same profile twice
+  const signingIn = useRef(false);
+
   useEffect(() => {
     // Fires once on launch, then on every sign-in / sign-out
-    return onAuthStateChanged(auth, (firebaseUser) => {
-      // Profile is still mock data: a restored session gets a complete mock profile
-      setUser((prev) => {
-        if (!firebaseUser) return null;
-        if (prev) return prev;
-        return firebaseUser.isAnonymous ? MOCK_USER_GUEST : MOCK_USER_STUDENT;
-      });
+    return onAuthStateChanged(auth, async (firebaseUser) => {
+      if (!signingIn.current) {
+        try {
+          setUser(firebaseUser ? await loadOrCreateStudent(firebaseUser) : null);
+        } catch (error) {
+          console.warn('Could not load profile', error);
+          setUser(null);
+        }
+      }
       setAuthReady(true);
     });
   }, []);
@@ -57,10 +60,23 @@ export function SessionProvider({ children }) {
         await GoogleSignin.hasPlayServices();
         const response = await GoogleSignin.signIn();
         if (!isSuccessResponse(response)) return false; // user cancelled the picker
-        const credential = GoogleAuthProvider.credential(response.data.idToken);
-        await signInWithCredential(auth, credential);
-        // First sign-in: the student still has to fill in a profile
-        setUser(NEW_STUDENT);
+        const { idToken, user: googleUser } = response.data;
+
+        if (!googleUser.email.toLowerCase().endsWith(`@${SCHOOL_EMAIL_DOMAIN}`)) {
+          await GoogleSignin.signOut().catch(() => {});
+          throw Object.assign(new Error('Not a school account'), { code: 'wrong-domain' });
+        }
+
+        signingIn.current = true;
+        try {
+          const { user: firebaseUser } = await signInWithCredential(auth, GoogleAuthProvider.credential(idToken));
+          setUser(await loadOrCreateStudent(firebaseUser));
+        } catch (error) {
+          await firebaseSignOut(auth).catch(() => {});
+          throw error;
+        } finally {
+          signingIn.current = false;
+        }
         return true;
       },
 
@@ -69,14 +85,16 @@ export function SessionProvider({ children }) {
       signOut: async () => {
         // Also clear Google's cached account, or the picker is skipped next time
         await GoogleSignin.signOut().catch(() => {});
-        await firebaseSignOut(auth);
+        await firebaseSignOut(auth).catch(() => {});
+        // Guests have no Firebase user, so the auth listener never clears them
+        setUser(null);
       },
 
-
-
-      // Backend swap: these become Cloud Function calls; the server validates and saves.
-      completeStudentProfile: ({ studentId, program }) =>
-        setUser((prev) => ({ ...prev, institutional_id: studentId, program })),
+      completeStudentProfile: async ({ studentId, program }) => {
+        await saveStudentProfile(user.id, { studentId, program });
+        setUser((prev) => ({ ...prev, institutional_id: studentId, program }));
+      },
+      // Backend swap: the guest profile moves to Firestore with the guest slice.
       // The server issues the Guest ID (R-02, R-30); the mock passes back a fixed one.
       completeGuestProfile: ({ name, email, guestType }) => {
         const guestId = MOCK_USER_GUEST.institutional_id;

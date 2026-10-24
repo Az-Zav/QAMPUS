@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "266281420551-gqc78tb4ubk14dos1n0oii19lv1vtkle.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.qampus.app",
+            "certificate_hash": "0abe726c46c71e5f8e14de33b74325c5606b2eaa"
+          }
+        },
+        {
           "client_id": "266281420551-grdn5pluqli29spo0gfqvdmdp02prr16.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

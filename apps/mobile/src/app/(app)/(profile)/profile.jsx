@@ -64,9 +64,9 @@ export default function ProfileScreen() {
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
-  const logOut = () => {
+  const logOut = async () => {
     setLogOutOpen(false);
-    signOut();
+    await signOut();
     router.replace('/login');
   };
 

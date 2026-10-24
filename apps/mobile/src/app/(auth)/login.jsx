@@ -3,7 +3,7 @@ import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { ButtonType, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Login() {
@@ -15,10 +15,16 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     try {
       const signedIn = await signInAsStudent();
-      if (signedIn) router.replace('/complete-profile');
+      if (signedIn) router.replace('/');
     } catch (error) {
-      // TODO: surface this in the UI (NoticeModal) once error copy exists
+      // TODO: swap Alert for NoticeModal once error copy exists
       console.warn('Google sign-in failed', error);
+      Alert.alert(
+        'Sign-in failed',
+        error.code === 'wrong-domain'
+          ? 'Please sign in with your @tip.edu.ph account.'
+          : `Something went wrong. Please try again.${__DEV__ ? `\n\n${error.code ?? ''} ${error.message}` : ''}`,
+      );
     }
   };
 
