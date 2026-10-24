@@ -2,10 +2,20 @@
 
 Final shape for V1, locked one collection at a time. Locking a collection fixes its fields; seeding and implementation still happen per slice, not all at once.
 
-| Collection | Status |
-|---|---|
-| `users` | **LOCKED** |
-| everything else | draft |
+| Collection | Status | Notes |
+|---|---|---|
+| `users` | **LOCKED** | |
+| `institutionalIds` | **LOCKED** | claim docs; implemented with profiles and guests |
+| `offices` | **LOCKED** | keeps `short_name` and `check_in_code` |
+| `staff` | **LOCKED** | |
+| `queues` | **LOCKED** | |
+| `tickets` | **LOCKED** | no push token and no offense fields (see open items) |
+| `offenses` | draft | finalize with slice 2; may fold into tickets |
+| `events` | draft | finalize when implemented |
+| `users/{uid}/notifications` | draft | finalize when implemented |
+| `announcements` | draft | finalize when implemented |
+
+A locked collection changes only through a new entry in `docs/DECISIONS.md`.
 
 Open items at the bottom.
 Document IDs are in the comments. Everything is a Firestore document; `timestamp` fields must equal server time on write.
@@ -165,6 +175,6 @@ erDiagram
 | 5 Guests | `institutionalIds` claims for guests, anonymous `users` |
 
 ## Open items
-1. Keep the office `short_name`? (UI uses it a lot.)
-2. Push needs a place for the holder's token on the ticket; depends on the push option (relay or in-app only).
-3. `announcements` as a shared collection merged into the notification list (no server can fan out writes).
+1. `offenses`: keep as its own collection (PRD design) or fold into `tickets` as four fields? Folding would amend the locked `tickets` fields, so decide before slice 2.
+2. Push: where the holder's token lives depends on the push option (relay or in-app only). If it needs a ticket field, add it by a new decision.
+3. `events`, `notifications`, `announcements`: shapes above are drafts until their slices.

@@ -74,3 +74,9 @@ tickets/{queueId}_{seq}         queue_id, office_id, office_code, office_name, q
 ## 2026-10-24 Check-in code lives on the office doc; no `officeCodes` collection
 One 6-digit `check_in_code` on `offices/{id}` serves both the QR and manual entry. The QR is posted publicly and a photo can be shared, so hiding the code from the app only stops the laziest remote check-in; staff no-show (including `IN_SERVICE → NO_SHOW`, R-23a) covers abuse. Saves a collection, a seed doc and a rules lookup. Supersedes the `officeCodes` parts of the earlier data-model entries. A rolling QR (rejected in PRD R-20) would need its own doc for the rotating secret.
 
+## 2026-10-24 Schema locked: users, institutionalIds, offices, staff, queues, tickets
+Field sets in `docs/SCHEMA.md` are fixed per collection. Locking is about the shape only; seeding and implementation stay per slice (ticketing slice 1 uses `users`, `offices`, `staff`, `queues`, `tickets`; `institutionalIds` comes with profiles and guests). A locked collection changes only through a new entry here.
+- `offices` keeps `short_name` (the UI uses it heavily) and `check_in_code`; no `counter_label`, no timezone field (campus constant UTC+8).
+- `tickets` keeps both `user_id` (the uid, used by rules and student queries) and the `holder_*` snapshot (staff cannot read other users' profiles, and rules cannot query for the ticket's owner). One timestamp per status. No push token and no offense fields.
+- Still draft: `offenses` (decide fold-into-tickets vs separate before slice 2), `events`, `notifications`, `announcements`.
+
