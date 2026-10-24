@@ -123,6 +123,8 @@ service cloud.firestore {
         && d.holder_institutional_id == profile.institutional_id
         && d.holder_name == profile.name
         && profile.get('active_count', 0) < 3
+        && !(d.office_id in profile.get('active_offices', {}))
+        && d.office_id in getAfter(/databases/$(db)/documents/users/$(request.auth.uid)).data.active_offices
         && getAfter(/databases/$(db)/documents/users/$(request.auth.uid)).data.active_count == profile.get('active_count', 0) + 1
         && office.status == 'ACTIVE'
         && d.office_name == office.name
@@ -139,21 +141,23 @@ service cloud.firestore {
         && ((isAnon() && request.resource.data.role == 'GUEST')
          || (schoolEmail() && request.resource.data.role == 'STUDENT'));
       allow update: if (signedIn() && request.auth.uid == uid
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'strike_count', 'banned_until', 'active_count'])
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'strike_count', 'banned_until', 'active_count', 'active_offices'])
             && (resource.data.get('institutional_id', null) == null
             || request.resource.data.get('institutional_id', null) == resource.data.get('institutional_id', null)))
-        // The three-ticket limit (R-07) is this counter. A student moves their own by one, within 0..3: a join
-        // must raise it in the same write (see the ticket rules), finishing or cancelling lowers it. Rules
-        // cannot tell why it moved, so a hand-made client could cheat it; fine for a prototype.
+        // The three-ticket limit (R-07) is this counter, and `active_offices` (office id -> true) holds the offices
+        // where the student has an active ticket, so they cannot join the same office twice. A student moves the
+        // counter by one, within 0..3: a join must raise it and add its office in the same write (see the ticket
+        // rules); finishing or cancelling lowers it and clears the office. Rules cannot tell why they moved, so a
+        // hand-made client could cheat; fine for a prototype.
         || (signedIn() && request.auth.uid == uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count', 'active_offices'])
             && request.resource.data.active_count >= 0
             && request.resource.data.active_count <= 3
             && (request.resource.data.active_count == resource.data.get('active_count', 0) + 1
                 || request.resource.data.active_count == resource.data.get('active_count', 0) - 1))
         // Staff give a slot back when they finish a ticket (complete, no-show, office cancel).
         || (isStaff()
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count', 'active_offices'])
             && request.resource.data.active_count >= 0
             && request.resource.data.active_count == resource.data.get('active_count', 0) - 1);
     }

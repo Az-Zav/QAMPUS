@@ -35,6 +35,7 @@ erDiagram
     int strike_count
     timestamp banned_until
     int active_count "open tickets, max 3"
+    map active_offices "office id to true, one entry per office with an active ticket"
     timestamp created_at
     timestamp updated_at
   }

@@ -4,11 +4,14 @@
 // The three-ticket limit (R-07) is a counter on the student's users doc, `active_count`. A join raises it by
 // one in the same write as the ticket (Security Rules require that); every write that takes a ticket out of the
 // active states (complete, no-show, cancel, office cancel) lowers it by one in the same transaction.
+// `active_offices` (office id -> true) holds the offices where the student has an active ticket, so a student
+// cannot join the same office twice; it is set by a join and cleared by the same writes that lower the counter.
 
 import { CANCELLED_BY, QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDate } from '@qampus/core/format';
 import {
   collection,
+  deleteField,
   doc,
   getDocs,
   increment,
@@ -38,9 +41,13 @@ function asFailure(error) {
   return new TicketingFailure(error?.code === 'permission-denied' ? TicketingError.DENIED : TicketingError.UNKNOWN);
 }
 
-// A ticket leaves the active states: give its holder's slot back (inside the same transaction)
+// A ticket leaves the active states: give its holder's slot back and clear the office from their active
+// offices (inside the same transaction)
 function releaseHolder(db, tx, ticket) {
-  tx.update(doc(db, 'users', ticket.user_id), { active_count: increment(-1) });
+  tx.update(doc(db, 'users', ticket.user_id), {
+    active_count: increment(-1),
+    [`active_offices.${ticket.office_id}`]: deleteField(),
+  });
 }
 
 // Staff: open today's queue. Creates the doc on the first open of the day, reopens a closed one.
@@ -92,8 +99,15 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
     return await runTransaction(db, async (tx) => {
       const snap = await tx.get(queueRef);
       const userSnap = await tx.get(userRef);
-      const activeCount = userSnap.exists() ? (userSnap.data().active_count ?? 0) : 0;
-      const reason = checkJoin({ user, office, queue: snap.exists() ? snap.data() : null, activeCount });
+      const profile = userSnap.exists() ? userSnap.data() : {};
+      const activeCount = profile.active_count ?? 0;
+      const reason = checkJoin({
+        user,
+        office,
+        queue: snap.exists() ? snap.data() : null,
+        activeCount,
+        activeOffices: profile.active_offices ?? {},
+      });
       if (reason) throw new TicketingFailure(reason);
 
       const seq = snap.data().last_seq + 1;
@@ -103,7 +117,7 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
       tx.update(queueRef, { last_seq: seq, updated_at: serverTimestamp() });
       // An exact number, not increment(1): the ticket rule reads the counter as it will be after this write
       // (getAfter) and compares it with the old value plus one
-      tx.update(userRef, { active_count: activeCount + 1 });
+      tx.update(userRef, { active_count: activeCount + 1, [`active_offices.${office.id}`]: true });
       tx.set(ticketRef, {
         office_id: office.id,
         office_name: office.name,

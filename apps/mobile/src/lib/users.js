@@ -22,6 +22,7 @@ export async function loadOrCreateStudent(firebaseUser) {
     strike_count: 0,
     banned_until: null,
     active_count: 0,
+    active_offices: {},
   };
   await setDoc(ref, { ...profile, created_at: serverTimestamp() });
   return { id: ref.id, ...profile };
