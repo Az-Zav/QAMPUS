@@ -62,7 +62,7 @@ export default function HomeScreen() {
   };
 
   const openJoin = (office) => {
-    if (!office.open) return;
+    if (!office.open || office.joinDisabled) return;
     setSelectedOffice(office);
     setModal(HomeModal.JOIN);
   };

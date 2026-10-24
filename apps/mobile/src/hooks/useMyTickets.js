@@ -1,7 +1,7 @@
 import { TICKET_STATUS } from '@/constants';
 import { useQueueData } from '@/providers/QueueDataProvider';
 import { toHistoryView, toTicketView } from '@/utils';
-import { campusDate } from '@qampus/core';
+import { isActiveTicket } from '@qampus/backend';
 import { useMemo } from 'react';
 import { useNow } from './useNow';
 
@@ -10,16 +10,16 @@ const finishedAt = (ticket) => ticket.completed_at ?? ticket.cancelled_at ?? tic
 
 // The signed-in user's tickets: active (Home) and finished (History), as views.
 // Ticks every second only while a ticket is CALLED, so countdowns stay live.
-// Known gap (slice 1): an unfinished ticket from an earlier day is not shown anywhere.
+// An unfinished ticket from an earlier day still holds one of the three slots, so it stays on Home
+// until the student cancels it.
 export function useMyTickets() {
   const { board, tickets } = useQueueData();
   const hasCalled = tickets.some((t) => t.status === TICKET_STATUS.CALLED);
   const now = useNow(1000, hasCalled);
 
   const active = useMemo(() => {
-    const today = campusDate(now).key;
     return tickets
-      .filter((ticket) => !FINISHED.includes(ticket.status) && ticket.queue_date === today)
+      .filter(isActiveTicket)
       .sort((a, b) => new Date(a.joined_at) - new Date(b.joined_at))
       .map((ticket) =>
         toTicketView(

@@ -17,10 +17,11 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Slice E (complete, no-show, student cancel) tested on device and staff browser**: staff Complete and No-show free the window in one atomic write; a student cancels a WAITING ticket from the Home ticket modal (with confirm). Finished tickets appear in the student's History through the live listener. No offenses or strikes are recorded yet.
 - **EAS**: dev build works; testing through `expo start --dev-client --tunnel`. JS-only changes reload without a rebuild.
 - **Slice F (cleanup + office cancels the queue) tested on device and staff browser**: staff "Cancel entire queue" is real; the dead mock reducer paths and ticket-flow mock data are deleted (`QueueProvider` 946 -> ~450 lines).
+- **Three-ticket limit (R-07) tested on device and staff browser**: `users.active_count` is raised by a join (rules require it) and lowered by every finish/cancel. Join is refused with a message at three; the Join button is disabled at three. A hand-made client could cheat the counter (accepted for the prototype). Office cancel runs in small transactions.
 - **UI**: all screens exist. The whole ticket flow is real. Still mock: offenses and strikes, activity log (no entries are added by real actions yet), notifications and push, guests, programs, public display (`MOCK_OFFICES`).
 
 ## In progress
-Nothing active. The ticket flow (slices B to F) passed manual testing. Next: enforce the three-ticket limit (PRD R-07), then no double join of the same queue.
+Nothing active. The three-ticket limit passed manual testing. Next: no double join of the same queue (approach to be agreed).
 
 ## Next
 The ticket flow is complete (join, call, verify, finish, cancel). Planned slices, each with a commit after the developer tests:
@@ -34,7 +35,6 @@ The ticket flow is complete (join, call, verify, finish, cancel). Planned slices
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).
 - Seeded `hours` on `off_reg_001` may be incomplete (`close_min` should be 1020). Hours are display only now.
 - Any Google account that signs in on the staff app leaves an empty Firebase Auth user (no Firestore access). Accepted.
-- An unfinished ticket from an earlier day is not shown on the student's Home (known gap, slice 1).
 - A refused open/close/call/complete on staff only logs to the console (no on-screen message yet).
 - Staff "Override cutoff" only changes mock state (the cutoff is not real yet).
 - Stray root `app.json`; root README is still the Expo template.

@@ -1,11 +1,25 @@
 // Ticketing writes. Staff open and close today's queue; students join it. Security Rules (firestore.rules)
 // decide what is allowed; preflight only supplies readable reasons. Every function takes `db` first.
+//
+// The three-ticket limit (R-07) is a counter on the student's users doc, `active_count`. A join raises it by
+// one in the same write as the ticket (Security Rules require that); every write that takes a ticket out of the
+// active states (complete, no-show, cancel, office cancel) lowers it by one in the same transaction.
 
 import { CANCELLED_BY, QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDate } from '@qampus/core/format';
-import { doc, increment, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDocs,
+  increment,
+  query,
+  runTransaction,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+import { chunkByHolder, isActiveTicket, waitingTickets } from './derive.js';
 import { queueIdFor, ticketIdFor, ticketNumberFor } from './ids.js';
-import { waitingTickets } from './derive.js';
 import {
   checkCall,
   checkCancel,
@@ -22,6 +36,11 @@ import {
 function asFailure(error) {
   if (error instanceof TicketingFailure) return error;
   return new TicketingFailure(error?.code === 'permission-denied' ? TicketingError.DENIED : TicketingError.UNKNOWN);
+}
+
+// A ticket leaves the active states: give its holder's slot back (inside the same transaction)
+function releaseHolder(db, tx, ticket) {
+  tx.update(doc(db, 'users', ticket.user_id), { active_count: increment(-1) });
 }
 
 // Staff: open today's queue. Creates the doc on the first open of the day, reopens a closed one.
@@ -63,15 +82,18 @@ export async function closeQueue(db, office, now = new Date()) {
   }
 }
 
-// Student: take the next number in today's queue. The queue bump and the ticket are one atomic write,
-// and the ticket id includes the number, so two students can never end up with the same one.
+// Student: take the next number in today's queue. The queue bump, the ticket and the student's counter are one
+// atomic write, and the ticket id includes the number, so two students can never end up with the same one.
 // `user` needs { id, name, institutional_id }; `office` needs { id, code, name, status }.
 export async function joinQueue(db, { user, office, now = new Date() }) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
+  const userRef = doc(db, 'users', user.id);
   try {
     return await runTransaction(db, async (tx) => {
       const snap = await tx.get(queueRef);
-      const reason = checkJoin({ user, office, queue: snap.exists() ? snap.data() : null });
+      const userSnap = await tx.get(userRef);
+      const activeCount = userSnap.exists() ? (userSnap.data().active_count ?? 0) : 0;
+      const reason = checkJoin({ user, office, queue: snap.exists() ? snap.data() : null, activeCount });
       if (reason) throw new TicketingFailure(reason);
 
       const seq = snap.data().last_seq + 1;
@@ -79,6 +101,9 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
       const ticketNumber = ticketNumberFor(office.code, now, seq);
 
       tx.update(queueRef, { last_seq: seq, updated_at: serverTimestamp() });
+      // An exact number, not increment(1): the ticket rule reads the counter as it will be after this write
+      // (getAfter) and compares it with the old value plus one
+      tx.update(userRef, { active_count: activeCount + 1 });
       tx.set(ticketRef, {
         office_id: office.id,
         office_name: office.name,
@@ -157,8 +182,8 @@ export async function verifyByHolderId(db, { ticket, idNumber, now = new Date() 
   await startService(db, ticket.id);
 }
 
-// Staff: finish service. The ticket becomes COMPLETED and the window is freed in one atomic write; the
-// queue also counts the visit and its length, which later feed the service-time average.
+// Staff: finish service. The ticket becomes COMPLETED, the window is freed and the holder's slot is released in
+// one atomic write; the queue also counts the visit and its length, which later feed the service-time average.
 export async function completeTicket(db, { office, ticket, now = new Date() }) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticket.id);
@@ -166,10 +191,8 @@ export async function completeTicket(db, { office, ticket, now = new Date() }) {
     await runTransaction(db, async (tx) => {
       const queueSnap = await tx.get(queueRef);
       const ticketSnap = await tx.get(ticketRef);
-      const reason = checkComplete({
-        ticket: ticketSnap.exists() ? { id: ticketSnap.id, ...ticketSnap.data() } : null,
-        queue: queueSnap.exists() ? queueSnap.data() : null,
-      });
+      const current = ticketSnap.exists() ? { id: ticketSnap.id, ...ticketSnap.data() } : null;
+      const reason = checkComplete({ ticket: current, queue: queueSnap.exists() ? queueSnap.data() : null });
       if (reason) throw new TicketingFailure(reason);
 
       const startedAt = ticketSnap.data().service_started_at?.toMillis?.() ?? now.getTime();
@@ -180,6 +203,7 @@ export async function completeTicket(db, { office, ticket, now = new Date() }) {
         service_seconds_total: increment(seconds),
         updated_at: serverTimestamp(),
       });
+      releaseHolder(db, tx, current);
       tx.update(ticketRef, { status: TICKET_STATUS.COMPLETED, completed_at: serverTimestamp() });
     });
   } catch (error) {
@@ -187,7 +211,8 @@ export async function completeTicket(db, { office, ticket, now = new Date() }) {
   }
 }
 
-// Staff: mark the current ticket a no-show and free the window. No offense is recorded yet (penalties slice).
+// Staff: mark the current ticket a no-show, free the window and release the holder's slot.
+// No offense is recorded yet (penalties slice).
 export async function markTicketNoShow(db, { office, ticket, reason = '', now = new Date() }) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticket.id);
@@ -201,6 +226,7 @@ export async function markTicketNoShow(db, { office, ticket, reason = '', now = 
 
       const trimmed = reason.trim();
       tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
+      releaseHolder(db, tx, current);
       tx.update(ticketRef, {
         status: TICKET_STATUS.NO_SHOW,
         no_show_at: serverTimestamp(),
@@ -212,9 +238,8 @@ export async function markTicketNoShow(db, { office, ticket, reason = '', now = 
   }
 }
 
-// Student: cancel their own ticket. A WAITING ticket is a single write. A CALLED ticket is at the window, so
-// the same write also frees the window. The offense for cancelling after the call is recorded by the
-// penalties slice; nothing is recorded yet.
+// Student: cancel their own ticket and give the slot back. A CALLED ticket is at the window, so the same write
+// also frees the window. The offense for cancelling after the call is recorded by the penalties slice.
 export async function cancelOwnTicket(db, { ticket }) {
   const failure = checkCancel({ ticket });
   if (failure) throw new TicketingFailure(failure);
@@ -222,19 +247,21 @@ export async function cancelOwnTicket(db, { ticket }) {
   const ticketRef = doc(db, 'tickets', ticket.id);
   const cancelled = { status: TICKET_STATUS.CANCELLED, cancelled_by: CANCELLED_BY.USER, cancelled_at: serverTimestamp() };
   try {
-    if (ticket.status === TICKET_STATUS.WAITING) {
-      await updateDoc(ticketRef, cancelled);
-      return;
-    }
-    const queueRef = doc(db, 'queues', `${ticket.office_id}_${ticket.queue_date}`);
     await runTransaction(db, async (tx) => {
-      const queueSnap = await tx.get(queueRef);
       const ticketSnap = await tx.get(ticketRef);
-      const atWindow = queueSnap.exists() && queueSnap.data().current_ticket_id === ticket.id;
-      if (!ticketSnap.exists() || ticketSnap.data().status !== TICKET_STATUS.CALLED || !atWindow) {
-        throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
+      const current = ticketSnap.exists() ? { id: ticketSnap.id, ...ticketSnap.data() } : null;
+      const stillFailure = checkCancel({ ticket: current });
+      if (stillFailure) throw new TicketingFailure(stillFailure);
+
+      if (current.status === TICKET_STATUS.CALLED) {
+        const queueRef = doc(db, 'queues', `${current.office_id}_${current.queue_date}`);
+        const queueSnap = await tx.get(queueRef);
+        if (!queueSnap.exists() || queueSnap.data().current_ticket_id !== current.id) {
+          throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
+        }
+        tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
       }
-      tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
+      releaseHolder(db, tx, current);
       tx.update(ticketRef, cancelled);
     });
   } catch (error) {
@@ -242,37 +269,60 @@ export async function cancelOwnTicket(db, { ticket }) {
   }
 }
 
-// Staff: cancel the whole queue (R-16). Every unfinished ticket becomes CANCELLED by the office with the
-// reason, the window is cleared and the queue is closed, in one transaction. It reads every ticket number
-// the queue ever issued today (1..last_seq), so a student joining at the same moment cannot be missed.
-// Cancelling by the office never penalizes anyone.
+// Staff: cancel the whole queue (R-16), nobody penalized. Step 1 closes the queue and cancels the ticket at the
+// window (if any) in one transaction, so no one can join and the window is clear. Step 2 cancels the waiting
+// tickets in small transactions: each cancellation also releases its holder's slot, and Security Rules allow only
+// a handful of document lookups per write. A holder never appears twice in one transaction (their counter would
+// be lowered twice in one write). The reason is stored on every cancelled ticket. Running it again finishes
+// whatever an interrupted run left behind.
 export async function cancelOfficeQueue(db, { office, reason, now = new Date() }) {
   const trimmed = String(reason ?? '').trim();
   if (!trimmed) throw new TicketingFailure(TicketingError.REASON_REQUIRED);
 
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
-  const unfinished = [TICKET_STATUS.WAITING, TICKET_STATUS.CALLED, TICKET_STATUS.IN_SERVICE];
+  const cancelled = () => ({
+    status: TICKET_STATUS.CANCELLED,
+    cancelled_by: CANCELLED_BY.OFFICE,
+    cancelled_at: serverTimestamp(),
+    reason: trimmed,
+  });
+
   try {
     await runTransaction(db, async (tx) => {
       const queueSnap = await tx.get(queueRef);
       if (!queueSnap.exists()) return; // never opened today: nothing to cancel
+      const queue = queueSnap.data();
+      if (queue.status === QUEUE_STATUS.CLOSED && !queue.current_ticket_id) return;
 
-      const refs = Array.from({ length: queueSnap.data().last_seq }, (_, i) =>
-        doc(db, 'tickets', ticketIdFor(queueRef.id, i + 1)),
-      );
-      const snaps = await Promise.all(refs.map((ref) => tx.get(ref)));
-      for (const snap of snaps) {
-        if (snap.exists() && unfinished.includes(snap.data().status)) {
-          tx.update(snap.ref, {
-            status: TICKET_STATUS.CANCELLED,
-            cancelled_by: CANCELLED_BY.OFFICE,
-            cancelled_at: serverTimestamp(),
-            reason: trimmed,
-          });
+      let current = null;
+      if (queue.current_ticket_id) {
+        const currentSnap = await tx.get(doc(db, 'tickets', queue.current_ticket_id));
+        if (currentSnap.exists() && isActiveTicket(currentSnap.data())) {
+          current = { id: currentSnap.id, ...currentSnap.data() };
         }
       }
       tx.update(queueRef, { status: QUEUE_STATUS.CLOSED, current_ticket_id: null, updated_at: serverTimestamp() });
+      if (current) {
+        releaseHolder(db, tx, current);
+        tx.update(doc(db, 'tickets', current.id), cancelled());
+      }
     });
+
+    const todays = await getDocs(
+      query(collection(db, 'tickets'), where('office_id', '==', office.id), where('queue_date', '==', campusDate(now).key)),
+    );
+    const waiting = todays.docs.map((d) => ({ id: d.id, ...d.data() })).filter((t) => t.status === TICKET_STATUS.WAITING);
+
+    for (const chunk of chunkByHolder(waiting, 3)) {
+      await runTransaction(db, async (tx) => {
+        const snaps = await Promise.all(chunk.map((t) => tx.get(doc(db, 'tickets', t.id))));
+        for (const snap of snaps) {
+          if (!snap.exists() || snap.data().status !== TICKET_STATUS.WAITING) continue;
+          releaseHolder(db, tx, { id: snap.id, ...snap.data() });
+          tx.update(snap.ref, cancelled());
+        }
+      });
+    }
   } catch (error) {
     throw asFailure(error);
   }
