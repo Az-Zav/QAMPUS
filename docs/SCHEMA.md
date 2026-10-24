@@ -1,6 +1,13 @@
 # Firestore schema (V1 draft)
 
-Final shape for V1. Only the implementation is per slice. Open items at the bottom.
+Final shape for V1, locked one collection at a time. Locking a collection fixes its fields; seeding and implementation still happen per slice, not all at once.
+
+| Collection | Status |
+|---|---|
+| `users` | **LOCKED** |
+| everything else | draft |
+
+Open items at the bottom.
 Document IDs are in the comments. Everything is a Firestore document; `timestamp` fields must equal server time on write.
 
 ```mermaid
