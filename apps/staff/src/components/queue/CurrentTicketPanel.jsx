@@ -109,7 +109,7 @@ function Holder({ holder, styles }) {
       <View style={styles.identity}>
         <Text style={styles.name}>{holder.name}</Text>
         <Text style={styles.idLine}>
-          {holder.id_number} · {detail}
+          {[holder.id_number, detail].filter(Boolean).join(' · ')}
         </Text>
       </View>
     </View>

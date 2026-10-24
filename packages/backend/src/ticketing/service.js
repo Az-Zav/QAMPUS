@@ -5,7 +5,8 @@ import { QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDate } from '@qampus/core/format';
 import { doc, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { queueIdFor, ticketIdFor, ticketNumberFor } from './ids.js';
-import { checkJoin, TicketingError, TicketingFailure } from './preflight.js';
+import { waitingTickets } from './derive.js';
+import { checkCall, checkJoin, TicketingError, TicketingFailure } from './preflight.js';
 
 // Firestore refusals become a TicketingFailure with a code the UI can map to copy
 function asFailure(error) {
@@ -85,4 +86,36 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
   } catch (error) {
     throw asFailure(error);
   }
+}
+
+// Staff: call one WAITING ticket to the window. The queue (current ticket, last called number) and the
+// ticket (CALLED, called_at) change in one atomic write, so two staff cannot call different tickets.
+export async function callTicket(db, { office, ticketId, now = new Date() }) {
+  const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
+  const ticketRef = doc(db, 'tickets', ticketId);
+  try {
+    await runTransaction(db, async (tx) => {
+      const [queueSnap, ticketSnap] = await Promise.all([tx.get(queueRef), tx.get(ticketRef)]);
+      const queue = queueSnap.exists() ? queueSnap.data() : null;
+      const ticket = ticketSnap.exists() ? ticketSnap.data() : null;
+      const reason = checkCall({ officeId: office.id, queue, ticket });
+      if (reason) throw new TicketingFailure(reason);
+
+      tx.update(queueRef, {
+        last_called_seq: Math.max(queue.last_called_seq, ticket.daily_sequence),
+        current_ticket_id: ticketRef.id,
+        updated_at: serverTimestamp(),
+      });
+      tx.update(ticketRef, { status: TICKET_STATUS.CALLED, called_at: serverTimestamp() });
+    });
+  } catch (error) {
+    throw asFailure(error);
+  }
+}
+
+// Staff: call the first waiting ticket (FIFO). `tickets` are the office's tickets for today.
+export async function callNext(db, { office, tickets, now = new Date() }) {
+  const [first] = waitingTickets(tickets);
+  if (!first) throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
+  await callTicket(db, { office, ticketId: first.id, now });
 }

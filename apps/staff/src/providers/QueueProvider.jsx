@@ -14,7 +14,7 @@ import {
   TICKET_STATUS,
 } from '@qampus/core/domain';
 
-import { getRemainingSeconds } from '@qampus/core/ticket';
+import { getRemainingSeconds, toShortTicketNumber } from '@qampus/core/ticket';
 
 import {
   getPenaltyState,
@@ -27,9 +27,16 @@ import {
   useReducer,
 } from 'react';
 
+import { useOfficeTickets } from '@/hooks/useOfficeTickets';
 import { useTodayQueue } from '@/hooks/useTodayQueue';
 import { db } from '@/lib/firebase';
-import { closeQueue as closeQueueDoc, openQueue as openQueueDoc } from '@qampus/backend';
+import {
+  callNext as callNextTicket,
+  callTicket,
+  closeQueue as closeQueueDoc,
+  openQueue as openQueueDoc,
+  waitingTickets,
+} from '@qampus/backend';
 import { useOffice } from './OfficeProvider';
 import { useSession } from './SessionProvider';
 
@@ -742,6 +749,16 @@ function queueReducer(state, event) {
 // offenses.jsx
 // =====================================================
 
+// A stored ticket as the staff panel and table read it: short number and a holder block.
+// The schema keeps only the holder's name and ID (no program), so the detail line is just the ID.
+function toStaffTicket(ticket) {
+  return {
+    ...ticket,
+    short_ticket_number: toShortTicketNumber(ticket.ticket_number),
+    holder: { name: ticket.holder_name, id_number: ticket.holder_institutional_id },
+  };
+}
+
 export function QueueProvider({ children }) {
   const { user } = useSession();
 
@@ -768,94 +785,61 @@ export function QueueProvider({ children }) {
 
   const { queue: mockQueue, offenses, activity } = state;
 
-  // Open/closed is real (today's queue doc); the waiting list and current ticket are still mock
-  // until the call-next slice. No doc for today means staff have not opened the queue.
+  // Open/closed, the waiting list and the current ticket are real (Firestore). Verify, no-show,
+  // complete, cancel-queue, offenses and the activity log are still mock until their slices.
+  // No queue doc for today means staff have not opened the queue.
   const { office } = useOffice();
   const todayQueue = useTodayQueue(office?.id);
+  const officeTickets = useOfficeTickets(office?.id);
+  const currentTicket = officeTickets.find(
+    (ticket) =>
+      ticket.id === todayQueue?.current_ticket_id &&
+      (ticket.status === TICKET_STATUS.CALLED || ticket.status === TICKET_STATUS.IN_SERVICE),
+  );
   const queue = {
     ...mockQueue,
     status: todayQueue?.status === QUEUE_STATUS.OPEN ? QUEUE_STATUS.OPEN : QUEUE_STATUS.CLOSED,
+    current: currentTicket ? toStaffTicket(currentTicket) : null,
+    waiting: waitingTickets(officeTickets).map(toStaffTicket),
+    average_service_minutes: office?.default_service_minutes ?? mockQueue.average_service_minutes,
+    // The real capacity cutoff arrives with the limits slice; this silences the mock cutoff banner
+    cutoff_overridden: true,
   };
 
   // =================================================
   // WM01: CALL NEXT / OVERRIDE FIFO
   // =================================================
 
-  const call = (
-    ticketId,
-    { override = false, reason } = {},
-  ) => {
-    send(QueueAction.CALL, {
-      ticketId,
-      override,
-      reason,
-    });
-  };
-
+  // The listeners on the queue and ticket docs update the console; a refused write only logs for now
   const callNext = () => {
-    const first = queue.waiting[0];
-
-    if (first) {
-      call(first.id);
-    }
+    if (office) callNextTicket(db, { office, tickets: officeTickets }).catch((error) => console.warn('Could not call next', error));
   };
 
   const overrideCall = (ticketId) => {
-    call(ticketId, { override: true });
+    if (office) callTicket(db, { office, ticketId }).catch((error) => console.warn('Could not call the ticket', error));
   };
 
   // =================================================
   // WM02: VERIFY BY ID
   // =================================================
 
-  const verifyById = (idNumber) => {
-    const result = validateVerification(
-      state,
-      idNumber,
-      Date.now(),
-    );
-
-    if (result === VerifyResult.OK) {
-      send(QueueAction.VERIFY, {
-        idNumber,
-      });
-    } else if (
-      queue.current?.status === TICKET_STATUS.CALLED
-    ) {
-      send(QueueAction.INVALID_VERIFY, {
-        idNumber,
-      });
-    }
-
-    return result;
-  };
+  // Arrives with the verify-arrival slice
+  const verifyById = () => VerifyResult.NO_MATCH;
 
   // =================================================
   // WM03: MARK NO-SHOW
   // =================================================
 
-  const markNoShow = (reason = '') => {
-    const result = validateNoShow(
-      state,
-      reason,
-      Date.now(),
-    );
-
-    if (result === NoShowResult.OK) {
-      send(QueueAction.NO_SHOW, {
-        reason,
-      });
-    }
-
-    return result;
-  };
+  // Arrives with the finish slice
+  const markNoShow = () => NoShowResult.INVALID_STATE;
 
   // =================================================
   // WM04: COMPLETE SERVICE
   // =================================================
 
+  // Arrives with the finish slice
   const completeService = () => {
-    send(QueueAction.COMPLETE);
+    console.warn('Complete service is not wired to Firestore yet');
   };
 
   // =================================================

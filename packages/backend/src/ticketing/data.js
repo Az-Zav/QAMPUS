@@ -2,6 +2,7 @@
 // Timestamps arrive as ISO strings, so views can pass them straight to `new Date()`.
 
 import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { campusDate } from '@qampus/core/format';
 import { queueIdFor } from './ids.js';
 
 function toPlain(snap) {
@@ -74,6 +75,15 @@ export function watchBoard(db, now, onData, onError) {
 export function watchMyTickets(db, uid, onData, onError) {
   return onSnapshot(
     query(collection(db, 'tickets'), where('user_id', '==', uid)),
+    (snap) => onData(snap.docs.map(toPlain)),
+    onError,
+  );
+}
+
+// Every ticket of an office for the campus day of `now` (staff queue screen); callers split waiting from current
+export function watchOfficeTickets(db, officeId, now, onData, onError) {
+  return onSnapshot(
+    query(collection(db, 'tickets'), where('office_id', '==', officeId), where('queue_date', '==', campusDate(now).key)),
     (snap) => onData(snap.docs.map(toPlain)),
     onError,
   );

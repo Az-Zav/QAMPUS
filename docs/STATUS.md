@@ -12,14 +12,14 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Rules in the repo**: `firestore.rules` is the source of truth (`firebase.json`, `.firebaserc` pin `qampus-d0718`). Deploy with `firebase deploy --only firestore:rules`; never edit in the console.
 - **`packages/backend`** (`@qampus/backend`): shared by both apps. Ticketing ids/derive/preflight (13 unit tests, `npm test`), listeners (`watchBoard`, `watchQueue`, `watchMyTickets`), writes (`openQueue`, `closeQueue`, `joinQueue`).
 - **Slice B (student joins) tested on device and staff browser**: staff Open/Close queue is real (today's `queues` doc). Mobile Offices list, Home ticket and My Tickets read Firestore through `QueueDataProvider`; Confirm join calls `joinQueue` with failure messages.
+- **Slice C (call next) tested on device and staff browser**: staff waiting list and current ticket are real (`useOfficeTickets` plus today's queue doc). Call next and Override write through `callNext`/`callTicket`. Verify, no-show and complete are stubs until slices D and E. A student's Home ticket shows YOUR_TURN with the countdown once called.
 - **EAS**: dev build works; testing through `expo start --dev-client --tunnel`. JS-only changes reload without a rebuild.
 - **UI**: all screens exist. Still mock: staff waiting list and current ticket, offenses, activity log, notifications, guests, programs, display.
 
 ## In progress
-Nothing active. Slice B passed manual testing (open queue, join twice, close/reopen). Slice C is next.
+Nothing active. Slice C passed manual testing (call next, current ticket, student sees it). Slice D is next.
 
 ## Next (end-to-end ticket flow, one commit per slice, developer tests between)
-C. Call next (staff): real waiting list and current ticket, ticket CALLED, student sees it. Removes `MOCK_STAFF_QUEUE`.
 D. Verify arrival (student): 60 s window, office `check_in_code` (QR or manual).
 E. Complete, cancel (WAITING only), no-show (after 60 s). Removes `MOCK_HISTORY_TICKETS`.
 F. Remove leftover mock paths for the ticket flow. Offenses, notifications, activity log, guests stay mock until their slices.

@@ -25,6 +25,22 @@ service cloud.firestore {
       return /databases/$(db)/documents/tickets/$(queueId + '_' + string(seq));
     }
 
+    function ticketDoc(ticketId) { return /databases/$(db)/documents/tickets/$(ticketId); }
+
+    // Staff calling a WAITING ticket of their office: the ticket becomes CALLED and, in the same write,
+    // the queue's current ticket points at it. Only while the queue is OPEN and the window is free.
+    function validCall(ticketId, before, after) {
+      let queuePath = /databases/$(db)/documents/queues/$(before.office_id + '_' + string(before.queue_date));
+      return before.office_id == staffOfficeId()
+        && before.status == 'WAITING'
+        && after.diff(before).affectedKeys().hasOnly(['status', 'called_at'])
+        && after.status == 'CALLED'
+        && after.called_at == request.time
+        && get(queuePath).data.status == 'OPEN'
+        && get(queuePath).data.current_ticket_id == null
+        && getAfter(queuePath).data.current_ticket_id == ticketId;
+    }
+
     // A student joining: the ticket takes exactly the next number of an OPEN queue, in the same write
     // that bumps the queue (checked with getAfter), and its snapshot fields match the real docs.
     function validJoin(ticketId, d) {
@@ -109,15 +125,31 @@ service cloud.firestore {
             && request.resource.data.last_seq == resource.data.last_seq + 1
             && request.resource.data.updated_at == request.time
             && existsAfter(ticketPath(queueId, request.resource.data.last_seq))
-            && getAfter(ticketPath(queueId, request.resource.data.last_seq)).data.user_id == request.auth.uid);
+            && getAfter(ticketPath(queueId, request.resource.data.last_seq)).data.user_id == request.auth.uid)
+        // Staff call a ticket: the queue points at it and its number moves the last called number up.
+        || (isStaff()
+            && queueId.matches(staffOfficeId() + '_[0-9]{8}')
+            && resource.data.status == 'OPEN'
+            && resource.data.current_ticket_id == null
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['last_called_seq', 'current_ticket_id', 'updated_at'])
+            && request.resource.data.current_ticket_id.matches(queueId + '_[0-9]+')
+            && request.resource.data.updated_at == request.time
+            && get(ticketDoc(request.resource.data.current_ticket_id)).data.status == 'WAITING'
+            && getAfter(ticketDoc(request.resource.data.current_ticket_id)).data.status == 'CALLED'
+            && getAfter(ticketDoc(request.resource.data.current_ticket_id)).data.office_id == staffOfficeId()
+            && request.resource.data.last_called_seq ==
+                (getAfter(ticketDoc(request.resource.data.current_ticket_id)).data.daily_sequence > resource.data.last_called_seq
+                  ? getAfter(ticketDoc(request.resource.data.current_ticket_id)).data.daily_sequence
+                  : resource.data.last_called_seq));
     }
 
-    // tickets/{queueId}_{seq}. Create-only for now: no client can edit or delete a ticket yet.
+    // tickets/{queueId}_{seq}. Students create (join); staff call. Nothing else can change a ticket yet.
     match /tickets/{ticketId} {
       allow read: if signedIn()
         && (resource.data.user_id == request.auth.uid
             || (isStaff() && resource.data.office_id == staffOfficeId()));
       allow create: if signedIn() && validJoin(ticketId, request.resource.data);
+      allow update: if isStaff() && validCall(ticketId, resource.data, request.resource.data);
     }
   }
 }

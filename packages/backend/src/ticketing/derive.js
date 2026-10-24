@@ -1,6 +1,7 @@
 // Values the schema does not store: they are derived from the queue doc (docs/SCHEMA.md, reading notes).
 // Pure: no Firebase.
 
+import { TICKET_STATUS } from '@qampus/core/domain';
 import { shortTicketNumber } from './ids.js';
 
 // Waiting is approximated as last_seq - last_called_seq (a cancelled ticket still counts until called past)
@@ -16,3 +17,7 @@ export const estimatedWaitMinutes = (people, office) => people * (office?.defaul
 // "Now serving" short number, or null before anyone was called
 export const nowServing = (office, queue) =>
   queue && queue.last_called_seq > 0 ? shortTicketNumber(office.code, queue.last_called_seq) : null;
+
+// Waiting tickets in FIFO order (lowest number first)
+export const waitingTickets = (tickets) =>
+  tickets.filter((ticket) => ticket.status === TICKET_STATUS.WAITING).sort((a, b) => a.daily_sequence - b.daily_sequence);
