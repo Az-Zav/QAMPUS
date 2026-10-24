@@ -14,6 +14,9 @@ export const TicketingError = Object.freeze({
   GRACE_EXPIRED: 'GRACE_EXPIRED',
   INVALID_CODE: 'INVALID_CODE',
   ID_MISMATCH: 'ID_MISMATCH',
+  NOT_IN_SERVICE: 'NOT_IN_SERVICE',
+  GRACE_NOT_EXPIRED: 'GRACE_NOT_EXPIRED',
+  REASON_REQUIRED: 'REASON_REQUIRED',
   DENIED: 'DENIED',
   UNKNOWN: 'UNKNOWN',
 });
@@ -69,4 +72,30 @@ export function checkVerifyById({ ticket, idNumber, now }) {
   const norm = (value) => String(value ?? '').trim().toUpperCase();
   if (!norm(idNumber) || norm(idNumber) !== norm(ticket.holder_institutional_id)) return TicketingError.ID_MISMATCH;
   return null;
+}
+
+// Staff complete the ticket at the window: it must be IN_SERVICE and the queue's current ticket
+export function checkComplete({ ticket, queue }) {
+  if (!ticket || ticket.status !== TICKET_STATUS.IN_SERVICE || queue?.current_ticket_id !== ticket.id) {
+    return TicketingError.NOT_IN_SERVICE;
+  }
+  return null;
+}
+
+// Staff mark the current ticket a no-show: a CALLED ticket only after its grace period (R-12), an
+// IN_SERVICE one (verification reversed, R-23a) only with a reason.
+export function checkNoShow({ ticket, queue, reason, now }) {
+  if (!ticket || queue?.current_ticket_id !== ticket.id) return TicketingError.TICKET_UNAVAILABLE;
+  if (ticket.status === TICKET_STATUS.CALLED) {
+    return getRemainingSeconds(ticket.called_at, new Date(now).getTime()) > 0 ? TicketingError.GRACE_NOT_EXPIRED : null;
+  }
+  if (ticket.status === TICKET_STATUS.IN_SERVICE) {
+    return String(reason ?? '').trim() ? null : TicketingError.REASON_REQUIRED;
+  }
+  return TicketingError.TICKET_UNAVAILABLE;
+}
+
+// A student may cancel only a ticket that is still WAITING. Cancelling after the call is an offense (later slice).
+export function checkCancel({ ticket }) {
+  return ticket?.status === TICKET_STATUS.WAITING ? null : TicketingError.TICKET_UNAVAILABLE;
 }

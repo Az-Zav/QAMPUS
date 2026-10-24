@@ -26,7 +26,8 @@ export default function TicketModal({ visible, ticket, onClose, onCancel, onOpen
   const status = ticket?.status;
   const isCalled = status === TicketStatus.YOUR_TURN;
   const isExpired = status === TicketStatus.EXPIRED;
-  const canCancel = status !== TicketStatus.IN_SERVICE;
+  // Only a ticket that is still waiting can be cancelled; cancelling after the call is an offense (later slice)
+  const canCancel = status === TicketStatus.WAITING;
 
   return (
     <ModalShell

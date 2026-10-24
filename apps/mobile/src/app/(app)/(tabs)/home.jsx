@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import ConfirmModal from '@/components/modals/ConfirmModal';
 import JoinConfirmModal from '@/components/modals/JoinConfirmModal';
 import NoticeModal from '@/components/modals/NoticeModal';
 import EmptyState from '@/components/shell/EmptyState';
@@ -10,12 +11,27 @@ import InfoCard from '@/components/shell/InfoCard';
 import TicketModal from '@/components/modals/TicketModal';
 import TicketStubCard from '@/components/tickets/TicketStubCard';
 
-import { EmptyStateType, IconSet, InfoCardType, MODAL_COPY, SPACING, TYPOGRAPHY } from '@/constants';
+import { EmptyStateType, IconSet, InfoCardType, MODAL_COPY, ModalTone, SPACING, TYPOGRAPHY } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
-import { useJoinQueue, useMyTickets, useNotifications, useOffices, useSession, useTheme, useThemedStyles } from '@/hooks';
+import {
+  useCancelTicket,
+  useJoinQueue,
+  useMyTickets,
+  useNotifications,
+  useOffices,
+  useSession,
+  useTheme,
+  useThemedStyles,
+} from '@/hooks';
 import { greetingFor } from '@/utils';
 
-const HomeModal = Object.freeze({ TICKET: 'ticket', JOIN: 'join', FAILED: 'failed' });
+const HomeModal = Object.freeze({
+  TICKET: 'ticket',
+  JOIN: 'join',
+  FAILED: 'failed',
+  CANCEL: 'cancel',
+  CANCEL_FAILED: 'cancelFailed',
+});
 
 export default function HomeScreen() {
   const { colors } = useTheme();
@@ -26,6 +42,7 @@ export default function HomeScreen() {
   const { offices } = useOffices();
   const { unreadCount } = useNotifications();
   const { join, joining } = useJoinQueue();
+  const { cancel, cancelling } = useCancelTicket();
 
   const preview = usePreview('home', { barStyle: styles.previewBar }); // DEV-PREVIEW
   const active = preview.data?.active ?? liveActive; // DEV-PREVIEW
@@ -34,6 +51,7 @@ export default function HomeScreen() {
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [joinError, setJoinError] = useState(null);
+  const [cancelError, setCancelError] = useState(null);
 
   const selectedTicket = active.find((t) => t.id === selectedTicketId) ?? null;
   const closeModal = () => setModal(null);
@@ -54,6 +72,14 @@ export default function HomeScreen() {
     const error = await join(selectedOffice);
     setJoinError(error);
     setModal(error ? HomeModal.FAILED : null);
+  };
+
+  // A cancelled ticket leaves Active Queues through the live listener and shows up in History
+  const confirmCancel = async () => {
+    if (cancelling) return;
+    const error = await cancel(selectedTicketId);
+    setCancelError(error);
+    setModal(error ? HomeModal.CANCEL_FAILED : null);
   };
 
   const openScanner = () => {
@@ -122,7 +148,7 @@ export default function HomeScreen() {
         visible={modal === HomeModal.TICKET}
         ticket={selectedTicket}
         onClose={closeModal}
-        onCancel={closeModal}
+        onCancel={() => setModal(HomeModal.CANCEL)}
         onOpenScanner={openScanner}
       />
 
@@ -140,6 +166,23 @@ export default function HomeScreen() {
         title={MODAL_COPY.joinFailed.title}
         body={MODAL_COPY.joinFailed.body(joinError)}
         buttonLabel={MODAL_COPY.joinFailed.buttonLabel}
+        onClose={closeModal}
+      />
+
+      <ConfirmModal
+        {...MODAL_COPY.cancelTicket}
+        tone={ModalTone.DESTRUCTIVE}
+        visible={modal === HomeModal.CANCEL}
+        onConfirm={confirmCancel}
+        onClose={closeModal}
+      />
+
+      <NoticeModal
+        visible={modal === HomeModal.CANCEL_FAILED}
+        icon={MODAL_COPY.cancelFailed.icon}
+        title={MODAL_COPY.cancelFailed.title}
+        body={MODAL_COPY.cancelFailed.body(cancelError)}
+        buttonLabel={MODAL_COPY.cancelFailed.buttonLabel}
         onClose={closeModal}
       />
     </View>

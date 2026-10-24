@@ -53,6 +53,35 @@ service cloud.firestore {
         && after.service_started_at == request.time;
     }
 
+    // Staff finish the ticket at the window, freeing it (the queue's current ticket becomes null in the same
+    // write): COMPLETED from IN_SERVICE, or NO_SHOW from a CALLED ticket after its grace period, or from an
+    // IN_SERVICE ticket with a reason (verification reversed).
+    function validFinish(ticketId, before, after) {
+      let queuePath = /databases/$(db)/documents/queues/$(before.office_id + '_' + string(before.queue_date));
+      return before.office_id == staffOfficeId()
+        && get(queuePath).data.current_ticket_id == ticketId
+        && getAfter(queuePath).data.current_ticket_id == null
+        && ((before.status == 'IN_SERVICE'
+             && after.status == 'COMPLETED'
+             && after.completed_at == request.time
+             && after.diff(before).affectedKeys().hasOnly(['status', 'completed_at']))
+            || (after.status == 'NO_SHOW'
+                && after.no_show_at == request.time
+                && after.diff(before).affectedKeys().hasOnly(['status', 'no_show_at', 'reason'])
+                && ((before.status == 'CALLED' && request.time > before.called_at + duration.value(60, 's'))
+                    || (before.status == 'IN_SERVICE' && after.get('reason', '').size() > 0))));
+    }
+
+    // A student cancels their own ticket only while it is still WAITING.
+    function validCancel(before, after) {
+      return before.user_id == request.auth.uid
+        && before.status == 'WAITING'
+        && after.diff(before).affectedKeys().hasOnly(['status', 'cancelled_by', 'cancelled_at'])
+        && after.status == 'CANCELLED'
+        && after.cancelled_by == 'USER'
+        && after.cancelled_at == request.time;
+    }
+
     // A student joining: the ticket takes exactly the next number of an OPEN queue, in the same write
     // that bumps the queue (checked with getAfter), and its snapshot fields match the real docs.
     function validJoin(ticketId, d) {
@@ -152,17 +181,37 @@ service cloud.firestore {
             && request.resource.data.last_called_seq ==
                 (getAfter(ticketDoc(request.resource.data.current_ticket_id)).data.daily_sequence > resource.data.last_called_seq
                   ? getAfter(ticketDoc(request.resource.data.current_ticket_id)).data.daily_sequence
-                  : resource.data.last_called_seq));
+                  : resource.data.last_called_seq))
+        // Staff free the window after a no-show: the current ticket becomes null.
+        || (isStaff()
+            && queueId.matches(staffOfficeId() + '_[0-9]{8}')
+            && resource.data.current_ticket_id != null
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['current_ticket_id', 'updated_at'])
+            && request.resource.data.current_ticket_id == null
+            && request.resource.data.updated_at == request.time
+            && getAfter(ticketDoc(resource.data.current_ticket_id)).data.status == 'NO_SHOW')
+        // Staff free the window after completing: it also counts the visit and adds its length.
+        || (isStaff()
+            && queueId.matches(staffOfficeId() + '_[0-9]{8}')
+            && resource.data.current_ticket_id != null
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['current_ticket_id', 'completed_count', 'service_seconds_total', 'updated_at'])
+            && request.resource.data.current_ticket_id == null
+            && request.resource.data.completed_count == resource.data.completed_count + 1
+            && request.resource.data.service_seconds_total >= resource.data.service_seconds_total
+            && request.resource.data.updated_at == request.time
+            && getAfter(ticketDoc(resource.data.current_ticket_id)).data.status == 'COMPLETED');
     }
 
-    // tickets/{queueId}_{seq}. Students create (join); staff call; the holder or staff start service. Nothing else yet.
+    // tickets/{queueId}_{seq}. Students join and cancel (while WAITING); staff call, finish; the holder or staff start service.
     match /tickets/{ticketId} {
       allow read: if signedIn()
         && (resource.data.user_id == request.auth.uid
             || (isStaff() && resource.data.office_id == staffOfficeId()));
       allow create: if signedIn() && validJoin(ticketId, request.resource.data);
       allow update: if (isStaff() && validCall(ticketId, resource.data, request.resource.data))
-        || (signedIn() && validArrival(resource.data, request.resource.data));
+        || (signedIn() && validArrival(resource.data, request.resource.data))
+        || (isStaff() && validFinish(ticketId, resource.data, request.resource.data))
+        || (signedIn() && validCancel(resource.data, request.resource.data));
     }
   }
 }

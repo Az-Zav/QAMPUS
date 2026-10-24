@@ -34,6 +34,8 @@ import {
   callNext as callNextTicket,
   callTicket,
   closeQueue as closeQueueDoc,
+  completeTicket,
+  markTicketNoShow,
   openQueue as openQueueDoc,
   TicketingError,
   verifyByHolderId,
@@ -841,16 +843,30 @@ export function QueueProvider({ children }) {
   // WM03: MARK NO-SHOW
   // =================================================
 
-  // Arrives with the finish slice
-  const markNoShow = () => NoShowResult.INVALID_STATE;
+  // Staff mark the ticket at the window a no-show: a CALLED ticket after its grace period, an IN_SERVICE
+  // one (verification reversed) with a reason. Resolves to a NoShowResult for the modal.
+  // No offense is recorded yet; penalties come in their own slice.
+  const markNoShow = async (reason = '') => {
+    if (!currentTicket) return NoShowResult.INVALID_STATE;
+    try {
+      await markTicketNoShow(db, { office, ticket: currentTicket, reason });
+      return NoShowResult.OK;
+    } catch (error) {
+      if (error.code === TicketingError.GRACE_NOT_EXPIRED) return NoShowResult.TOO_EARLY;
+      if (error.code === TicketingError.REASON_REQUIRED) return NoShowResult.REASON_REQUIRED;
+      return NoShowResult.INVALID_STATE;
+    }
+  };
 
   // =================================================
   // WM04: COMPLETE SERVICE
   // =================================================
 
-  // Arrives with the finish slice
+  // Staff finish the ticket in service; the window is free again once the write lands
   const completeService = () => {
-    console.warn('Complete service is not wired to Firestore yet');
+    if (office && currentTicket) {
+      completeTicket(db, { office, ticket: currentTicket }).catch((error) => console.warn('Could not complete the ticket', error));
+    }
   };
 
   // =================================================

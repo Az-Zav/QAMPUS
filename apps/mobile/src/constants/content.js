@@ -292,6 +292,23 @@ export const MODAL_COPY = Object.freeze({
       })[reason] ?? 'Something went wrong. Try again in a moment.',
     buttonLabel: 'OK',
   },
+  cancelTicket: {
+    icon: 'close-circle-outline',
+    title: 'Cancel this ticket?',
+    body: 'You will lose your place in line. You can join again, but with a new number at the back.',
+    confirmLabel: 'Cancel ticket',
+    cancelLabel: 'Keep my place',
+  },
+  cancelFailed: {
+    icon: 'alert-circle-outline',
+    title: "Couldn't cancel",
+    body: (reason) =>
+      ({
+        TICKET_UNAVAILABLE: 'This ticket can no longer be cancelled. It may already have been called.',
+        DENIED: "The cancellation wasn't accepted. Check your connection and try again.",
+      })[reason] ?? 'Something went wrong. Try again in a moment.',
+    buttonLabel: 'OK',
+  },
   checkIn: {
     successIcon: 'checkmark-circle-outline',
     successTitle: "You're checked in",

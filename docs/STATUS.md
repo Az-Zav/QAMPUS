@@ -14,14 +14,14 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Slice B (student joins) tested on device and staff browser**: staff Open/Close queue is real (today's `queues` doc). Mobile Offices list, Home ticket and My Tickets read Firestore through `QueueDataProvider`; Confirm join calls `joinQueue` with failure messages.
 - **Slice C (call next) tested on device and staff browser**: staff waiting list and current ticket are real (`useOfficeTickets` plus today's queue doc). Call next and Override write through `callNext`/`callTicket`. Verify, no-show and complete are stubs until slices D and E. A student's Home ticket shows YOUR_TURN with the countdown once called.
 - **Slice D (verify arrival) tested on device and staff browser**: the student checks in on the Scan tab by typing the 6-digit office code (`useCheckIn`, `checkInByCode`); staff Verify by ID is real (`verifyByHolderId`). Both do CALLED -> IN_SERVICE inside the 60 s grace period. QR scanning is not built (needs `expo-camera` and a new dev build). An app-wide "It's your turn" dialog (`CalledModal` in the signed-in layout) opens while a ticket is being called.
+- **Slice E (complete, no-show, student cancel) tested on device and staff browser**: staff Complete and No-show free the window in one atomic write; a student cancels a WAITING ticket from the Home ticket modal (with confirm). Finished tickets appear in the student's History through the live listener. No offenses or strikes are recorded yet.
 - **EAS**: dev build works; testing through `expo start --dev-client --tunnel`. JS-only changes reload without a rebuild.
 - **UI**: all screens exist. Still mock: staff waiting list and current ticket, offenses, activity log, notifications, guests, programs, display.
 
 ## In progress
-Nothing active. Slice D passed manual testing (check-in by code, staff verify by ID, called dialog). Slice E is next.
+Nothing active. Slice E passed manual testing. Open: whether a student may cancel after the call (see PRD R-16/R-13); slice F cleanup is next.
 
 ## Next (end-to-end ticket flow, one commit per slice, developer tests between)
-E. Complete, cancel (WAITING only), no-show (after 60 s). Removes `MOCK_HISTORY_TICKETS`.
 F. Remove leftover mock paths for the ticket flow. Offenses, notifications, activity log, guests stay mock until their slices.
 
 ## Known issues
@@ -30,7 +30,8 @@ F. Remove leftover mock paths for the ticket flow. Offenses, notifications, acti
 - Seeded `hours` on `off_reg_001` may be incomplete (`close_min` should be 1020). Hours are display only now.
 - Any Google account that signs in on the staff app leaves an empty Firebase Auth user (no Firestore access). Accepted.
 - An unfinished ticket from an earlier day is not shown on the student's Home (known gap, slice 1).
-- A refused open/close on staff only logs to the console (no on-screen message yet).
+- A refused open/close/call/complete on staff only logs to the console (no on-screen message yet).
+- Staff "Cancel entire queue" and "Override cutoff" still only change mock state.
 - Stray root `app.json`; root README is still the Expo template.
 
 ## Open questions

@@ -2,6 +2,7 @@
 
 export { useSession } from '@/providers/SessionProvider';
 export { useTheme, useThemedStyles } from '@qampus/ui';
+export { useCancelTicket } from './useCancelTicket';
 export { useCheckIn } from './useCheckIn';
 export { useJoinQueue } from './useJoinQueue';
 export { useMyTickets } from './useMyTickets';

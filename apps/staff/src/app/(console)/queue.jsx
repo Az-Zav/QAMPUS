@@ -156,8 +156,8 @@ export default function Queue() {
 
           destructive: true,
 
-          onConfirm: () => {
-            const result = queue.markNoShow(input);
+          onConfirm: async () => {
+            const result = await queue.markNoShow(input);
 
             if (result === NoShowResult.OK) {
               close();

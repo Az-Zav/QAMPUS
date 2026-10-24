@@ -1,12 +1,22 @@
 // Ticketing writes. Staff open and close today's queue; students join it. Security Rules (firestore.rules)
 // decide what is allowed; preflight only supplies readable reasons. Every function takes `db` first.
 
-import { QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
+import { CANCELLED_BY, QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDate } from '@qampus/core/format';
-import { doc, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, increment, runTransaction, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { queueIdFor, ticketIdFor, ticketNumberFor } from './ids.js';
 import { waitingTickets } from './derive.js';
-import { checkCall, checkCheckIn, checkJoin, checkVerifyById, TicketingError, TicketingFailure } from './preflight.js';
+import {
+  checkCall,
+  checkCancel,
+  checkCheckIn,
+  checkComplete,
+  checkJoin,
+  checkNoShow,
+  checkVerifyById,
+  TicketingError,
+  TicketingFailure,
+} from './preflight.js';
 
 // Firestore refusals become a TicketingFailure with a code the UI can map to copy
 function asFailure(error) {
@@ -145,4 +155,74 @@ export async function verifyByHolderId(db, { ticket, idNumber, now = new Date() 
   const reason = checkVerifyById({ ticket, idNumber, now });
   if (reason) throw new TicketingFailure(reason);
   await startService(db, ticket.id);
+}
+
+// Staff: finish service. The ticket becomes COMPLETED and the window is freed in one atomic write; the
+// queue also counts the visit and its length, which later feed the service-time average.
+export async function completeTicket(db, { office, ticket, now = new Date() }) {
+  const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
+  const ticketRef = doc(db, 'tickets', ticket.id);
+  try {
+    await runTransaction(db, async (tx) => {
+      const queueSnap = await tx.get(queueRef);
+      const ticketSnap = await tx.get(ticketRef);
+      const reason = checkComplete({
+        ticket: ticketSnap.exists() ? { id: ticketSnap.id, ...ticketSnap.data() } : null,
+        queue: queueSnap.exists() ? queueSnap.data() : null,
+      });
+      if (reason) throw new TicketingFailure(reason);
+
+      const startedAt = ticketSnap.data().service_started_at?.toMillis?.() ?? now.getTime();
+      const seconds = Math.max(0, Math.round((now.getTime() - startedAt) / 1000));
+      tx.update(queueRef, {
+        current_ticket_id: null,
+        completed_count: increment(1),
+        service_seconds_total: increment(seconds),
+        updated_at: serverTimestamp(),
+      });
+      tx.update(ticketRef, { status: TICKET_STATUS.COMPLETED, completed_at: serverTimestamp() });
+    });
+  } catch (error) {
+    throw asFailure(error);
+  }
+}
+
+// Staff: mark the current ticket a no-show and free the window. No offense is recorded yet (penalties slice).
+export async function markTicketNoShow(db, { office, ticket, reason = '', now = new Date() }) {
+  const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
+  const ticketRef = doc(db, 'tickets', ticket.id);
+  try {
+    await runTransaction(db, async (tx) => {
+      const queueSnap = await tx.get(queueRef);
+      const ticketSnap = await tx.get(ticketRef);
+      const current = ticketSnap.exists() ? { id: ticketSnap.id, ...ticketSnap.data() } : null;
+      const failure = checkNoShow({ ticket: current, queue: queueSnap.exists() ? queueSnap.data() : null, reason, now });
+      if (failure) throw new TicketingFailure(failure);
+
+      const trimmed = reason.trim();
+      tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
+      tx.update(ticketRef, {
+        status: TICKET_STATUS.NO_SHOW,
+        no_show_at: serverTimestamp(),
+        ...(trimmed ? { reason: trimmed } : {}),
+      });
+    });
+  } catch (error) {
+    throw asFailure(error);
+  }
+}
+
+// Student: cancel their own ticket while it is still WAITING. Cancelling after the call is not allowed yet.
+export async function cancelWaitingTicket(db, { ticket }) {
+  const failure = checkCancel({ ticket });
+  if (failure) throw new TicketingFailure(failure);
+  try {
+    await updateDoc(doc(db, 'tickets', ticket.id), {
+      status: TICKET_STATUS.CANCELLED,
+      cancelled_by: CANCELLED_BY.USER,
+      cancelled_at: serverTimestamp(),
+    });
+  } catch (error) {
+    throw asFailure(error);
+  }
 }
