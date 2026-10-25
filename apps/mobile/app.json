@@ -4,13 +4,14 @@
     "slug": "Qampus",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/Qampus-Logo.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "qampus",
     "userInterfaceStyle": "automatic",
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FAF7F0",
-        "foregroundImage": "./assets/images/Qampus-Logo.png"
+        "backgroundColor": "#FFCC33",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.qampus.app",
