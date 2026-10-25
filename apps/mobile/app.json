@@ -36,7 +36,22 @@
       "expo-font",
       "@react-native-google-signin/google-signin",
       "expo-dev-client",
-      "expo-updates"
+      "expo-updates",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Qampus to use the camera to scan the office QR code and check you in.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-local-authentication",
+      [
+        "expo-notifications",
+        {
+          "color": "#FFC72C",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
