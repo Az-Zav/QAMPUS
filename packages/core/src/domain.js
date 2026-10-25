@@ -48,6 +48,8 @@ export const RULES = Object.freeze({
   OFFENSES_PER_BAN: 2, // R-13
   BAN_HOURS: 24, // R-13
   APPROACHING_PLACE: 3, // R-24: the student this far back in line is told their turn is near
+  MIN_MEASURED_VISITS: 3, // the measured visit length replaces the office default only after this many completed visits today
+  MIN_VISIT_MINUTES: 1, // a measured visit length is never taken below this, so a few quick test visits cannot zero the cutoff
 });
 
 // ---------------------------------------------------------------------------

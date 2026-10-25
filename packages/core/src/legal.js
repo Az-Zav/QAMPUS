@@ -85,7 +85,13 @@ const STUDENT_TERMS = Object.freeze({
       ],
     },
     {
-      heading: '9. Contact',
+      heading: '9. Governing Law',
+      blocks: [
+        'These Terms are governed by the laws of the Republic of the Philippines.',
+      ],
+    },
+    {
+      heading: '10. Contact',
       blocks: [
         'Questions about these Terms can be sent to the campus services team through Help & Support in the App.',
       ],
@@ -101,7 +107,7 @@ const PRIVACY = Object.freeze({
     {
       heading: 'Introduction',
       blocks: [
-        'Welcome to QAMPUS. This Privacy Policy explains how we collect, use, share and otherwise process personal information in connection with the QAMPUS mobile application, the QAMPUS staff console and the public "Now Serving" display (collectively, the **"Services"**). We process personal information in line with the Data Privacy Act of 2012 (Republic Act No. 10173).',
+        'Welcome to QAMPUS. This Privacy Policy explains how we collect, use, share and otherwise process personal information in connection with the QAMPUS mobile application, the QAMPUS staff console and the public "Now Serving" display (collectively, the **"Services"**). We aim to process personal information in line with the Data Privacy Act of 2012 (Republic Act No. 10173).',
       ],
     },
     {
@@ -134,10 +140,10 @@ const PRIVACY = Object.freeze({
     {
       heading: '3. Who Can See Your Information',
       blocks: [
-        { label: 'Office Staff', text: 'Staff of an office you join can see your name, student ID or Guest ID, program, your tickets at that office and your offense record.' },
+        { label: 'Office Staff', text: 'Staff of an office you join can see your name, student ID or Guest ID, program, email address and strike count, your tickets at that office and your offense record there.' },
         { label: 'Fellow Staff', text: 'Staff of the same office can see the activity log, which names the staff member behind each action.' },
         { label: 'Public Display', text: 'The "Now Serving" screen at an office shows ticket numbers only. It never shows names or IDs.' },
-        { label: 'Service Providers', text: 'Our data is stored and processed by Google Firebase (authentication and database) and sign-in is handled by Google. "Your turn" push notifications pass through our relay on Cloudflare and Expo’s push service, which receive only the push token, the office name and the message. They process it on our behalf.' },
+        { label: 'Service Providers', text: 'Our data is stored and processed by Google Firebase (authentication and database) and sign-in is handled by Google. "Your turn" push notifications pass through our relay on Cloudflare and Expo’s push service, which receive only the push token, the office name and the message. Google delivers the push through Firebase Cloud Messaging. These providers may process information outside the Philippines. They process it on our behalf.' },
         'We do not sell your personal information or share it for marketing. We may disclose it when required by law or by a lawful order.',
       ],
     },
@@ -150,7 +156,7 @@ const PRIVACY = Object.freeze({
     {
       heading: '5. Security',
       blocks: [
-        'Information travels over encrypted connections. Access rules ensure that you can read only your own tickets, notifications and record, and that staff can act only on their own office. No method of storage or transmission is completely secure, but we work to protect your information.',
+        'Information travels over encrypted connections. Access rules ensure that you can read only your own tickets, notifications and record, and that staff can act only on their own office. No method of storage or transmission is completely secure, but we work to protect your information. If a data breach that affects you occurs, we will tell you and the National Privacy Commission as the law requires.',
       ],
     },
     {
@@ -234,7 +240,13 @@ const STAFF_TERMS = Object.freeze({
       ],
     },
     {
-      heading: '8. Contact',
+      heading: '8. Governing Law',
+      blocks: [
+        'These Terms are governed by the laws of the Republic of the Philippines.',
+      ],
+    },
+    {
+      heading: '9. Contact',
       blocks: [
         'Questions about these Terms, your access or your office assignment go to the system administrator.',
       ],

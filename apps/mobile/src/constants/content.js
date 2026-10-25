@@ -309,8 +309,8 @@ export const MODAL_COPY = Object.freeze({
   logOutGuest: {
     icon: 'log-out-outline',
     title: 'Leave as guest?',
-    body: 'Your Guest ID, tickets and history are deleted for good and cannot be recovered. You would start again with a new Guest ID.',
-    confirmLabel: 'Leave and delete',
+    body: 'You will lose access to your Guest ID, tickets and history, and they cannot be recovered. You would start again with a new Guest ID.',
+    confirmLabel: 'Leave as guest',
     cancelLabel: 'Stay signed in',
   },
   joinConfirm: {

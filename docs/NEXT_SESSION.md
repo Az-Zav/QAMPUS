@@ -94,7 +94,7 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
   the Join button reason and the staff banner/strip use it; staff Override cutoff = `overrideCutoff` (queue flag + `CUTOFF_OVERRIDE`
   event). Client-side only. An office with no hours that day has no cutoff. The measured average is today's `service_seconds_total /
   completed_count`; very fast test visits make the cutoff sit at closing time (reset both counters in the console to test with the
-  default). Candidate follow-up: use the measured average only after 3+ visits and never below 1 minute.
+  default). Follow-up DONE 2026-10-25: the measured average is used only after 3 visits and never below 1 minute (`RULES.MIN_MEASURED_VISITS`, `MIN_VISIT_MINUTES`).
 
 ### Roadmap (agreed with the developer 2026-10-25; follow this order)
 1. **6.7 Small issues** (in progress; see below). The optional cutoff tweak (measured average only after 3+ visits) is NOT part of it.
@@ -114,7 +114,7 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
   state `notice` in `QueueProvider`), auto-dismissed after 8 seconds.
 - The stray root `app.json` (a different EAS project and owner than `apps/mobile/app.json`) was removed and the root `README.md`
   rewritten. Root `eas.json` was left alone (looks like a leftover too; decide with the developer).
-- Still open for later: the `ui-mock-final` tag (a pushed tag is outward-facing: ask first) and the separate dev Firebase project
+- The `ui-mock-final` tag was created 2026-10-25 on df96ceb (the last commit before the Firebase work, the working mock app). Still open for later: the separate dev Firebase project
   question (decide at the preview deployment step).
 
 ### 6.6 Guests (DONE 2026-10-25, tested and pushed; reasons in DECISIONS.md; the account is now made on the form's Continue, see DECISIONS 2026-10-25 "Guest account is made on Continue")
