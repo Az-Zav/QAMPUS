@@ -10,7 +10,7 @@ import {
   STAFF_FONT,
   TYPOGRAPHY,
 } from '@/constants';
-import { useDisplayQueue, useOfficeByCode } from '@/hooks';
+import { OfficeLookup, useDisplayQueue, useOfficeByCode } from '@/hooks';
 import { checkInPayload } from '@/utils/office';
 import { formatManualCode } from '@qampus/core/format';
 import { useLocalSearchParams } from 'expo-router';
@@ -23,17 +23,20 @@ const CHECK_IN_WIDTH = 1440;
 const QR_BOX = 600;
 const QR_PADDING = 36;
 
-// D01 — Public display at /display/:officeCode. No auth, no scrolling, no interactive elements.
+// D01 — Public display at /display/:officeCode. No staff login, no scrolling, no interactive elements. Opened from
+// the staff console's "Launch public display" button (a new tab), or on its own on the counter's screen.
 // Designed on a 1920x1080 canvas and scaled to fit the screen it is shown on.
 export default function Display() {
-  const { code, outage } = useLocalSearchParams();
+  const { code } = useLocalSearchParams();
   const { width, height } = useWindowDimensions();
-  const office = useOfficeByCode(code);
+  const { office, status } = useOfficeByCode(code);
   const display = useDisplayQueue(office);
   const scale = Math.min(width / DISPLAY_WIDTH, height / DISPLAY_HEIGHT);
 
-  // Dev aid until real polling: ?outage=1 shows the outage state
-  if (outage) return <Outage />;
+  if (status === OfficeLookup.ERROR || display?.error) return <Outage />;
+
+  // Still loading the session, the office or the queue: a blank screen, not a flash of "closed"
+  if (status === OfficeLookup.LOADING || (office && !display)) return <View style={styles.stage} />;
 
   if (!office) {
     return (

@@ -72,6 +72,7 @@ export const QUEUE_COPY = Object.freeze({
   joiningClosed: 'Joining closed',
   cutoffReached: 'Joining closed: cutoff reached',
   overrideCutoff: 'Override cutoff',
+  launchDisplay: 'Launch public display',
   openQueue: 'Open queue',
   closeQueue: 'Close queue',
   cancelQueue: 'Cancel queue',

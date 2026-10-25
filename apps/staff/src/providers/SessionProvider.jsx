@@ -42,7 +42,8 @@ export function SessionProvider({ children }) {
     return onAuthStateChanged(auth, async (firebaseUser) => {
       if (!signingIn.current) {
         try {
-          setUser(firebaseUser ? await loadStaff(firebaseUser) : null);
+          // An anonymous account is the public display's, not a staff member's
+          setUser(firebaseUser && !firebaseUser.isAnonymous ? await loadStaff(firebaseUser) : null);
         } catch (error) {
           console.warn('Could not load staff profile', error);
           setUser(null);

@@ -25,15 +25,15 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **In-app notifications tested**: `users/{uid}/notifications` is written with each cause (your turn, approaching turn at place 3, no-show, queue cancelled per ticket, offense revoked, queue confirmed, warning on a called cancel). The mobile list and bell are live; viewing the screen marks them read (only while focused); a banner slides in from the top for a new one while the app is open. Push is not built.
 - **Capacity cutoff and measured wait times tested**: `cutoffState` refuses a join when the minutes left before closing, divided by the average visit, are fewer than the waiting plus one (client side only); the Join button reason and the staff banner/strip use it; staff Override cutoff writes `cutoff_overridden` plus a `CUTOFF_OVERRIDE` event. Wait estimates use today's measured average. A day with no hours has no cutoff.
 - **Guests (6.6, built, awaiting test)**: "Continue as guest" signs in anonymously (device bound), the guest form issues a unique `G` + six digits reserved in `institutionalIds`; student IDs are reserved the same way (a taken ID is refused). Guests use the app like students; guest Sign out warns that the ID and tickets are lost.
-- **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff and guests are real. Still mock: staff notifications (maintenance text only), programs, public display (`MOCK_OFFICES`).
+- **Public display (6.4, built, awaiting test)**: staff Queue has a "Launch public display" button that opens `/display/{office code}` in a new tab. It shows Now Serving, the next three numbers, the `check_in_code` QR and manual code, and a closed state, from the live office and queue (no names). A tab opened from the console reuses the staff session; a bare screen signs in anonymously. `MOCK_OFFICES` is deleted.
+- **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff, guests and the display are real. Still mock: staff notifications (maintenance text only) and the programs list.
 
 ## In progress
-6.6 guests / anonymous sign-in is coded and checked (69 unit tests, lint, both builds); waiting for the developer to enable the Anonymous provider in Firebase Auth, deploy the rules and test, then commit. 6.7 is pushed.
+6.4 public display is coded and checked (74 unit tests, lint, staff build); waiting for the developer's test, then commit. 6.6 (guests) is pushed.
 
 ## Next
-Roadmap in `NEXT_SESSION.md` section 6: 6.7, then the public display (a "Launch public display" button opening a new tab, with the
-`check_in_code` QR), then guests / anonymous sign-in (flow finalized first), then the native-package slices in one rebuild (QR camera
-scan, push, biometric), then UI polish (spacing, responsiveness, remove dev previews), then a preview deployment for end-to-end testing.
+Roadmap in `NEXT_SESSION.md` section 6: after the display, the native-package slices in one rebuild (QR camera scan, push,
+biometric), then UI polish (spacing, responsiveness, remove dev previews), then a preview deployment for end-to-end testing.
 
 ## Known issues
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).

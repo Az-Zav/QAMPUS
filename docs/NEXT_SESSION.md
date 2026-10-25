@@ -95,8 +95,8 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 
 ### Roadmap (agreed with the developer 2026-10-25; follow this order)
 1. **6.7 Small issues** (in progress; see below). The optional cutoff tweak (measured average only after 3+ visits) is NOT part of it.
-2. **6.6 Guests / anonymous sign-in** (decided to go before 6.4; flow below; being built).
-3. **6.4 Public display**, planned with the developer (design below), then built.
+2. **6.6 Guests / anonymous sign-in**: DONE and pushed.
+3. **6.4 Public display**: built, awaiting the developer's test.
 4. **Slices that need a new native package, batched into ONE dev build** (so only one rebuild): QR scan with `expo-camera` (6.5),
    push notifications with `expo-notifications` (needs the sender decision first), biometric sign-in/unlock. Plan each when reached.
 5. **UI polish**: improve spacing of components on the screens, responsiveness (phone sizes and the staff web at different widths),
@@ -114,38 +114,17 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 - Still open for later: the `ui-mock-final` tag (a pushed tag is outward-facing: ask first) and the separate dev Firebase project
   question (decide at the preview deployment step).
 
-### 6.4 Public display (D01), PRD R-20, R-21 (the developer's model; plan in detail after 6.7)
-Model: in the staff web app a **"Launch public display" button** opens the display in a **new browser tab or window**
-(`window.open` to `/display/[code]`), meant for the TV at the counter. The display shows Now Serving, the next three tickets, the manual
-code and the **office QR that encodes `check_in_code`** (`checkInPayload` already builds `qampus://check-in/{code}/{check_in_code}`),
-with a "This queue is closed" state; it needs no staff action once launched. Delete `MOCK_OFFICES` and `useOfficeByCode`'s mock.
-To settle when planning: the display page's sign-in (a new tab of the same browser already has the staff session, so it may simply
-reuse it; a separate TV browser needs `signInAnonymously` and the Anonymous provider enabled in Firebase Auth, which the developer
-does), a QR component for the web (a small library or SVG), full-screen button, and auto-refresh via the existing queue listener.
-Now serving comes from `queues.last_called_seq`; the next three are the following numbers up to `last_seq` (cancelled numbers can
-appear, the same accepted imprecision as the waiting count). Rules already let any signed-in user read `offices` and `queues`.
-
-### 6.6 Guests / anonymous sign-in (FLOW DECIDED with the developer 2026-10-25; BUILT, awaiting the developer's test; ahead of 6.4)
-Decisions: (1) a guest may sign out, after a confirm dialog warning that the guest ID, tickets and history are lost for good (no way
-back into an anonymous account); (2) a student ID already registered to another account is refused ("first claim wins"; a wrong claim
-is fixed by the developer in the console); (3) guests are otherwise treated like students (same three-ticket limit, penalties,
-notifications); (4) clearing app data creates a new anonymous account and ID (PRD known limitation 1, accepted); (5) the Guest ID is
-generated in the app and the rules enforce uniqueness, a departure from R-30's "server issues it" (Spark has no server).
-Flow: Login "Continue as guest" -> `signInAnonymously` (developer enables the Anonymous provider in Firebase Auth) -> `users/{uid}` with
-role GUEST and empty profile (the create rule already exists) -> Guest form (name, optional email, type) -> one transaction picks a
-random `G` + six digits, reserves `institutionalIds/{id}` (`{ uid }`, create-only) and saves the profile with that ID (retry up to 8
-times on a taken ID) -> the issued-ID screen -> Home. The student `complete-profile` goes through the same reservation (7-digit ID).
-App start: `onAuthStateChanged` loads the guest profile for an anonymous user (it used to create a student doc, which rules refuse).
-Rules: `institutionalIds/{id}`: `get` by any signed-in user (needed to see an ID is taken; it exposes only the owner's uid), create
-only with `uid == auth.uid`, the id shaped `G[0-9]{6}` for an anonymous account or `[0-9]{7}` for a school account, and the user's
-profile must carry that ID in the same write (`getAfter`). A change of `users.institutional_id` requires its claim in the same write.
-Code: `packages/backend/src/identity` (`ids.js` pure + tests: `randomGuestId`, `isGuestId`; `service.js`: `issueGuestProfile`,
-`claimStudentProfile`, `IdentityError`), mobile `lib/users.js` (`loadOrCreateGuest`, `saveGuestDetails`), `SessionProvider`
-(`signInAsGuest`, `completeGuestProfile`, `updateProfile` for guests), `QueueDataProvider` (listen for guests too), login,
-guest-profile, complete-profile, profile (sign-out warning). `MOCK_USER_GUEST` is deleted. Students with an ID saved before 6.6 have no claim doc (not backfilled).
-Developer steps: enable Anonymous sign-in in Firebase Auth; deploy the rules.
-Tests (manual): guest sign-in, profile, ID shown; restart keeps the same guest and ID; join, call, complete as a guest; staff
-Verify by ID with the guest ID; two students entering the same ID (second is refused); guest sign-out warning; Edit Profile as a guest.
+### 6.4 Public display (D01), PRD R-20, R-21 (BUILT 2026-10-25, awaiting the developer's test)
+The staff Queue screen's strip has a **Launch public display** button: `window.open('/display/{office code}', '_blank')`. The display
+(`apps/staff/src/app/display/[code].jsx`, designed on a 1920x1080 canvas and scaled) shows Now Serving, the next three numbers, the
+office QR (`checkInPayload`: `qampus://check-in/{code}/{check_in_code}`), the manual code, and "This queue is closed" with the next
+opening. Data: `watchOfficeByCode` (offices where code == X) and `watchQueue`, shaped by the pure `displayState` (unit tested):
+now serving is the queue's current ticket (its number is the last segment of `current_ticket_id`), next is the numbers after
+`max(last_called_seq, current)` up to `last_seq`. Accepted imprecision: cancelled numbers can appear and a ticket called out of order
+is skipped past. Session: `usePublicSession` reuses the browser's session (a tab opened from the console is the staff session) and
+signs in anonymously only when there is none (the counter's TV; needs the Anonymous provider, already enabled for guests); the staff
+`SessionProvider` ignores anonymous accounts. No rules change (offices and queues are readable by any signed-in user; tickets stay
+private). A listener error shows the Outage screen. `MOCK_OFFICES` and the `?outage=1` dev aid are gone. No fullscreen button (use F11).
 
 ### 6.5 and the native slices (after 6.6, one rebuild)
 - QR scan on the student Scan tab (R-20, R-21, R-31): `npx expo install expo-camera`, the camera permission plugin in

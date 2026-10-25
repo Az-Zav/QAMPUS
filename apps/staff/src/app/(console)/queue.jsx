@@ -228,6 +228,11 @@ export default function Queue() {
     }
   })();
 
+  // Opens the public display for this office in a new tab; it reuses this browser's session
+  const launchDisplay = () => {
+    if (typeof window !== 'undefined') window.open(`${window.location.origin}/display/${encodeURIComponent(office.code)}`, '_blank');
+  };
+
   const sideBySide =
     width >= QUEUE_COLUMNS_BREAKPOINT;
 
@@ -268,6 +273,7 @@ export default function Queue() {
         onOverrideCutoff={() =>
           open(QueueModal.CUTOFF)
         }
+        onLaunchDisplay={launchDisplay}
         onOpenQueue={queue.openQueue}
         onCloseQueue={() =>
           open(QueueModal.CLOSE)

@@ -1,7 +1,7 @@
 // Values the schema does not store: they are derived from the queue doc (docs/SCHEMA.md, reading notes).
 // Pure: no Firebase.
 
-import { RULES, TICKET_STATUS } from '@qampus/core/domain';
+import { QUEUE_STATUS, RULES, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDayStart, nextOpening, todayHours } from '@qampus/core/format';
 import { shortTicketNumber } from './ids.js';
 
@@ -67,6 +67,21 @@ export function cutoffState({ office, queue, now = new Date() }) {
 // "Now serving" short number, or null before anyone was called
 export const nowServing = (office, queue) =>
   queue && queue.last_called_seq > 0 ? shortTicketNumber(office.code, queue.last_called_seq) : null;
+
+// What the public display shows (D01): only ticket numbers, never names. `nowServing` is the ticket at the window
+// (the queue's current ticket, its number is the id's last segment), or null; `next` is the following numbers still to
+// be called, up to `nextCount`. Cancelled numbers can appear and a ticket called out of order is skipped past, the same
+// accepted imprecision as the waiting count (the queue doc does not store who is waiting).
+export function displayState({ office, queue, nextCount = 3 }) {
+  const isOpen = queue?.status === QUEUE_STATUS.OPEN;
+  const currentSeq = Number(String(queue?.current_ticket_id ?? '').split('_').pop()) || 0;
+  const nowServing = currentSeq > 0 ? shortTicketNumber(office.code, currentSeq) : null;
+  const first = Math.max(queue?.last_called_seq ?? 0, currentSeq) + 1;
+  const last = Math.min(queue?.last_seq ?? 0, first + nextCount - 1);
+  const next = [];
+  for (let seq = first; seq <= last; seq += 1) next.push(shortTicketNumber(office.code, seq));
+  return { isOpen, nowServing, next: isOpen ? next : [] };
+}
 
 // Waiting tickets in FIFO order (lowest number first)
 export const waitingTickets = (tickets) =>

@@ -11,7 +11,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 const COPIED_MS = 1500;
 
 // W03 HeaderStrip — manual code (mirrors the public display), queue readout, joining indicator,
-// and the queue-level actions: Open/Close queue and Cancel queue.
+// and the queue-level actions: Launch public display, Open/Close queue and Cancel queue.
 export default function HeaderStrip({
   manualCode,
   waitingCount,
@@ -20,6 +20,7 @@ export default function HeaderStrip({
   joiningOpen,
   cutoffReached,
   onOverrideCutoff,
+  onLaunchDisplay,
   onOpenQueue,
   onCloseQueue,
   onCancelQueue,
@@ -75,6 +76,12 @@ export default function HeaderStrip({
             </Pressable>
           )}
         </View>
+        <ActionButton
+          label={QUEUE_COPY.launchDisplay}
+          type={ButtonType.SECONDARY}
+          onPress={onLaunchDisplay}
+          style={styles.launch}
+        />
         {isOpen ? (
           <ActionButton
             label={QUEUE_COPY.closeQueue}
@@ -124,6 +131,7 @@ const makeStyles = (c) =>
     joiningLabel: { fontFamily: STAFF_FONT.semibold, fontSize: 17, color: c.ink },
     joiningClosed: { color: c.slate },
     link: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: 17, color: c.ink, textDecorationLine: 'underline' },
+    launch: { width: 210 },
     toggle: { width: 150 },
     cancel: { width: 170 },
   });

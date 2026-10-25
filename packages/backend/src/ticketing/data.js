@@ -1,7 +1,7 @@
 // Firestore listeners for offices, queues and tickets. Each returns an unsubscribe function.
 // Timestamps arrive as ISO strings, so views can pass them straight to `new Date()`.
 
-import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, limit, onSnapshot, query, where } from 'firebase/firestore';
 import { campusDate } from '@qampus/core/format';
 import { toPlain } from '../plain.js';
 import { queueIdFor } from './ids.js';
@@ -77,6 +77,16 @@ export function watchOfficeTickets(db, officeId, now, onData, onError) {
   return onSnapshot(
     query(collection(db, 'tickets'), where('office_id', '==', officeId), where('queue_date', '==', campusDate(now).key)),
     (snap) => onData(snap.docs.map(toPlain)),
+    onError,
+  );
+}
+
+// The office whose code is `code` (the public display's address, /display/R), live: onData(office | null).
+// The code is looked up in capitals, as offices store it.
+export function watchOfficeByCode(db, code, onData, onError) {
+  return onSnapshot(
+    query(collection(db, 'offices'), where('code', '==', String(code ?? '').trim().toUpperCase()), limit(1)),
+    (snap) => onData(snap.empty ? null : toPlain(snap.docs[0])),
     onError,
   );
 }

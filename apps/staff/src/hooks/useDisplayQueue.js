@@ -1,26 +1,32 @@
-import { QUEUE_STATUS } from '@qampus/core/domain';
-import { useQueueStore } from '@/providers/QueueProvider';
+import { db } from '@/lib/firebase';
+import { displayState, watchQueue } from '@qampus/backend';
+import { useEffect, useState } from 'react';
+import { useCampusDay } from './useCampusDay';
 
-const NEXT_COUNT = 3;
-
-// D01: what the public display shows for an office — now serving and the next three, CODE-SEQ only
-// (no names or personal data on a public screen). Offices other than the live mock queue fall back
-// to their summary record. Backend swap: poll the public queue endpoint for office.code.
+// D01: what the public display shows for an office: { isOpen, nowServing, next } (CODE-SEQ numbers only, no names or
+// personal data on a public screen), or { error: true } when the queue cannot be read, or null until it has loaded.
 export function useDisplayQueue(office) {
-  const { queue } = useQueueStore();
-  if (!office) return null;
+  const dayKey = useCampusDay();
+  const officeId = office?.id ?? null;
+  const key = `${officeId}_${dayKey}`;
+  // Tagged with the key it was loaded for, so yesterday's queue is never shown as today's
+  const [state, setState] = useState({ key: null, queue: null, error: false });
 
-  if (office.id === queue.office_id) {
-    return {
-      isOpen: queue.status === QUEUE_STATUS.OPEN,
-      nowServing: queue.current?.short_ticket_number ?? null,
-      next: queue.waiting.slice(0, NEXT_COUNT).map((ticket) => ticket.short_ticket_number),
-    };
-  }
+  useEffect(() => {
+    if (!officeId) return undefined;
+    return watchQueue(
+      db,
+      officeId,
+      new Date(),
+      (queue) => setState({ key, queue, error: false }),
+      (error) => {
+        console.warn('Could not load the queue', error);
+        setState({ key, queue: null, error: true });
+      },
+    );
+  }, [officeId, key]);
 
-  return {
-    isOpen: office.queue.status === QUEUE_STATUS.OPEN,
-    nowServing: office.queue.current_ticket_number,
-    next: [],
-  };
+  if (!office || state.key !== key) return null;
+  if (state.error) return { error: true };
+  return displayState({ office, queue: state.queue });
 }
