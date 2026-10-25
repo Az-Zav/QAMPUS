@@ -1,36 +1,45 @@
 import { ButtonType, IconSet, LOCK_COPY, SPACING, TYPOGRAPHY } from '@/constants';
 import { useTheme, useThemedStyles } from '@/hooks';
 import { Button } from '@qampus/ui';
-import { StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 
-// Covers the whole app while the biometric lock is on. `waiting` is the moment before the setting has been read:
-// the cover is already up (no flash of the app) but there is nothing to ask yet.
+// Covers the whole phone screen while the biometric lock is on: a Modal is its own window, so it sits above the status
+// bar, the navigation bar, the bottom nav and every other screen or dialog, instead of only the area its parent fills.
+// `waiting` is the moment before the setting has been read: the cover is already up (no flash of the app) but there is
+// nothing to ask yet. The back button is ignored, so it cannot be dismissed without unlocking.
 export default function LockScreen({ waiting = false, onUnlock }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
 
   return (
-    <View style={styles.cover} accessibilityViewIsModal importantForAccessibility="yes">
-      {!waiting && (
-        <>
-          <IconSet name="lock-closed-outline" size={44} color={colors.gold} />
-          <Text style={styles.title} accessibilityRole="header">
-            {LOCK_COPY.title}
-          </Text>
-          <Text style={styles.body}>{LOCK_COPY.body}</Text>
-          <Button label={LOCK_COPY.unlock} type={ButtonType.PRIMARY} onPress={onUnlock} style={styles.button} />
-        </>
-      )}
-    </View>
+    <Modal
+      visible
+      animationType="none"
+      transparent={false}
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={() => {}}
+    >
+      <View style={styles.cover}>
+        {!waiting && (
+          <>
+            <IconSet name="lock-closed-outline" size={44} color={colors.gold} />
+            <Text style={styles.title} accessibilityRole="header">
+              {LOCK_COPY.title}
+            </Text>
+            <Text style={styles.body}>{LOCK_COPY.body}</Text>
+            <Button label={LOCK_COPY.unlock} type={ButtonType.PRIMARY} onPress={onUnlock} style={styles.button} />
+          </>
+        )}
+      </View>
+    </Modal>
   );
 }
 
 const makeStyles = (c) =>
   StyleSheet.create({
     cover: {
-      ...StyleSheet.absoluteFillObject,
-      zIndex: 1000,
-      elevation: 1000,
+      flex: 1,
       backgroundColor: c.paper,
       alignItems: 'center',
       justifyContent: 'center',
