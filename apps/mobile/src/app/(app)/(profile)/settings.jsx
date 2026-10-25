@@ -10,8 +10,9 @@ import SubHeader from '@/components/shell/SubHeader';
 
 import { RADII, SETTINGS_COPY, SPACING, withOpacity } from '@/constants';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
+import { useBiometric } from '@/providers/BiometricProvider';
 
-// S16 Settings (UIUX §4.14). Push and theme are functional; biometric is inert in V1 (PRD §5).
+// S16 Settings (UIUX §4.14). Theme and biometric unlock work; push saves its switch with the push slice.
 // The theme follows the device until a half is picked; the choice lasts until the app restarts.
 
 export default function SettingsScreen() {
@@ -20,6 +21,7 @@ export default function SettingsScreen() {
   const { user } = useSession();
   const [pushEnabled, setPushEnabled] = useState(user?.push_enabled ?? true);
   const { scheme, setPreference } = useTheme();
+  const biometric = useBiometric();
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
 
@@ -39,9 +41,10 @@ export default function SettingsScreen() {
             />
             <Toggle
               title={SETTINGS_COPY.biometric.title}
-              subtitle={SETTINGS_COPY.biometric.subtitle}
-              value
-              disabled
+              subtitle={biometric.available ? SETTINGS_COPY.biometric.subtitle : SETTINGS_COPY.biometric.unavailable}
+              value={biometric.enabled}
+              onValueChange={biometric.setEnabled}
+              disabled={!biometric.available && !biometric.enabled}
             />
           </View>
         </View>

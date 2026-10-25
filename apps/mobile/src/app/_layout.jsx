@@ -1,5 +1,6 @@
 import { THEMES } from '@/constants';
 import { useTheme } from '@/hooks';
+import { BiometricProvider } from '@/providers/BiometricProvider';
 import { QueueDataProvider } from '@/providers/QueueDataProvider';
 import { SessionProvider } from '@/providers/SessionProvider';
 import { ThemeProvider } from '@qampus/ui';
@@ -39,9 +40,11 @@ export default function RootLayout() {
     <SafeAreaProvider style={{ flex: 1 }}>
       <ThemeProvider themes={THEMES}>
         <SessionProvider>
-          <QueueDataProvider>
-            <ThemedRoot />
-          </QueueDataProvider>
+          <BiometricProvider>
+            <QueueDataProvider>
+              <ThemedRoot />
+            </QueueDataProvider>
+          </BiometricProvider>
         </SessionProvider>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -2,6 +2,7 @@ import CalledModal from '@/components/modals/CalledModal';
 import BottomNav from '@/components/shell/BottomNav';
 import NotificationToast from '@/components/shell/NotificationToast';
 import { AppTab, TicketStatus } from '@/constants';
+import { useBiometric } from '@/providers/BiometricProvider';
 import { useMyTickets, useNotificationToast, useTheme, useThemedStyles } from '@/hooks';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -18,12 +19,14 @@ export default function AppLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const { active } = useMyTickets();
+  // Nothing from behind the biometric lock may pop up over it
+  const { locked } = useBiometric();
 
   // "It's your turn": shown on any screen while a ticket is being called, until the student dismisses
   // it or opens the scanner. A ticket is only announced once; it is not shown on the scanner itself.
   const [dismissedIds, setDismissedIds] = useState(() => new Set());
   const calledTicket =
-    pathname === '/scan'
+    pathname === '/scan' || locked
       ? null
       : (active.find((t) => t.status === TicketStatus.YOUR_TURN && !dismissedIds.has(t.id)) ?? null);
   const dismiss = (id) => setDismissedIds((prev) => new Set(prev).add(id));
@@ -42,7 +45,7 @@ export default function AppLayout() {
       />
       <BottomNav active={TAB_PATHS[pathname]} onNavigate={(tab) => router.navigate(`/${tab}`)} />
       <NotificationToast
-        notification={toast}
+        notification={locked ? null : toast}
         onPress={() => {
           dismissToast();
           router.navigate('/notifications');

@@ -1,3 +1,4 @@
+export * from './checkin.js';
 export * from './data.js';
 export * from './derive.js';
 export * from './ids.js';
