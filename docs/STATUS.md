@@ -21,22 +21,23 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Three-ticket limit (R-07) tested on device and staff browser**: `users.active_count` is raised by a join (rules require it) and lowered by every finish/cancel. Join is refused with a message at three; the Join button is disabled at three. A hand-made client could cheat the counter (accepted for the prototype). Office cancel runs in small transactions.
 - **One active ticket per office tested on device and staff browser**: `users.active_offices` (office id -> true) is set by a join and cleared by every finish/cancel. A second join of the same office is refused with a message, and its Join button is disabled.
 - **Penalties tested on device and staff browser**: offenses (`offenses/{ticketId}`), strikes and a 24-hour ban after the second, recorded with the no-show and the cancel-while-called in the same transaction; a ban blocks joining; the student's Bans & Warnings screen and the staff Offenses screen read real data; staff revoke with a reason. `MOCK_OFFENSES` and `MOCK_STAFF_OFFENSES` are deleted.
-- **Activity log (`events`) built, awaiting the developer's test**: every staff action and the student join/cancel/check-in writes one `events` line inside its transaction; the staff Activity Log reads them 50 per page (Newer/Older). Needs `firebase deploy --only firestore:rules,firestore:indexes --project qampus-d0718` before it works. `MOCK_STAFF_ACTIVITY` and the mock reducer are gone.
-- **UI**: all screens exist. The whole ticket flow and the activity log are real. Still mock: notifications and push, guests, programs, public display (`MOCK_OFFICES`), staff cutoff override.
+- **Activity log (`events`) tested**: every staff action and the student join/cancel/check-in writes one `events` line inside its transaction; the staff Activity Log reads them 50 per page (arrows) with action and date filters. Needs the rules and `firestore.indexes.json` deployed.
+- **In-app notifications tested**: `users/{uid}/notifications` is written with each cause (your turn, approaching turn at place 3, no-show, queue cancelled per ticket, offense revoked, queue confirmed, warning on a called cancel). The mobile list and bell are live; viewing the screen marks them read (only while focused); a banner slides in from the top for a new one while the app is open. Push is not built.
+- **Capacity cutoff and measured wait times tested**: `cutoffState` refuses a join when the minutes left before closing, divided by the average visit, are fewer than the waiting plus one (client side only); the Join button reason and the staff banner/strip use it; staff Override cutoff writes `cutoff_overridden` plus a `CUTOFF_OVERRIDE` event. Wait estimates use today's measured average. A day with no hours has no cutoff.
+- **UI**: all screens exist. The ticket flow, activity log, notifications and cutoff are real. Still mock: staff notifications (maintenance text only), guests, programs, public display (`MOCK_OFFICES`).
 
 ## In progress
-Slice 6.1 (activity log): code done, 49 unit tests, lint and staff build pass. Waiting for the rules/index deploy and the developer's manual test, then commit.
+Nothing active. Slices 6.1 to 6.3 passed manual testing and are pushed. Next slice to be chosen.
 
 ## Next
-Ordered plan with designs, rules notes and decisions: `NEXT_SESSION.md` section 6. In order: 6.2 notifications (in-app, stage A then B), 6.3 capacity cutoff and wait times, then public display, QR scan (new dev build), guests, small issues.
+Ordered plan with designs and decisions: `NEXT_SESSION.md` section 6. Remaining: public display (6.4), QR scan (6.5, new dev build), guests (6.6), push (needs a decision), small issues (6.7). Candidate tweak: measured average only after 3+ visits.
 
 ## Known issues
 - `edit-profile.jsx` calls `updateProfile`, which `SessionProvider` does not define; saving a profile throws.
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).
-- Seeded `hours` on `off_reg_001` may be incomplete (`close_min` should be 1020). Hours are display only now.
 - Any Google account that signs in on the staff app leaves an empty Firebase Auth user (no Firestore access). Accepted.
 - A refused open/close/call/complete on staff only logs to the console (no on-screen message yet).
-- Staff "Override cutoff" only changes mock state (the cutoff is not real yet).
+- Cutoff is enforced in the client only (a hand-made client could join past it); an office with no hours for today has no cutoff.
 - Stray root `app.json`; root README is still the Expo template.
 
 ## Open questions

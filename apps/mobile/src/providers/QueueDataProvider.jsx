@@ -32,7 +32,8 @@ export function QueueDataProvider({ children }) {
   const [board, setBoard] = useState(EMPTY_BOARD);
   const [tickets, setTickets] = useState(EMPTY_TICKETS);
   const [offenses, setOffenses] = useState(EMPTY_OFFENSES);
-  const [notifications, setNotifications] = useState(EMPTY_NOTIFICATIONS);
+  // The mailbox is tagged with the uid it was loaded for: it is only "loaded" once Firestore has answered
+  const [mailbox, setMailbox] = useState({ uid: null, list: EMPTY_NOTIFICATIONS });
   // The student's own profile, live: the session copy is read once at sign-in, so strikes and bans would be stale
   const [profile, setProfile] = useState(null);
 
@@ -58,7 +59,7 @@ export function QueueDataProvider({ children }) {
 
   useEffect(() => {
     if (!uid) return undefined;
-    return watchMyNotifications(db, uid, setNotifications, warn('Could not load notifications'));
+    return watchMyNotifications(db, uid, (list) => setMailbox({ uid, list }), warn('Could not load notifications'));
   }, [uid]);
 
   // Signed out (or a guest): show nothing, whatever the last student left in state
@@ -68,10 +69,11 @@ export function QueueDataProvider({ children }) {
       tickets: uid ? tickets : EMPTY_TICKETS,
       offenses: uid ? offenses : EMPTY_OFFENSES,
       profile: uid ? profile : null,
-      notifications: uid ? notifications : EMPTY_NOTIFICATIONS,
+      notifications: uid && mailbox.uid === uid ? mailbox.list : EMPTY_NOTIFICATIONS,
+      notificationsReady: !!uid && mailbox.uid === uid,
       uid,
     }),
-    [uid, board, tickets, offenses, profile, notifications],
+    [uid, board, tickets, offenses, profile, mailbox],
   );
 
   return <QueueDataContext.Provider value={value}>{children}</QueueDataContext.Provider>;

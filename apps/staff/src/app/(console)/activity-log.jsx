@@ -1,4 +1,3 @@
-import ActionButton from '@/components/primitives/ActionButton';
 import FilterSelect from '@/components/primitives/FilterSelect';
 import { LogRow } from '@/components/records/RecordRow';
 import ConsolePage from '@/components/shell/ConsolePage';
@@ -8,15 +7,16 @@ import {
   ACTIVITY_ACTION,
   ACTIVITY_ACTION_LABEL,
   ACTIVITY_LOG_COPY,
-  ButtonType,
   EMPTY_COPY,
   FOOTER_COPY,
+  RADII,
   STAFF_FONT,
   TYPOGRAPHY,
 } from '@/constants';
-import { useActivityLog, useStaffOffice, useThemedStyles } from '@/hooks';
+import { useActivityLog, useStaffOffice, useTheme, useThemedStyles } from '@/hooks';
+import { ChevronLeft, ChevronRight } from '@/icons';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 const ACTION_OPTIONS = [
   { key: null, label: ACTIVITY_LOG_COPY.allActions },
@@ -28,6 +28,7 @@ const RANGE_OPTIONS = ACTIVITY_LOG_COPY.dateRanges;
 // numbers, actor and reason. Filters: action type and date.
 export default function ActivityLog() {
   const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
   const { office } = useStaffOffice();
   const [action, setAction] = useState(null);
   const [rangeKey, setRangeKey] = useState(RANGE_OPTIONS[0].key);
@@ -35,7 +36,7 @@ export default function ActivityLog() {
   const { entries, rangeLabel, hasNewer, hasOlder, newer, older } = useActivityLog({ action, days: range.days });
 
   return (
-    <ConsolePage topSpacing={44} footer={{ center: FOOTER_COPY.logScope(office), right: FOOTER_COPY.logNote }}>
+    <ConsolePage topSpacing={44} footer={{ center: FOOTER_COPY.logScope(office) }}>
       <PageHeader title={ACTIVITY_LOG_COPY.title} subtitle={ACTIVITY_LOG_COPY.subtitle(office)}>
         <View style={styles.filters}>
           <FilterSelect
@@ -62,20 +63,26 @@ export default function ActivityLog() {
           <View style={styles.pager}>
             <Text style={styles.count}>{ACTIVITY_LOG_COPY.pageSummary(range.label, rangeLabel)}</Text>
             <View style={styles.pagerButtons}>
-              <ActionButton
-                label={ACTIVITY_LOG_COPY.newer}
-                type={ButtonType.SECONDARY}
-                disabled={!hasNewer}
+              <Pressable
                 onPress={newer}
-                style={styles.pagerButton}
-              />
-              <ActionButton
-                label={ACTIVITY_LOG_COPY.older}
-                type={ButtonType.SECONDARY}
-                disabled={!hasOlder}
+                disabled={!hasNewer}
+                accessibilityRole="button"
+                accessibilityLabel={ACTIVITY_LOG_COPY.newer}
+                accessibilityState={{ disabled: !hasNewer }}
+                style={[styles.arrow, !hasNewer && styles.arrowDisabled]}
+              >
+                <ChevronLeft size={18} color={colors.ink} />
+              </Pressable>
+              <Pressable
                 onPress={older}
-                style={styles.pagerButton}
-              />
+                disabled={!hasOlder}
+                accessibilityRole="button"
+                accessibilityLabel={ACTIVITY_LOG_COPY.older}
+                accessibilityState={{ disabled: !hasOlder }}
+                style={[styles.arrow, !hasOlder && styles.arrowDisabled]}
+              >
+                <ChevronRight size={18} color={colors.ink} />
+              </Pressable>
             </View>
           </View>
           {entries.map((entry) => (
@@ -93,5 +100,6 @@ const makeStyles = (c) =>
     count: { fontFamily: STAFF_FONT.semibold, fontSize: TYPOGRAPHY.size.md, color: c.slate },
     pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
     pagerButtons: { flexDirection: 'row', gap: 8 },
-    pagerButton: { height: 36, paddingHorizontal: 16 },
+    arrow: { padding: 8, borderRadius: RADII.full, borderWidth: 1, borderColor: c.slate },
+    arrowDisabled: { opacity: 0.35 },
   });

@@ -4,6 +4,8 @@ export {
   BellRing,
   Check,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   CircleCheck,
   CircleX,
   Copy,

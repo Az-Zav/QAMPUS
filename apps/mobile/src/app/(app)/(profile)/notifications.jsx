@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
 import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
@@ -10,24 +10,12 @@ import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 import CalledModal from '@/components/modals/CalledModal';
 
-import { EmptyStateType, ListRowTone, ListRowType, NOTIFICATION_TYPE, NOTIFICATIONS_COPY, SPACING, TicketStatus } from '@/constants';
+import { EmptyStateType, ListRowType, NOTIFICATION_STYLE, NOTIFICATION_TYPE, NOTIFICATIONS_COPY, SPACING, TicketStatus } from '@/constants';
 import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
 import { useMyTickets, useNotifications, useNow, useThemedStyles } from '@/hooks';
 import { daysBetween, formatRelative } from '@/utils';
 
 // S12 Notifications (UIUX §4.10, §5.6).
-
-const TYPE_STYLE = {
-  [NOTIFICATION_TYPE.QUEUE_CONFIRMED]: { icon: 'ticket-outline', tone: ListRowTone.HIGHLIGHT },
-  [NOTIFICATION_TYPE.YOUR_TURN]: { icon: 'notifications-outline', tone: ListRowTone.HIGHLIGHT },
-  [NOTIFICATION_TYPE.APPROACHING_TURN]: { icon: 'timer-outline', tone: ListRowTone.HIGHLIGHT },
-  [NOTIFICATION_TYPE.NO_SHOW]: { icon: 'person-remove-outline', tone: ListRowTone.ERROR },
-  [NOTIFICATION_TYPE.QUEUE_CANCELLED]: { icon: 'close-circle-outline', tone: ListRowTone.NEUTRAL },
-  [NOTIFICATION_TYPE.SERVICE_COMPLETED]: { icon: 'checkmark-circle-outline', tone: ListRowTone.SUCCESS },
-  [NOTIFICATION_TYPE.WARNING]: { icon: 'warning-outline', tone: ListRowTone.ERROR },
-  [NOTIFICATION_TYPE.GLOBAL_ANNOUNCEMENT]: { icon: 'megaphone-outline', tone: ListRowTone.NEUTRAL },
-  [NOTIFICATION_TYPE.OFFENSE_REVOKED]: { icon: 'shield-checkmark-outline', tone: ListRowTone.SUCCESS },
-};
 
 // Types that point at the penalty record (UIUX §5.6)
 const OPENS_BANS = new Set([NOTIFICATION_TYPE.WARNING, NOTIFICATION_TYPE.NO_SHOW]);
@@ -42,6 +30,21 @@ export default function NotificationsScreen() {
   const preview = usePreview('notifications'); // DEV-PREVIEW
   const items = preview.data?.notifications ?? liveNotifications; // DEV-PREVIEW
   const [calledTicketId, setCalledTicketId] = useState(null);
+
+  // Looking at the screen is reading: while it is focused, whatever is unread (now or arriving meanwhile) is
+  // marked read. A screen left open behind another one is not focused and reads nothing.
+  const requested = useRef(new Set());
+  useFocusEffect(
+    useCallback(() => {
+      liveNotifications
+        .filter((n) => !n.is_read && !requested.current.has(n.id))
+        .forEach((n) => {
+          requested.current.add(n.id);
+          markRead(n.id);
+        });
+    }, [liveNotifications, markRead]),
+  );
+
   const unread = items.filter((n) => !n.is_read).length;
 
   const sections = useMemo(
@@ -58,7 +61,6 @@ export default function NotificationsScreen() {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
   const onPressItem = (notification) => {
-    if (!notification.is_read) markRead(notification.id);
 
     if (notification.type === NOTIFICATION_TYPE.YOUR_TURN) {
       // Opens M05 only while the ticket is still CALLED; otherwise it's just marked read
@@ -93,7 +95,7 @@ export default function NotificationsScreen() {
         ListEmptyComponent={<EmptyState type={EmptyStateType.NO_NOTIFICATIONS} />}
         renderSectionHeader={({ section }) => <SectionLabel text={section.title} style={styles.sectionLabel} />}
         renderItem={({ item }) => {
-          const { icon, tone } = TYPE_STYLE[item.type] ?? TYPE_STYLE[NOTIFICATION_TYPE.GLOBAL_ANNOUNCEMENT];
+          const { icon, tone } = NOTIFICATION_STYLE[item.type] ?? NOTIFICATION_STYLE[NOTIFICATION_TYPE.GLOBAL_ANNOUNCEMENT];
           return (
             <ListRow
               type={ListRowType.NOTIFICATION}

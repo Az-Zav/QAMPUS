@@ -102,7 +102,6 @@ export const FOOTER_COPY = Object.freeze({
   offensesScope: (office) => `Showing offenses for ${office.short_name} only`,
   offensesNote: 'Revoked offenses stay on the record',
   logScope: (office) => `Showing all actions for ${office.short_name}`,
-  logNote: 'Retained indefinitely (R-29)',
 });
 
 export const OFFENSES_COPY = Object.freeze({

@@ -6,7 +6,7 @@ import { useCallback, useMemo } from 'react';
 // The signed-in student's in-app notifications (R-25), newest first, live. `markRead(id)` marks one read;
 // `markAllRead()` marks them all. A failed mark only logs: the list stays as it was.
 export function useNotifications() {
-  const { notifications, uid } = useQueueData();
+  const { notifications, notificationsReady, uid } = useQueueData();
 
   const markRead = useCallback(
     (id) => {
@@ -22,10 +22,11 @@ export function useNotifications() {
   return useMemo(
     () => ({
       notifications,
+      ready: notificationsReady,
       unreadCount: notifications.filter((n) => !n.is_read).length,
       markRead,
       markAllRead,
     }),
-    [notifications, markRead, markAllRead],
+    [notifications, notificationsReady, markRead, markAllRead],
   );
 }

@@ -3,4 +3,5 @@
 
 export * from './content';
 export * from './domain';
+export * from './notificationStyle';
 export * from './theme';
