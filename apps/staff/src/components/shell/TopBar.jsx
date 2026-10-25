@@ -15,10 +15,12 @@ import {
 } from '@/constants';
 import { useSession, useStaffOffice, useStaffQueue, useTheme, useThemedStyles } from '@/hooks';
 import { BellRing, ChevronDown, CircleCheck, CircleX } from '@/icons';
+import { Image } from 'expo-image';
 import { Link, usePathname } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+const LOGO = require('../../../assets/images/Qampus-Logo.png');
 const Menu = Object.freeze({ NONE: null, ACCOUNT: 'account', NOTIFICATIONS: 'notifications' });
 
 // Figma Staff/TopBar — brand, office and queue status pill on the left, section tabs in the middle,
@@ -49,7 +51,10 @@ export default function TopBar() {
     <View style={styles.bar}>
       <View style={styles.inner}>
         <View style={styles.left}>
-          <Text style={styles.brand}>QAMPUS</Text>
+          <View style={styles.brandRow}>
+            <Image source={LOGO} style={styles.logo} contentFit="contain" accessibilityLabel="QAMPUS" />
+            <Text style={styles.brand}>QAMPUS</Text>
+          </View>
           <Text style={styles.office} numberOfLines={1}>
             {office?.short_name}
           </Text>
@@ -174,6 +179,8 @@ const makeStyles = (c) =>
       gap: 24,
     },
     left: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 16 },
+    brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    logo: { width: 32, height: 32 },
     brand: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: TYPOGRAPHY.size.lg, color: c.gold },
     office: { flexShrink: 1, fontFamily: STAFF_FONT.semibold, fontSize: 16, color: c.onInverse },
     pill: {
