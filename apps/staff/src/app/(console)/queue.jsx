@@ -34,8 +34,10 @@ import {
 } from '@/hooks';
 
 import {
+  CancelResult,
   NoShowResult,
   OverrideResult,
+  QueueActionResult,
   VerifyResult,
 } from '@/providers/QueueProvider';
 
@@ -48,7 +50,17 @@ import {
 } from 'react-native';
 
 // =====================================================
-// STAFF QUEUE MODAL TYPES
+// QAMPUS STAFF QUEUE DASHBOARD
+//
+// Preserves:
+// - Queue header controls
+// - Current ticket panel
+// - Waiting ticket list
+// - Structured multi-select reasons
+// - Queue action validation
+// - Responsive layout from Fix #8
+//
+// Fix #6 demo panel removed.
 // =====================================================
 
 const QueueModal = Object.freeze({
@@ -62,14 +74,73 @@ const QueueModal = Object.freeze({
 });
 
 // =====================================================
+// ACTION ERROR MESSAGES
+// =====================================================
+
+const QUEUE_ACTION_ERRORS = {
+  [QueueActionResult.INVALID_STATE]:
+    'This action is not available in the current queue state.',
+
+  [QueueActionResult.QUEUE_CLOSED]:
+    'Open the queue before calling the next ticket.',
+
+  [QueueActionResult.ACTIVE_TICKET]:
+    'Finish handling the current ticket first.',
+
+  [QueueActionResult.NO_WAITING_TICKETS]:
+    'There are no waiting tickets to call.',
+
+  [QueueActionResult.TICKET_NOT_FOUND]:
+    'The selected ticket could not be found.',
+
+  [QueueActionResult.ALREADY_OPEN]:
+    'The queue is already open.',
+
+  [QueueActionResult.ALREADY_CLOSED]:
+    'The queue is already closed.',
+
+  [QueueActionResult.ALREADY_OVERRIDDEN]:
+    'The cutoff has already been overridden.',
+};
+
+const OVERRIDE_ERRORS = {
+  [OverrideResult.REASON_REQUIRED]:
+    'Please select at least one valid reason.',
+
+  [OverrideResult.INVALID_STATE]:
+    'The queue must be open with no active ticket.',
+
+  [OverrideResult.TICKET_NOT_FOUND]:
+    'This ticket is no longer waiting.',
+
+  [OverrideResult.ALREADY_NEXT]:
+    'This ticket is already next. Use Call Next.',
+};
+
+const NO_SHOW_ERRORS = {
+  [NoShowResult.INVALID_STATE]:
+    'This ticket cannot be marked as a no-show.',
+
+  [NoShowResult.TOO_EARLY]:
+    'The grace period has not expired yet.',
+
+  [NoShowResult.REASON_REQUIRED]:
+    'Please select a valid reason.',
+
+  [NoShowResult.ALREADY_RECORDED]:
+    'A no-show offense already exists for this ticket.',
+};
+
+const CANCEL_ERRORS = {
+  [CancelResult.INVALID_REASON]:
+    'Please select at least one valid reason.',
+
+  [CancelResult.INVALID_STATE]:
+    'The queue has already been cancelled or cleared.',
+};
+
+// =====================================================
 // QUEUE DASHBOARD
-//
-// Fix #1: No-show handling
-// Fix #2: Offense and penalty calculations
-// Fix #3: Unified reducer state
-// Fix #4: FIFO override validation
-//
-// New: Multi-select reason system
 // =====================================================
 
 export default function Queue() {
@@ -78,62 +149,63 @@ export default function Queue() {
   const { office } = useStaffOffice();
   const queue = useStaffQueue();
 
-  // Current modal.
   const [modal, setModal] = useState(null);
-
-  // Existing ID verification input.
   const [input, setInput] = useState('');
-
-  // Shared modal error.
   const [error, setError] = useState(null);
 
-  // New structured reason selection.
+  const [
+    actionError,
+    setActionError,
+  ] = useState(null);
+
   const [
     reasonSelection,
     setReasonSelection,
   ] = useState(createEmptyReasonSelection);
 
-  // =====================================================
+  // =================================================
   // MODAL HELPERS
-  // =====================================================
+  // =================================================
 
   const open = (type, ticket = null) => {
     setInput('');
     setError(null);
+    setActionError(null);
 
-    // Each action starts with a fresh selection.
-    setReasonSelection(createEmptyReasonSelection());
+    setReasonSelection(
+      createEmptyReasonSelection(),
+    );
 
-    setModal({ type, ticket });
+    setModal({
+      type,
+      ticket,
+    });
   };
 
   const close = () => {
     setModal(null);
     setInput('');
     setError(null);
-    setReasonSelection(createEmptyReasonSelection());
+
+    setReasonSelection(
+      createEmptyReasonSelection(),
+    );
   };
 
-  // For existing actions that don't need a reason.
-  const run = (action) => () => {
-    action();
-    close();
-  };
-
-  // Keep selected reasons in parent state.
   const handleReasonChange = (selection) => {
     setReasonSelection(selection);
     setError(null);
   };
 
-  // Validate reason selections before calling provider.
   const checkReasons = (action) => {
     const result = validateReasonSelection(
       action,
       reasonSelection,
     );
 
-    if (result !== ReasonValidationResult.OK) {
+    if (
+      result !== ReasonValidationResult.OK
+    ) {
       setError(
         REASON_ERROR_MESSAGES[result] ??
           'Please select a valid reason.',
@@ -145,18 +217,58 @@ export default function Queue() {
     return true;
   };
 
+  // Execute a synchronous queue action and
+  // display an error if it does not succeed.
+  const executeAction = (action) => {
+    const result = action();
+
+    if (
+      result === QueueActionResult.OK ||
+      result === undefined
+    ) {
+      setActionError(null);
+      close();
+      return true;
+    }
+
+    setError(
+      QUEUE_ACTION_ERRORS[result] ??
+        'Unable to complete this action.',
+    );
+
+    return false;
+  };
+
+  // Actions without confirmation modals.
+  const runDirectAction = (action) => {
+    const result = action();
+
+    if (
+      result === QueueActionResult.OK ||
+      result === undefined
+    ) {
+      setActionError(null);
+      return;
+    }
+
+    setActionError(
+      QUEUE_ACTION_ERRORS[result] ??
+        'Unable to complete this action.',
+    );
+  };
+
   const currentNumber =
     queue.current?.short_ticket_number;
 
-  // =====================================================
+  // =================================================
   // MODAL CONFIGURATION
-  // =====================================================
+  // =================================================
 
   const modalProps = (() => {
     switch (modal?.type) {
-      // =================================================
-      // FIFO OVERRIDE — STRUCTURED REASONS
-      // =================================================
+      // =============================================
+      // FIFO OVERRIDE
+      // =============================================
 
       case QueueModal.OVERRIDE: {
         const copy = MODAL_COPY.override(
@@ -168,13 +280,19 @@ export default function Queue() {
 
           field: ModalField.REASON_SELECT,
 
-          reasonAction: REASON_ACTION.FIFO_OVERRIDE,
+          reasonAction:
+            REASON_ACTION.FIFO_OVERRIDE,
+
           reasonSelection,
-          onReasonSelectionChange: handleReasonChange,
+
+          onReasonSelectionChange:
+            handleReasonChange,
 
           onConfirm: () => {
             if (
-              !checkReasons(REASON_ACTION.FIFO_OVERRIDE)
+              !checkReasons(
+                REASON_ACTION.FIFO_OVERRIDE,
+              )
             ) {
               return;
             }
@@ -184,40 +302,30 @@ export default function Queue() {
               reasonSelection,
             );
 
-            if (result === OverrideResult.OK) {
+            if (
+              result === OverrideResult.OK
+            ) {
+              setActionError(null);
               close();
               return;
             }
 
-            const errors = {
-              [OverrideResult.REASON_REQUIRED]:
-                'Please select at least one valid reason.',
-
-              [OverrideResult.INVALID_STATE]:
-                'The queue must be open with no active ticket.',
-
-              [OverrideResult.TICKET_NOT_FOUND]:
-                'This ticket is no longer waiting.',
-
-              [OverrideResult.ALREADY_NEXT]:
-                'This ticket is already next. Use Call Next.',
-            };
-
             setError(
-              errors[result] ??
+              OVERRIDE_ERRORS[result] ??
                 'Unable to override the queue.',
             );
           },
         };
       }
 
-      // =================================================
-      // VERIFY BY ID — EXISTING FUNCTIONALITY
-      // =================================================
+      // =============================================
+      // VERIFY BY ID
+      // =============================================
 
       case QueueModal.VERIFY: {
-        const copy =
-          MODAL_COPY.verifyById(currentNumber);
+        const copy = MODAL_COPY.verifyById(
+          currentNumber,
+        );
 
         return {
           ...copy,
@@ -228,35 +336,34 @@ export default function Queue() {
           onConfirm: () => {
             const result = queue.verifyById(input);
 
-            if (result === VerifyResult.OK) {
+            if (
+              result === VerifyResult.OK
+            ) {
+              setActionError(null);
               close();
-            } else {
-              setError(
-                result === VerifyResult.EXPIRED
-                  ? copy.expired
-                  : copy.noMatch,
-              );
+              return;
             }
+
+            setError(
+              result === VerifyResult.EXPIRED
+                ? copy.expired
+                : copy.noMatch,
+            );
           },
         };
       }
 
-      // =================================================
-      // NO-SHOW — FIX #1 PRESERVED
-      //
-      // Expired CALLED:
-      // Automatic system reason, no dropdown.
-      //
-      // IN_SERVICE:
-      // Required reason selection.
-      // =================================================
+      // =============================================
+      // MANUAL NO-SHOW
+      // =============================================
 
       case QueueModal.NO_SHOW: {
         const reversingVerification =
           queue.current?.status === 'IN_SERVICE';
 
-        const copy =
-          MODAL_COPY.markNoShow(currentNumber);
+        const copy = MODAL_COPY.markNoShow(
+          currentNumber,
+        );
 
         return {
           ...copy,
@@ -283,7 +390,9 @@ export default function Queue() {
           onConfirm: () => {
             if (
               reversingVerification &&
-              !checkReasons(REASON_ACTION.VERIFIED_NO_SHOW)
+              !checkReasons(
+                REASON_ACTION.VERIFIED_NO_SHOW,
+              )
             ) {
               return;
             }
@@ -294,66 +403,61 @@ export default function Queue() {
                 : '',
             );
 
-            if (result === NoShowResult.OK) {
+            if (
+              result === NoShowResult.OK
+            ) {
+              setActionError(null);
               close();
               return;
             }
 
-            const errors = {
-              [NoShowResult.INVALID_STATE]:
-                'This ticket cannot be marked as a no-show.',
-
-              [NoShowResult.TOO_EARLY]:
-                'The grace period has not expired yet.',
-
-              [NoShowResult.REASON_REQUIRED]:
-                'Please select a valid reason.',
-
-              [NoShowResult.ALREADY_RECORDED]:
-                'A no-show offense already exists for this ticket.',
-            };
-
             setError(
-              errors[result] ??
+              NO_SHOW_ERRORS[result] ??
                 'Unable to mark this ticket as a no-show.',
             );
           },
         };
       }
 
-      // =================================================
-      // COMPLETE SERVICE — EXISTING FUNCTIONALITY
-      // =================================================
+      // =============================================
+      // COMPLETE SERVICE
+      // =============================================
 
       case QueueModal.COMPLETE:
         return {
-          ...MODAL_COPY.completeService(currentNumber),
-          onConfirm: run(queue.completeService),
+          ...MODAL_COPY.completeService(
+            currentNumber,
+          ),
+
+          onConfirm: () => {
+            executeAction(
+              queue.completeService,
+            );
+          },
         };
 
-      // =================================================
-      // CLOSE QUEUE — EXISTING FUNCTIONALITY
-      //
-      // No reason is required because existing
-      // issued tickets remain valid.
-      // =================================================
+      // =============================================
+      // CLOSE QUEUE
+      // =============================================
 
       case QueueModal.CLOSE:
         return {
           ...MODAL_COPY.closeQueue(),
+
           destructive: true,
-          onConfirm: run(queue.closeQueue),
+
+          onConfirm: () => {
+            executeAction(queue.closeQueue);
+          },
         };
 
-      // =================================================
-      // CANCEL QUEUE — STRUCTURED REASONS
-      //
-      // Entire queue cancellation requires
-      // at least one approved reason.
-      // =================================================
+      // =============================================
+      // CANCEL ENTIRE QUEUE
+      // =============================================
 
       case QueueModal.CANCEL: {
-        const copy = MODAL_COPY.cancelQueue();
+        const copy =
+          MODAL_COPY.cancelQueue();
 
         return {
           ...copy,
@@ -378,23 +482,39 @@ export default function Queue() {
               return;
             }
 
-            // File 6 will validate structured reasons
-            // and record them in the activity log.
-            queue.cancelQueue(reasonSelection);
+            const result = queue.cancelQueue(
+              reasonSelection,
+            );
 
-            close();
+            if (
+              result === CancelResult.OK
+            ) {
+              setActionError(null);
+              close();
+              return;
+            }
+
+            setError(
+              CANCEL_ERRORS[result] ??
+                'Unable to cancel the queue.',
+            );
           },
         };
       }
 
-      // =================================================
-      // OVERRIDE CUTOFF — EXISTING FUNCTIONALITY
-      // =================================================
+      // =============================================
+      // OVERRIDE CUTOFF
+      // =============================================
 
       case QueueModal.CUTOFF:
         return {
           ...MODAL_COPY.cutoffOverride(office),
-          onConfirm: run(queue.overrideCutoff),
+
+          onConfirm: () => {
+            executeAction(
+              queue.overrideCutoff,
+            );
+          },
         };
 
       default:
@@ -402,12 +522,16 @@ export default function Queue() {
     }
   })();
 
-  // =====================================================
+  // =================================================
   // RESPONSIVE LAYOUT
-  // =====================================================
+  // =================================================
 
   const sideBySide =
     width >= QUEUE_COLUMNS_BREAKPOINT;
+
+  // =================================================
+  // RENDER
+  // =================================================
 
   return (
     <ConsolePage
@@ -419,9 +543,20 @@ export default function Queue() {
         right: office.location,
       }}
     >
-      {/* =============================================
+      {/* =========================================
+          ACTION ERROR
+      ========================================= */}
+
+      {!!actionError && (
+        <InlineBanner
+          tone={BannerTone.DANGER}
+          message={actionError}
+        />
+      )}
+
+      {/* =========================================
           CUTOFF WARNING
-      ============================================= */}
+      ========================================= */}
 
       {queue.cutoffWarningMinutes !== null && (
         <InlineBanner
@@ -429,14 +564,18 @@ export default function Queue() {
           message={QUEUE_COPY.cutoffBanner(
             queue.cutoffWarningMinutes,
           )}
-          actionLabel={QUEUE_COPY.overrideCutoff}
-          onAction={() => open(QueueModal.CUTOFF)}
+          actionLabel={
+            QUEUE_COPY.overrideCutoff
+          }
+          onAction={() =>
+            open(QueueModal.CUTOFF)
+          }
         />
       )}
 
-      {/* =============================================
-          QUEUE HEADER AND CONTROLS
-      ============================================= */}
+      {/* =========================================
+          QUEUE HEADER
+      ========================================= */}
 
       <HeaderStrip
         manualCode={office.manual_code}
@@ -450,7 +589,9 @@ export default function Queue() {
         onOverrideCutoff={() =>
           open(QueueModal.CUTOFF)
         }
-        onOpenQueue={queue.openQueue}
+        onOpenQueue={() =>
+          runDirectAction(queue.openQueue)
+        }
         onCloseQueue={() =>
           open(QueueModal.CLOSE)
         }
@@ -459,14 +600,15 @@ export default function Queue() {
         }
       />
 
-      {/* =============================================
-          CURRENT TICKET AND WAITING QUEUE
-      ============================================= */}
+      {/* =========================================
+          CURRENT AND WAITING TICKETS
+      ========================================= */}
 
       <View
         style={[
           styles.columns,
-          sideBySide && styles.columnsRow,
+          sideBySide &&
+            styles.columnsRow,
         ]}
       >
         <CurrentTicketPanel
@@ -476,7 +618,9 @@ export default function Queue() {
             queue.remainingSeconds
           }
           canCallNext={queue.canCallNext}
-          onCallNext={queue.callNext}
+          onCallNext={() =>
+            runDirectAction(queue.callNext)
+          }
           onVerify={() =>
             open(QueueModal.VERIFY)
           }
@@ -487,7 +631,8 @@ export default function Queue() {
             open(QueueModal.COMPLETE)
           }
           style={
-            sideBySide && styles.panel
+            sideBySide &&
+            styles.panel
           }
         />
 
@@ -495,17 +640,21 @@ export default function Queue() {
           tickets={queue.waiting}
           canOverride={queue.canOverride}
           onOverride={(ticket) =>
-            open(QueueModal.OVERRIDE, ticket)
+            open(
+              QueueModal.OVERRIDE,
+              ticket,
+            )
           }
           style={
-            sideBySide && styles.table
+            sideBySide &&
+            styles.table
           }
         />
       </View>
 
-      {/* =============================================
+      {/* =========================================
           SHARED STAFF MODAL
-      ============================================= */}
+      ========================================= */}
 
       <StaffModal
         visible={!!modalProps}
@@ -532,6 +681,7 @@ const styles = StyleSheet.create({
   columns: {
     gap: 24,
     marginTop: 6,
+    minWidth: 0,
   },
 
   columnsRow: {
@@ -541,9 +691,11 @@ const styles = StyleSheet.create({
 
   panel: {
     width: CURRENT_PANEL_WIDTH,
+    minWidth: 0,
   },
 
   table: {
     flex: 1,
+    minWidth: 0,
   },
 });

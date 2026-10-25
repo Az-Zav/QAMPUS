@@ -40,14 +40,17 @@ import { useSession } from './SessionProvider';
 // =====================================================
 // QAMPUS STAFF QUEUE PROVIDER
 //
-// Fix #1: No-show handling
-// Fix #2: Offense and ban calculations
-// Fix #3: Unified state using useReducer
-// Fix #4: Required FIFO override reasons
+// Preserves:
+// - Manual FIFO advancement
+// - Manual No-Show handling
+// - Two-offense penalty calculation
+// - Unified reducer state
+// - Structured multi-select reasons
+// - Action result validation
 //
-// New: Structured multi-select reason system
+// Temporary mock data remains for backend handoff.
 //
-// Frontend-only mock implementation.
+// Fix #6 demo/reset actions have been removed.
 // =====================================================
 
 const QueueContext = createContext(null);
@@ -55,6 +58,18 @@ const QueueContext = createContext(null);
 // =====================================================
 // ACTION RESULTS
 // =====================================================
+
+export const QueueActionResult = Object.freeze({
+  OK: 'ok',
+  INVALID_STATE: 'invalidState',
+  QUEUE_CLOSED: 'queueClosed',
+  ACTIVE_TICKET: 'activeTicket',
+  NO_WAITING_TICKETS: 'noWaitingTickets',
+  TICKET_NOT_FOUND: 'ticketNotFound',
+  ALREADY_OPEN: 'alreadyOpen',
+  ALREADY_CLOSED: 'alreadyClosed',
+  ALREADY_OVERRIDDEN: 'alreadyOverridden',
+});
 
 export const VerifyResult = Object.freeze({
   OK: 'ok',
@@ -109,7 +124,7 @@ const QueueAction = Object.freeze({
 });
 
 // =====================================================
-// INITIAL STATE
+// INITIAL MOCK STATE
 // =====================================================
 
 function createInitialState() {
@@ -119,21 +134,25 @@ function createInitialState() {
       current: MOCK_STAFF_QUEUE.current
         ? { ...MOCK_STAFF_QUEUE.current }
         : null,
-      waiting: [...MOCK_STAFF_QUEUE.waiting],
+      waiting: MOCK_STAFF_QUEUE.waiting.map(
+        (ticket) => ({ ...ticket }),
+      ),
     },
 
-    offenses: [...MOCK_STAFF_OFFENSES],
+    offenses: MOCK_STAFF_OFFENSES.map(
+      (offense) => ({ ...offense }),
+    ),
 
-    activity: [...MOCK_STAFF_ACTIVITY],
+    activity: MOCK_STAFF_ACTIVITY.map(
+      (item) => ({ ...item }),
+    ),
   };
 }
 
 // =====================================================
-// EVENT AND ACTIVITY HELPERS
+// ACTIVITY HELPERS
 // =====================================================
 
-// IDs are generated before dispatch.
-// No counters or timestamps are generated in the reducer.
 let nextId = 0;
 
 const newId = (prefix) =>
@@ -158,22 +177,13 @@ function makeLog({
     actor,
     from,
     to,
-
-    // Human-readable reason, compatible with
-    // existing Activity Log records.
     reason: reason || null,
-
-    // Structured reason data for future Firebase
-    // integration and richer activity displays.
     reason_details: reasonDetails,
-
     note,
     created_at: now,
   };
 }
 
-// Input entries are in chronological order.
-// Activity Log displays the newest entry first.
 function prependActivity(activity, entries) {
   return [
     ...[...entries].reverse(),
@@ -182,7 +192,7 @@ function prependActivity(activity, entries) {
 }
 
 // =====================================================
-// STRUCTURED REASON VALIDATION
+// REASON VALIDATION
 // =====================================================
 
 function isValidReason(action, selection) {
@@ -204,7 +214,7 @@ function getReasonData(action, selection) {
 }
 
 // =====================================================
-// VALIDATION: VERIFY BY ID
+// VERIFY BY ID VALIDATION
 // =====================================================
 
 function validateVerification(state, idNumber, now) {
@@ -239,13 +249,7 @@ function validateVerification(state, idNumber, now) {
 }
 
 // =====================================================
-// VALIDATION: NO-SHOW
-//
-// CALLED:
-// Grace period must have expired.
-//
-// IN_SERVICE:
-// Requires a valid verified-no-show reason selection.
+// NO-SHOW VALIDATION
 // =====================================================
 
 function validateNoShow(state, reason, now) {
@@ -294,7 +298,7 @@ function validateNoShow(state, reason, now) {
 }
 
 // =====================================================
-// VALIDATION: FIFO OVERRIDE
+// FIFO OVERRIDE VALIDATION
 // =====================================================
 
 function validateOverride(state, ticketId, reason) {
@@ -332,7 +336,7 @@ function validateOverride(state, ticketId, reason) {
 }
 
 // =====================================================
-// VALIDATION: QUEUE CANCELLATION
+// QUEUE CANCELLATION VALIDATION
 // =====================================================
 
 function validateCancellation(state, reason) {
@@ -359,7 +363,7 @@ function validateCancellation(state, reason) {
 }
 
 // =====================================================
-// VALIDATION: OFFENSE REVOCATION
+// OFFENSE REVOCATION VALIDATION
 // =====================================================
 
 function validateRevocation(state, offenseId, reason) {
@@ -389,12 +393,6 @@ function validateRevocation(state, offenseId, reason) {
 
 // =====================================================
 // PURE QUEUE REDUCER
-//
-// Queue, offenses and activity are updated through
-// one state transition for every successful action.
-//
-// This is local React state consistency, not a
-// database transaction or server authorization.
 // =====================================================
 
 function queueReducer(state, event) {
@@ -413,8 +411,6 @@ function queueReducer(state, event) {
   } = event;
 
   const timestamp = Date.parse(now);
-
-  // Deterministic log IDs derived from the event ID.
   let logIndex = 0;
 
   const entry = (details) =>
@@ -426,10 +422,9 @@ function queueReducer(state, event) {
     });
 
   switch (type) {
-
-    // =================================================
-    // WM01: CALL NEXT / FIFO OVERRIDE
-    // =================================================
+    // ================================================
+    // CALL NEXT / FIFO OVERRIDE
+    // ================================================
 
     case QueueAction.CALL: {
       const {
@@ -450,7 +445,6 @@ function queueReducer(state, event) {
         return state;
       }
 
-      // Normal calls must follow FIFO order.
       if (
         !override &&
         queue.waiting[0]?.id !== ticketId
@@ -458,7 +452,6 @@ function queueReducer(state, event) {
         return state;
       }
 
-      // Priority overrides require valid reasons.
       if (
         override &&
         validateOverride(
@@ -499,21 +492,20 @@ function queueReducer(state, event) {
             action: override
               ? ACTIVITY_ACTION.OVERRIDE
               : ACTIVITY_ACTION.CALLED,
-
             ticket,
             from: TICKET_STATUS.WAITING,
             to: TICKET_STATUS.CALLED,
-
             reason: reasonData?.text ?? null,
-            reasonDetails: reasonData?.details ?? null,
+            reasonDetails:
+              reasonData?.details ?? null,
           }),
         ]),
       };
     }
 
-    // =================================================
-    // WM02: VERIFY BY ID
-    // =================================================
+    // ================================================
+    // VERIFY BY ID
+    // ================================================
 
     case QueueAction.VERIFY: {
       const ticket = queue.current;
@@ -552,9 +544,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
-    // RECORD INVALID VERIFICATION
-    // =================================================
+    // ================================================
+    // INVALID VERIFICATION LOG
+    // ================================================
 
     case QueueAction.INVALID_VERIFY: {
       const ticket = queue.current;
@@ -592,13 +584,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
-    // WM03: MARK NO-SHOW
-    //
-    // Preserves Fixes #1 and #2.
-    // Adds structured reasons only when reversing
-    // a previously verified IN_SERVICE ticket.
-    // =================================================
+    // ================================================
+    // MANUAL NO-SHOW
+    // ================================================
 
     case QueueAction.NO_SHOW: {
       const ticket = queue.current;
@@ -624,7 +612,6 @@ function queueReducer(state, event) {
           )
         : null;
 
-      // Existing penalty calculation.
       const penaltyBefore = getPenaltyState(
         offenses,
         ticket.holder.user_id,
@@ -648,7 +635,7 @@ function queueReducer(state, event) {
       return {
         ...state,
 
-        // Staff must call the next ticket separately.
+        // No automatic queue advancement.
         queue: {
           ...queue,
           current: null,
@@ -665,11 +652,9 @@ function queueReducer(state, event) {
             ticket,
             from: ticket.status,
             to: TICKET_STATUS.NO_SHOW,
-
             reason: verified
               ? reasonData.text
               : 'grace period lapsed',
-
             reasonDetails: verified
               ? reasonData.details
               : null,
@@ -684,9 +669,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
-    // WM04: COMPLETE SERVICE
-    // =================================================
+    // ================================================
+    // COMPLETE SERVICE
+    // ================================================
 
     case QueueAction.COMPLETE: {
       const ticket = queue.current;
@@ -717,9 +702,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
+    // ================================================
     // OPEN QUEUE
-    // =================================================
+    // ================================================
 
     case QueueAction.OPEN_QUEUE: {
       if (queue.status === QUEUE_STATUS.OPEN) {
@@ -742,12 +727,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
-    // WM05: CLOSE QUEUE
-    //
-    // Existing issued tickets stay valid.
-    // No reason dropdown is required.
-    // =================================================
+    // ================================================
+    // CLOSE QUEUE
+    // ================================================
 
     case QueueAction.CLOSE_QUEUE: {
       if (queue.status === QUEUE_STATUS.CLOSED) {
@@ -770,12 +752,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
-    // WM06: CANCEL ENTIRE QUEUE
-    //
-    // Requires structured reasons.
-    // Creates no offenses.
-    // =================================================
+    // ================================================
+    // CANCEL ENTIRE QUEUE
+    // ================================================
 
     case QueueAction.CANCEL_QUEUE: {
       const reason = payload.reason;
@@ -799,8 +778,6 @@ function queueReducer(state, event) {
         ...queue.waiting,
       ].filter(Boolean);
 
-      // The selected reasons belong to the entire
-      // queue cancellation action.
       const cancellationLogs = tickets.map(
         (ticket) =>
           entry({
@@ -823,7 +800,7 @@ function queueReducer(state, event) {
           waiting: [],
         },
 
-        // Office cancellations never add penalties.
+        // Queue cancellation creates no offenses.
         activity: prependActivity(activity, [
           ...cancellationLogs,
 
@@ -836,9 +813,9 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
-    // WM07: OVERRIDE CUTOFF
-    // =================================================
+    // ================================================
+    // OVERRIDE CUTOFF
+    // ================================================
 
     case QueueAction.OVERRIDE_CUTOFF: {
       if (queue.cutoff_overridden) {
@@ -861,15 +838,15 @@ function queueReducer(state, event) {
       };
     }
 
-    // =================================================
-    // WM08: REVOKE OFFENSE
-    //
-    // Requires structured reasons.
-    // Revoked offenses remain in history.
-    // =================================================
+    // ================================================
+    // REVOKE OFFENSE
+    // ================================================
 
     case QueueAction.REVOKE_OFFENSE: {
-      const { offenseId, reason } = payload;
+      const {
+        offenseId,
+        reason,
+      } = payload;
 
       if (
         validateRevocation(
@@ -921,13 +898,6 @@ function queueReducer(state, event) {
 
 // =====================================================
 // PROVIDER
-//
-// Public API remains compatible with:
-// - useStaffQueue.js
-// - useOffenses.js
-// - useActivityLog.js
-// - queue.jsx
-// - offenses.jsx
 // =====================================================
 
 export function QueueProvider({ children }) {
@@ -941,7 +911,6 @@ export function QueueProvider({ children }) {
 
   const actor = user?.name ?? 'System';
 
-  // IDs and timestamps are generated before dispatch.
   const send = (type, payload = {}) => {
     dispatch({
       type,
@@ -952,11 +921,15 @@ export function QueueProvider({ children }) {
     });
   };
 
-  const { queue, offenses, activity } = state;
+  const {
+    queue,
+    offenses,
+    activity,
+  } = state;
 
-  // =================================================
-  // WM01: CALL NEXT / OVERRIDE
-  // =================================================
+  // ================================================
+  // CALL NEXT
+  // ================================================
 
   const call = (
     ticketId,
@@ -970,14 +943,32 @@ export function QueueProvider({ children }) {
   };
 
   const callNext = () => {
+    if (queue.status !== QUEUE_STATUS.OPEN) {
+      return QueueActionResult.QUEUE_CLOSED;
+    }
+
+    if (queue.current) {
+      return QueueActionResult.ACTIVE_TICKET;
+    }
+
     const first = queue.waiting[0];
 
-    if (first) {
-      call(first.id);
+    if (!first) {
+      return QueueActionResult.NO_WAITING_TICKETS;
     }
+
+    call(first.id);
+    return QueueActionResult.OK;
   };
 
-  const overrideCall = (ticketId, reasonSelection) => {
+  // ================================================
+  // FIFO OVERRIDE
+  // ================================================
+
+  const overrideCall = (
+    ticketId,
+    reasonSelection,
+  ) => {
     const result = validateOverride(
       state,
       ticketId,
@@ -996,9 +987,9 @@ export function QueueProvider({ children }) {
     return OverrideResult.OK;
   };
 
-  // =================================================
-  // WM02: VERIFY BY ID
-  // =================================================
+  // ================================================
+  // VERIFY BY ID
+  // ================================================
 
   const verifyById = (idNumber) => {
     const result = validateVerification(
@@ -1008,19 +999,23 @@ export function QueueProvider({ children }) {
     );
 
     if (result === VerifyResult.OK) {
-      send(QueueAction.VERIFY, { idNumber });
+      send(QueueAction.VERIFY, {
+        idNumber,
+      });
     } else if (
       queue.current?.status === TICKET_STATUS.CALLED
     ) {
-      send(QueueAction.INVALID_VERIFY, { idNumber });
+      send(QueueAction.INVALID_VERIFY, {
+        idNumber,
+      });
     }
 
     return result;
   };
 
-  // =================================================
-  // WM03: MARK NO-SHOW
-  // =================================================
+  // ================================================
+  // MANUAL NO-SHOW
+  // ================================================
 
   const markNoShow = (reason = '') => {
     const result = validateNoShow(
@@ -1030,31 +1025,55 @@ export function QueueProvider({ children }) {
     );
 
     if (result === NoShowResult.OK) {
-      send(QueueAction.NO_SHOW, { reason });
+      send(QueueAction.NO_SHOW, {
+        reason,
+      });
     }
 
     return result;
   };
 
-  // =================================================
-  // WM04: COMPLETE SERVICE
-  // =================================================
+  // ================================================
+  // COMPLETE SERVICE
+  // ================================================
 
   const completeService = () => {
+    if (
+      queue.current?.status !==
+      TICKET_STATUS.IN_SERVICE
+    ) {
+      return QueueActionResult.INVALID_STATE;
+    }
+
     send(QueueAction.COMPLETE);
+    return QueueActionResult.OK;
   };
 
-  // =================================================
-  // QUEUE CONTROLS
-  // =================================================
+  // ================================================
+  // OPEN / CLOSE QUEUE
+  // ================================================
 
   const openQueue = () => {
+    if (queue.status === QUEUE_STATUS.OPEN) {
+      return QueueActionResult.ALREADY_OPEN;
+    }
+
     send(QueueAction.OPEN_QUEUE);
+    return QueueActionResult.OK;
   };
 
   const closeQueue = () => {
+    if (queue.status === QUEUE_STATUS.CLOSED) {
+      return QueueActionResult.ALREADY_CLOSED;
+    }
+
     send(QueueAction.CLOSE_QUEUE);
+    return QueueActionResult.OK;
   };
+
+  // ================================================
+  // CANCEL QUEUE
+  // ================================================
 
   const cancelQueue = (reasonSelection) => {
     const result = validateCancellation(
@@ -1073,13 +1092,22 @@ export function QueueProvider({ children }) {
     return CancelResult.OK;
   };
 
+  // ================================================
+  // OVERRIDE CUTOFF
+  // ================================================
+
   const overrideCutoff = () => {
+    if (queue.cutoff_overridden) {
+      return QueueActionResult.ALREADY_OVERRIDDEN;
+    }
+
     send(QueueAction.OVERRIDE_CUTOFF);
+    return QueueActionResult.OK;
   };
 
-  // =================================================
-  // WM08: REVOKE OFFENSE
-  // =================================================
+  // ================================================
+  // REVOKE OFFENSE
+  // ================================================
 
   const revokeOffense = (
     offenseId,
@@ -1103,9 +1131,11 @@ export function QueueProvider({ children }) {
     return RevokeResult.OK;
   };
 
-  // =================================================
+  // ================================================
   // CONTEXT VALUE
-  // =================================================
+  //
+  // No demo scenario methods exposed.
+  // ================================================
 
   const value = {
     queue,
