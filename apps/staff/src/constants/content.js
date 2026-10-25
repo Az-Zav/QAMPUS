@@ -1,4 +1,3 @@
-
 // Staff web user-facing copy (Figma: QAMPUS Staff Web App).
 
 export const BRAND_COPY = Object.freeze({
@@ -7,10 +6,10 @@ export const BRAND_COPY = Object.freeze({
 });
 
 export const SIGN_IN_COPY = Object.freeze({
-  headline: 'Campus queues, run from your window.',
-  body: 'Call the next ticket, confirm arrivals, and keep the line moving — without a crowd outside your door.',
+  headline: 'Smarter queues, smoother campus service.',
+  body: 'Manage your office queue, confirm student arrivals, and keep every service organized.',
   highlights: Object.freeze([
-    { icon: 'timer', text: 'A one-minute grace period on every call' },
+    { icon: 'timer', text: 'Call the next student with ease' },
     { icon: 'userCheck', text: 'Arrivals confirmed by QR or ID number' },
     { icon: 'shield', text: 'Every action recorded with who did it' },
   ]),
@@ -18,11 +17,13 @@ export const SIGN_IN_COPY = Object.freeze({
   subtitle: 'Use your institutional Google account.',
   cta: 'Continue with Google',
   ctaLoading: 'Signing you in…',
-  footnote: 'Access is granted by office assignment. No access? Contact the system administrator.',
+  footnote:
+    'Access is granted by office assignment. No access? Contact the system administrator.',
   legalLead: 'By continuing you agree to our',
   terms: 'Terms of Service',
   privacy: 'Privacy Policy',
-  error: "That account isn't on the institutional domain. Use your campus Google account.",
+  error:
+    "That account isn't on the institutional domain. Use your campus Google account.",
 });
 
 export const NOT_ASSIGNED_COPY = Object.freeze({
@@ -87,7 +88,9 @@ export const QUEUE_COPY = Object.freeze({
   closeQueue: 'Close queue',
   cancelQueue: 'Cancel queue',
   cutoffBanner: (minutes) =>
-    `Joining closes soon — ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} until the cutoff.`,
+    `Joining closes soon — ${minutes} ${
+      minutes === 1 ? 'minute' : 'minutes'
+    } until the cutoff.`,
   waiting: 'Waiting',
   next: 'NEXT',
   override: 'Override',
@@ -114,7 +117,8 @@ export const FOOTER_COPY = Object.freeze({
   offensesScope: (office) =>
     `Showing offenses for ${office.short_name} only`,
   offensesNote: 'Revoked offenses stay on the record',
-  logScope: (office) => `Showing all actions for ${office.short_name}`,
+  logScope: (office) =>
+    `Showing all actions for ${office.short_name}`,
 });
 
 export const OFFENSES_COPY = Object.freeze({
@@ -130,7 +134,8 @@ export const OFFENSES_COPY = Object.freeze({
 
 export const ACTIVITY_LOG_COPY = Object.freeze({
   title: 'Activity log',
-  subtitle: (office) => `${office.short_name} · every action affecting someone’s place in line`,
+  subtitle: (office) =>
+    `${office.short_name} · every action affecting someone’s place in line`,
   pageSummary: (range, entries) => `${range} · entries ${entries}`,
   newer: 'Newer',
   older: 'Older',
@@ -145,23 +150,29 @@ export const ACTIVITY_LOG_COPY = Object.freeze({
   ]),
 });
 
-// A refused staff action (call, complete, open or close the queue, cancel, override, revoke): the banner reads
-// "Couldn't <what>. <why>", where the why is keyed by the backend's TicketingError code
+// A refused staff action (call, complete, open or close the queue,
+// cancel, override, revoke): the banner reads
+// "Couldn't <what>. <why>", where the reason is keyed by
+// the backend's TicketingError code.
+
 export const ACTION_ERROR_COPY = Object.freeze({
   prefix: (what) => `Couldn't ${what}.`,
   dismiss: 'Dismiss',
   reasons: Object.freeze({
     QUEUE_CLOSED: 'The queue is closed.',
     WINDOW_BUSY: 'A ticket is already at the window.',
-    TICKET_UNAVAILABLE: 'That ticket is no longer available. It may have been cancelled or called already.',
+    TICKET_UNAVAILABLE:
+      'That ticket is no longer available. It may have been cancelled or called already.',
     NOT_IN_SERVICE: 'No ticket is in service right now.',
     REASON_REQUIRED: 'A reason is required.',
-    DENIED: 'The change was not accepted. Check your connection and try again.',
+    DENIED:
+      'The change was not accepted. Check your connection and try again.',
     UNKNOWN: 'Something went wrong. Try again in a moment.',
   }),
 });
 
 // Staff/EmptyState contexts
+
 export const EMPTY_COPY = Object.freeze({
   noOneWaiting: {
     title: 'No one waiting',
@@ -181,13 +192,13 @@ export const EMPTY_COPY = Object.freeze({
   },
 });
 
-// Staff modals WM01–WM08.
+// WM01–WM08. The safe choice is `cancel` (Gold, primary slot);
+// `confirm` is labelled by its effect.
+
 export const MODAL_COPY = Object.freeze({
-  // FIX #4: Reason is required for FIFO overrides.
   override: (number) => ({
     title: `Call ${number} ahead of the queue?`,
-    body: `You are about to call ${number} ahead of other waiting tickets. Provide a reason for this priority override. Your action will be recorded in the Activity Log.`,
-    placeholder: 'e.g. Priority assistance required',
+    body: `${number} isn't next in line. The queue won't be reordered, and this will be logged.`,
     cancel: 'Cancel',
     confirm: `Call ${number}`,
   }),
@@ -198,8 +209,10 @@ export const MODAL_COPY = Object.freeze({
     placeholder: 'Student ID or Guest ID',
     cancel: 'Cancel',
     confirm: 'Verify',
-    noMatch: "That ID doesn't match this ticket. Nothing has changed — check the ID and try again.",
-    expired: 'This ticket has expired and can no longer be verified. Mark it as a no-show instead.',
+    noMatch:
+      "That ID doesn't match this ticket. Nothing has changed — check the ID and try again.",
+    expired:
+      'This ticket has expired and can no longer be verified. Mark it as a no-show instead.',
   }),
 
   markNoShow: (number) => ({
