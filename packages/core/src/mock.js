@@ -3,22 +3,6 @@
 
 const minutesAgo = (m) => new Date(Date.now() - m * 60000).toISOString();
 
-export const MOCK_USER_GUEST = Object.freeze({
-  id: 'usr_gst_002',
-  role: 'GUEST',
-  name: 'Maria Santos',
-  email: null,
-  institutional_id: 'G104728',
-  program: null,
-  guest_type: 'PARENT_GUARDIAN',
-  device_token: 'dev_mock_uuid_456',
-  push_token: null,
-  push_enabled: true,
-  strike_count: 1,
-  banned_until: null,
-  created_at: '2026-09-28T07:30:00Z',
-});
-
 // Placeholder list; the program source is an open PRD question
 export const MOCK_PROGRAMS = Object.freeze([
   'BS Computer Science',

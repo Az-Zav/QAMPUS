@@ -1,18 +1,24 @@
-// Session: who is signed in. Students are backed by Firebase Auth (Google) and a Firestore
-// profile (lib/users.js). Guests are still mock until their backend slice exists.
+// Session: who is signed in. Students sign in with Google, guests with an anonymous Firebase account bound to the
+// device; both have a Firestore profile (lib/users.js) and a unique ID reserved in institutionalIds.
 
 import { USER_ROLE } from '@/constants';
-import { auth, SCHOOL_EMAIL_DOMAIN } from '@/lib/firebase';
-import { loadOrCreateStudent, saveStudentProfile, saveStudentProgram } from '@/lib/users';
-import { MOCK_USER_GUEST } from '@qampus/core/mock';
+import { auth, db, SCHOOL_EMAIL_DOMAIN } from '@/lib/firebase';
+import { loadOrCreateGuest, loadOrCreateStudent, saveGuestDetails, saveStudentProgram } from '@/lib/users';
+import { claimStudentProfile, issueGuestProfile } from '@qampus/backend';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
-import { GoogleAuthProvider, onAuthStateChanged, signInWithCredential, signOut as firebaseSignOut } from 'firebase/auth';
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInAnonymously,
+  signInWithCredential,
+  signOut as firebaseSignOut,
+} from 'firebase/auth';
 
 const SessionContext = createContext(null);
 
-// First sign-in guest: profile fields not filled yet (R-02)
-const NEW_GUEST = { ...MOCK_USER_GUEST, name: null, email: null, guest_type: null, institutional_id: null };
+// The profile of whoever Firebase says is signed in: an anonymous account is a guest, anything else a student
+const loadProfile = (firebaseUser) => (firebaseUser.isAnonymous ? loadOrCreateGuest(firebaseUser) : loadOrCreateStudent(firebaseUser));
 
 function profileIncomplete(user) {
   if (!user) return false;
@@ -28,7 +34,7 @@ export function SessionProvider({ children }) {
     // False until Firebase has read the persisted session, so the app doesn't flash Login
   const [authReady, setAuthReady] = useState(false);
 
-  // Set while signInAsStudent runs, so the listener doesn't load the same profile twice
+  // Set while signInAsStudent or signInAsGuest runs, so the listener doesn't load the same profile twice
   const signingIn = useRef(false);
 
   useEffect(() => {
@@ -36,7 +42,7 @@ export function SessionProvider({ children }) {
     return onAuthStateChanged(auth, async (firebaseUser) => {
       if (!signingIn.current) {
         try {
-          setUser(firebaseUser ? await loadOrCreateStudent(firebaseUser) : null);
+          setUser(firebaseUser ? await loadProfile(firebaseUser) : null);
         } catch (error) {
           console.warn('Could not load profile', error);
           setUser(null);
@@ -80,34 +86,46 @@ export function SessionProvider({ children }) {
         return true;
       },
 
-      signInAsGuest: () => setUser(NEW_GUEST),
+      // Guests have no credentials: an anonymous Firebase account bound to this device (R-02)
+      signInAsGuest: async () => {
+        signingIn.current = true;
+        try {
+          const { user: firebaseUser } = await signInAnonymously(auth);
+          setUser(await loadOrCreateGuest(firebaseUser));
+        } catch (error) {
+          await firebaseSignOut(auth).catch(() => {});
+          throw error;
+        } finally {
+          signingIn.current = false;
+        }
+      },
 
       signOut: async () => {
         // Also clear Google's cached account, or the picker is skipped next time
         await GoogleSignin.signOut().catch(() => {});
         await firebaseSignOut(auth).catch(() => {});
-        // Guests have no Firebase user, so the auth listener never clears them
         setUser(null);
       },
 
+      // Reserves the student ID (a second account entering the same one is refused with ID_TAKEN)
       completeStudentProfile: async ({ studentId, program }) => {
-        await saveStudentProfile(user.id, { studentId, program });
+        await claimStudentProfile(db, { uid: user.id, studentId, program });
         setUser((prev) => ({ ...prev, institutional_id: studentId, program }));
       },
-      // Edit Profile: a student's program is saved to Firestore (the student ID is locked, R-01); a guest's details
-      // change in memory only until the guest slice gives guests a profile document.
+      // Edit Profile: a student changes their program (the student ID is locked, R-01); a guest changes name,
+      // email and guest type (the Guest ID stays as issued)
       updateProfile: async (changes) => {
         if (user.role === USER_ROLE.GUEST) {
+          await saveGuestDetails(user.id, changes);
           setUser((prev) => ({ ...prev, ...changes }));
           return;
         }
         await saveStudentProgram(user.id, changes.program);
         setUser((prev) => ({ ...prev, program: changes.program }));
       },
-      // Backend swap: the guest profile moves to Firestore with the guest slice.
-      // The server issues the Guest ID (R-02, R-30); the mock passes back a fixed one.
-      completeGuestProfile: ({ name, email, guestType }) => {
-        const guestId = MOCK_USER_GUEST.institutional_id;
+      // Saves the guest's details and issues their unique Guest ID (R-02). Resolves to the ID.
+      completeGuestProfile: async ({ name, email, guestType }) => {
+        const guestId = await issueGuestProfile(db, { uid: user.id, name, email, guestType });
         setUser((prev) => ({ ...prev, name, email: email || null, guest_type: guestType, institutional_id: guestId }));
         return guestId;
       },

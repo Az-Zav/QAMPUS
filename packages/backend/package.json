@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.js",
     "./events": "./src/events/index.js",
+    "./identity": "./src/identity/index.js",
     "./notifications": "./src/notifications/index.js",
     "./ticketing": "./src/ticketing/index.js",
     "./penalties": "./src/penalties/index.js"

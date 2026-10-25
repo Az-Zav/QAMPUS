@@ -27,17 +27,28 @@ export default function GuestProfileScreen() {
   const [email, setEmail] = useState('');
   const [guestType, setGuestType] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-  const [guestId, setGuestId] = useState(null); // set once the (mock) backend issues it
+  const [guestId, setGuestId] = useState(null); // set once the backend has issued it
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
 
   const emailInvalid = email.trim() !== '' && !isValidEmail(email);
   const nameError = submitted && !name.trim() ? COPY.nameError : null;
   const emailError = submitted && emailInvalid ? COPY.emailError : null;
   const guestTypeError = submitted && !guestType ? COPY.guestTypeError : null;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitted(true);
-    if (!name.trim() || emailInvalid || !guestType) return;
-    setGuestId(completeGuestProfile({ name: name.trim(), email: email.trim(), guestType }));
+    if (!name.trim() || emailInvalid || !guestType || saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      setGuestId(await completeGuestProfile({ name: name.trim(), email: email.trim(), guestType }));
+    } catch (error) {
+      console.warn('Saving the guest profile failed', error);
+      setSaveError(PROFILE_COPY.guestFailed);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (guestId) {
@@ -102,10 +113,11 @@ export default function GuestProfileScreen() {
               placeholder={COPY.guestTypePlaceholder}
             />
           </FormField>
+          {!!saveError && <Text style={[styles.body, styles.error]}>{saveError}</Text>}
         </ScrollView>
 
         <View style={styles.footer}>
-          <Button label={PROFILE_COPY.continue} onPress={handleSubmit} />
+          <Button label={PROFILE_COPY.continue} onPress={handleSubmit} disabled={saving} />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -143,6 +155,9 @@ const makeStyles = (c) => StyleSheet.create({
   },
   center: {
     textAlign: 'center',
+  },
+  error: {
+    color: c.error,
   },
   issued: {
     flex: 1,

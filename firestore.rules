@@ -27,6 +27,8 @@ service cloud.firestore {
 
     function ticketDoc(ticketId) { return /databases/$(db)/documents/tickets/$(ticketId); }
 
+    function claimDoc(id) { return /databases/$(db)/documents/institutionalIds/$(id); }
+
     // An offense has the same id as its ticket, so a ticket can produce one offense and rules can find it.
     function offenseDoc(ticketId) { return /databases/$(db)/documents/offenses/$(ticketId); }
 
@@ -221,7 +223,12 @@ service cloud.firestore {
       allow update: if (signedIn() && request.auth.uid == uid
             && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'strike_count', 'banned_until', 'active_count', 'active_offices'])
             && (resource.data.get('institutional_id', null) == null
-            || request.resource.data.get('institutional_id', null) == resource.data.get('institutional_id', null)))
+            || request.resource.data.get('institutional_id', null) == resource.data.get('institutional_id', null))
+            // Saving a student or guest ID reserves it in the same write (institutionalIds below), so no two accounts
+            // can hold the same one.
+            && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['institutional_id'])
+                || (existsAfter(claimDoc(request.resource.data.institutional_id))
+                    && getAfter(claimDoc(request.resource.data.institutional_id)).data.uid == uid)))
         // The three-ticket limit (R-07) is this counter, and `active_offices` (office id -> true) holds the offices
         // where the student has an active ticket, so they cannot join the same office twice. A student moves the
         // counter by one, within 0..3: a join must raise it and add its office in the same write (see the ticket
@@ -423,6 +430,18 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read', 'read_at'])
         && request.resource.data.is_read == true
         && request.resource.data.read_at == request.time;
+    }
+
+    // institutionalIds/{id}: reserves a student ID (7 digits, school account) or a guest ID (G + 6 digits, anonymous
+    // account) for one user. Create-only, and only together with the owner's profile carrying that same ID. Any
+    // signed-in user may `get` one (the app has to see that an ID is taken); it shows only the owner's uid.
+    match /institutionalIds/{id} {
+      allow get: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && ((isAnon() && id.matches('G[0-9]{6}')) || (schoolEmail() && id.matches('[0-9]{7}')))
+        && getAfter(/databases/$(db)/documents/users/$(request.auth.uid)).data.institutional_id == id;
     }
 
     // events/{id}: create-only; staff read their own office's log.

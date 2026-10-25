@@ -108,7 +108,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      <ConfirmModal {...MODAL_COPY.logOut} visible={logOutOpen} onConfirm={logOut} onClose={() => setLogOutOpen(false)} />
+      <ConfirmModal {...(isGuest ? MODAL_COPY.logOutGuest : MODAL_COPY.logOut)} visible={logOutOpen} onConfirm={logOut} onClose={() => setLogOutOpen(false)} />
     </View>
   );
 }

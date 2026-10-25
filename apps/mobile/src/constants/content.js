@@ -146,6 +146,7 @@ export const PROFILE_COPY = Object.freeze({
     studentIdPlaceholder: '2512269',
     studentIdHelper: 'Exactly 7 digits.',
     studentIdError: 'Enter exactly 7 digits.',
+    studentIdTaken: 'This student ID is already registered to another account.',
     programLabel: 'Program',
     programPlaceholder: 'Select your program',
     programError: 'Choose your program.',
@@ -164,6 +165,8 @@ export const PROFILE_COPY = Object.freeze({
     guestTypePlaceholder: 'Select guest type',
     guestTypeError: 'Choose a guest type.',
   },
+  guestFailed: 'Couldn’t set up your guest profile. Check your connection and try again.',
+  guestSignInFailed: 'Couldn’t start a guest session. Check your connection and try again.',
   guestIssued: {
     title: 'You’re all set',
     body: 'This is your Guest ID. Staff use it to look you up if your phone can’t scan the code. You can find it any time in your profile.',
@@ -263,6 +266,14 @@ export const MODAL_COPY = Object.freeze({
     title: 'Log out?',
     body: "You'll need to sign in again to see your tickets and history.",
     confirmLabel: 'Log out',
+    cancelLabel: 'Stay signed in',
+  },
+  // A guest has no way back into an anonymous account: the ID, tickets and history are gone for good
+  logOutGuest: {
+    icon: 'log-out-outline',
+    title: 'Leave as guest?',
+    body: 'Your Guest ID, tickets and history are deleted for good and cannot be recovered. You would start again with a new Guest ID.',
+    confirmLabel: 'Leave and delete',
     cancelLabel: 'Stay signed in',
   },
   joinConfirm: {

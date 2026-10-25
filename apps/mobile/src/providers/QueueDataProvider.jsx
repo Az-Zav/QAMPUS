@@ -1,8 +1,6 @@
 // Live queue data for the student app: every office, today's queue per office, and the signed-in
 // student's own tickets and notifications. One set of Firestore listeners for the whole app; the hooks read from here.
-// Guests have no Firebase account yet, so they see no live data until their slice exists.
 
-import { USER_ROLE } from '@/constants';
 import { db } from '@/lib/firebase';
 import { useSession } from '@/providers/SessionProvider';
 import { watchBoard, watchMyNotifications, watchMyOffenses, watchMyTickets, watchProfile } from '@qampus/backend';
@@ -20,7 +18,7 @@ const warn = (label) => (error) => console.warn(label, error);
 
 export function QueueDataProvider({ children }) {
   const { user } = useSession();
-  const uid = user?.role === USER_ROLE.STUDENT ? user.id : null;
+  const uid = user?.id ?? null;
 
   // The queue doc id contains the campus day, so listeners restart when the day rolls over
   const [dayKey, setDayKey] = useState(() => campusDate().key);
@@ -62,7 +60,7 @@ export function QueueDataProvider({ children }) {
     return watchMyNotifications(db, uid, (list) => setMailbox({ uid, list }), warn('Could not load notifications'));
   }, [uid]);
 
-  // Signed out (or a guest): show nothing, whatever the last student left in state
+  // Signed out: show nothing, whatever the last user left in state
   const value = useMemo(
     () => ({
       board: uid ? board : EMPTY_BOARD,

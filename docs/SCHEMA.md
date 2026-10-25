@@ -5,7 +5,7 @@ Final shape for V1, locked one collection at a time. Locking a collection fixes 
 | Collection | Status | Notes |
 |---|---|---|
 | `users` | **LOCKED** | |
-| `institutionalIds` | **LOCKED** | claim docs; implemented with profiles and guests |
+| `institutionalIds` | **LOCKED** | claim docs `{ uid }`, create-only; implemented in slice 6.6 for students and guests |
 | `offices` | **LOCKED** | keeps `short_name` and `check_in_code` |
 | `staff` | **LOCKED** | |
 | `queues` | **LOCKED** | |

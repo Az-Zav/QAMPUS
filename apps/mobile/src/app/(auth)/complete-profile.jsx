@@ -21,22 +21,32 @@ export default function CompleteProfileScreen() {
   const [studentId, setStudentId] = useState('');
   const [program, setProgram] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [idTaken, setIdTaken] = useState(false); // another account registered this student ID first
   
   // Already filled in: nothing to collect (R-01 locks the student ID after first entry)
   if (user?.institutional_id && user?.program) return <Redirect href="/home" />;
 
 
   // Errors show only after the first Continue press
-  const studentIdError = submitted && !isValidStudentId(studentId) ? COPY.studentIdError : null;
+  const studentIdError = idTaken
+    ? COPY.studentIdTaken
+    : submitted && !isValidStudentId(studentId)
+      ? COPY.studentIdError
+      : null;
   const programError = submitted && !program ? COPY.programError : null;
 
   const handleContinue = async () => {
     setSubmitted(true);
     if (!isValidStudentId(studentId) || !program) return;
+    setIdTaken(false);
     try {
       await completeStudentProfile({ studentId: studentId.trim(), program });
       router.replace('/home');
     } catch (error) {
+      if (error.code === 'ID_TAKEN') {
+        setIdTaken(true);
+        return;
+      }
       // TODO: swap Alert for NoticeModal once error copy exists
       console.warn('Saving profile failed', error);
       Alert.alert('Could not save', 'Check your connection and try again.');
@@ -57,7 +67,10 @@ export default function CompleteProfileScreen() {
           <FormField label={COPY.studentIdLabel} helper={COPY.studentIdHelper} error={studentIdError}>
             <Input
               value={studentId}
-              onChangeText={(text) => setStudentId(text.replace(/\D/g, ''))}
+              onChangeText={(text) => {
+                setStudentId(text.replace(/\D/g, ''));
+                setIdTaken(false);
+              }}
               placeholder={COPY.studentIdPlaceholder}
               keyboardType="number-pad"
               maxLength={7}

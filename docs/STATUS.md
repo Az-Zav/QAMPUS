@@ -24,10 +24,11 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Activity log (`events`) tested**: every staff action and the student join/cancel/check-in writes one `events` line inside its transaction; the staff Activity Log reads them 50 per page (arrows) with action and date filters. Needs the rules and `firestore.indexes.json` deployed.
 - **In-app notifications tested**: `users/{uid}/notifications` is written with each cause (your turn, approaching turn at place 3, no-show, queue cancelled per ticket, offense revoked, queue confirmed, warning on a called cancel). The mobile list and bell are live; viewing the screen marks them read (only while focused); a banner slides in from the top for a new one while the app is open. Push is not built.
 - **Capacity cutoff and measured wait times tested**: `cutoffState` refuses a join when the minutes left before closing, divided by the average visit, are fewer than the waiting plus one (client side only); the Join button reason and the staff banner/strip use it; staff Override cutoff writes `cutoff_overridden` plus a `CUTOFF_OVERRIDE` event. Wait estimates use today's measured average. A day with no hours has no cutoff.
-- **UI**: all screens exist. The ticket flow, activity log, notifications and cutoff are real. Still mock: staff notifications (maintenance text only), guests, programs, public display (`MOCK_OFFICES`).
+- **Guests (6.6, built, awaiting test)**: "Continue as guest" signs in anonymously (device bound), the guest form issues a unique `G` + six digits reserved in `institutionalIds`; student IDs are reserved the same way (a taken ID is refused). Guests use the app like students; guest Sign out warns that the ID and tickets are lost.
+- **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff and guests are real. Still mock: staff notifications (maintenance text only), programs, public display (`MOCK_OFFICES`).
 
 ## In progress
-6.7 small issues are coded and checked (profile save, staff refusal banner, root README, stray root app.json removed); waiting for the developer's test, then commit. Slices 6.1 to 6.3 passed testing and are pushed.
+6.6 guests / anonymous sign-in is coded and checked (69 unit tests, lint, both builds); waiting for the developer to enable the Anonymous provider in Firebase Auth, deploy the rules and test, then commit. 6.7 is pushed.
 
 ## Next
 Roadmap in `NEXT_SESSION.md` section 6: 6.7, then the public display (a "Launch public display" button opening a new tab, with the
@@ -39,7 +40,7 @@ scan, push, biometric), then UI polish (spacing, responsiveness, remove dev prev
 - Any Google account that signs in on the staff app leaves an empty Firebase Auth user (no Firestore access). Accepted.
 - Cutoff is enforced in the client only (a hand-made client could join past it); an office with no hours for today has no cutoff.
 - Root `eas.json` (and an untracked root `android/`) look like leftovers of an older root-level EAS setup; `apps/mobile` has its own `eas.json`. Not touched.
-- A guest's Edit Profile changes live in memory only until the guest slice (6.6).
+- Students who saved a student ID before 6.6 have no `institutionalIds` claim; their ID is not reserved until they are given a claim (a second student could still take it). Accepted for the prototype.
 
 ## Open questions
 - Dev Firebase project separate from the real one?

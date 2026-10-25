@@ -1,6 +1,6 @@
 import { Button } from '@qampus/ui';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
-import { ButtonType, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, IconSet, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, Image, StatusBar, StyleSheet, Text, View } from 'react-native';
@@ -29,9 +29,15 @@ export default function Login() {
   };
 
 
-  const handleGuestLogin = () => {
-    signInAsGuest();
-    router.replace('/guest-profile');
+  const handleGuestLogin = async () => {
+    try {
+      await signInAsGuest();
+      router.replace('/');
+    } catch (error) {
+      // TODO: swap Alert for NoticeModal once error copy exists
+      console.warn('Guest sign-in failed', error);
+      Alert.alert('Guest sign-in failed', PROFILE_COPY.guestSignInFailed);
+    }
   };
 
   return (

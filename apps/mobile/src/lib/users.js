@@ -28,8 +28,33 @@ export async function loadOrCreateStudent(firebaseUser) {
   return { id: ref.id, ...profile };
 }
 
-export const saveStudentProfile = (uid, { studentId, program }) =>
-  updateDoc(doc(db, 'users', uid), { institutional_id: studentId, program });
+// A guest's profile (R-02): created empty on the first anonymous sign-in; the form and the unique Guest ID come later
+// (issueGuestProfile in @qampus/backend).
+export async function loadOrCreateGuest(firebaseUser) {
+  const ref = doc(db, 'users', firebaseUser.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) return { id: snap.id, ...snap.data() };
+
+  const profile = {
+    role: USER_ROLE.GUEST,
+    name: null,
+    email: null,
+    institutional_id: null,
+    program: null,
+    guest_type: null,
+    push_enabled: true,
+    strike_count: 0,
+    banned_until: null,
+    active_count: 0,
+    active_offices: {},
+  };
+  await setDoc(ref, { ...profile, created_at: serverTimestamp() });
+  return { id: ref.id, ...profile };
+}
+
+// A guest may edit their name, email and guest type afterwards; the Guest ID stays as issued
+export const saveGuestDetails = (uid, { name, email, guest_type }) =>
+  updateDoc(doc(db, 'users', uid), { name, email, guest_type });
 
 // Edit Profile (S14): a student may change their program; the student ID stays as first saved (R-01, and the
 // rules refuse a change once it is set).
