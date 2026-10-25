@@ -3,4 +3,5 @@
 
 export * from './domain';
 export * from './format';
+export * from './legal';
 export * from './ticket';

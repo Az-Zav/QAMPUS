@@ -5,6 +5,7 @@ export { ThemeProvider, useTheme, useThemedStyles } from './ThemeProvider';
 export { default as Button } from './primitives/Button';
 export { default as CountBadge } from './primitives/CountBadge';
 export { default as FormField } from './primitives/FormField';
+export { default as LegalBody } from './primitives/LegalBody';
 export { default as Input } from './primitives/Input';
 export { default as PageDots } from './primitives/PageDots';
 export { default as SegmentedSwitcher } from './primitives/SegmentedSwitcher';

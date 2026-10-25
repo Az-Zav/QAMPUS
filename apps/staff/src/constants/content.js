@@ -18,6 +18,9 @@ export const SIGN_IN_COPY = Object.freeze({
   cta: 'Continue with Google',
   ctaLoading: 'Signing you in…',
   footnote: 'Access is granted by office assignment. No access? Contact the system administrator.',
+  legalLead: 'By continuing you agree to our',
+  terms: 'Terms of Service',
+  privacy: 'Privacy Policy',
   error: "That account isn't on the institutional domain. Use your campus Google account.",
 });
 
@@ -47,7 +50,13 @@ export const TOP_BAR_COPY = Object.freeze({
   assignedStaff: 'assigned staff',
   officeAssignment: 'Office assignment',
   help: 'Help & support',
+  terms: 'Terms of Use',
+  privacy: 'Privacy Policy',
   signOut: 'Sign out',
+});
+
+export const LEGAL_COPY = Object.freeze({
+  back: 'Back',
 });
 
 export const INFO_COPY = Object.freeze({

@@ -7,7 +7,13 @@
     ".": "./src/index.js",
     "./domain": "./src/domain.js",
     "./format": "./src/format.js",
+    "./legal": "./src/legal.js",
     "./ticket": "./src/ticket.js",
     "./mock": "./src/mock.js"
+  },
+  "scripts": {
+    "lint": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-legal.mjs",
+    "legal:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-legal.mjs",
+    "legal:accept": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-legal.mjs --accept"
   }
 }

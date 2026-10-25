@@ -3,6 +3,6 @@
 
 export * from './content';
 export * from './domain';
-export * from './legal';
+export * from '@qampus/core/legal';
 export * from './notificationStyle';
 export * from './theme';

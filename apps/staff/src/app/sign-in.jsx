@@ -4,6 +4,7 @@ import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { ShieldCheck, Timer, UserRoundCheck } from '@/icons';
 import { SignInStatus } from '@/providers/SessionProvider';
 import { Image } from 'expo-image';
+import { Link } from 'expo-router';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 const HIGHLIGHT_ICONS = { timer: Timer, userCheck: UserRoundCheck, shield: ShieldCheck };
@@ -63,6 +64,17 @@ export default function SignIn() {
             </Text>
           )}
           <Text style={styles.footnote}>{SIGN_IN_COPY.footnote}</Text>
+          <Text style={styles.legal}>
+            {SIGN_IN_COPY.legalLead}
+            {'\n'}
+            <Link href="/legal/terms" style={styles.legalLink}>
+              {SIGN_IN_COPY.terms}
+            </Link>
+            {' & '}
+            <Link href="/legal/privacy" style={styles.legalLink}>
+              {SIGN_IN_COPY.privacy}
+            </Link>
+          </Text>
         </View>
       </View>
     </View>
@@ -116,4 +128,12 @@ const makeStyles = (c) =>
       color: c.slate,
       textAlign: 'center',
     },
+    legal: {
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
+      fontSize: TYPOGRAPHY.size.md,
+      lineHeight: 24,
+      color: c.slate,
+      textAlign: 'center',
+    },
+    legalLink: { fontFamily: TYPOGRAPHY.fontFamily.medium, color: c.ink },
   });

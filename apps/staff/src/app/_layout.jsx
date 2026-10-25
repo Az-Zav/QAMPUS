@@ -50,7 +50,7 @@ export default function RootLayout() {
 
 // Routes are exceptions to "everything is reachable": each Protected block only exists in its
 // session state. A guard flip sends the user to the anchor (index), which redirects by state.
-// The public display (D01) needs no session.
+// The public display (D01) and the legal pages need no session.
 function ThemedRoot() {
   const { colors, isDark } = useTheme();
   const { isSignedIn, hasOffice, authReady } = useSession();
@@ -63,6 +63,7 @@ function ThemedRoot() {
       <Stack screenOptions={{ headerShown: false, animation: 'fade', contentStyle: { backgroundColor: colors.paper } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="display/[code]" />
+        <Stack.Screen name="legal/[doc]" />
         <Stack.Protected guard={!isSignedIn}>
           <Stack.Screen name="sign-in" />
         </Stack.Protected>

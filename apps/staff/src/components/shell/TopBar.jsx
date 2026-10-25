@@ -3,6 +3,7 @@ import { MenuBackdrop, MenuDivider, MenuItem, MenuPanel } from '@/components/pri
 import {
   CONTENT_MAX_WIDTH,
   INFO_COPY,
+  LegalDoc,
   NAV_ITEMS,
   PAGE_GUTTER,
   QUEUE_COPY,
@@ -36,6 +37,11 @@ export default function TopBar() {
   const showInfo = (content) => {
     setMenu(Menu.NONE);
     setInfo(content);
+  };
+  // A new tab, like the public display, so the queue stays open behind it
+  const openLegal = (doc) => {
+    setMenu(Menu.NONE);
+    if (typeof window !== 'undefined') window.open(`${window.location.origin}/legal/${doc}`, '_blank');
   };
   const StatusIcon = isOpen ? CircleCheck : CircleX;
 
@@ -129,6 +135,8 @@ export default function TopBar() {
                 onPress={() => showInfo(INFO_COPY.officeAssignment(office))}
               />
               <MenuItem label={TOP_BAR_COPY.help} onPress={() => showInfo(INFO_COPY.help)} />
+              <MenuItem label={TOP_BAR_COPY.terms} onPress={() => openLegal(LegalDoc.TERMS)} />
+              <MenuItem label={TOP_BAR_COPY.privacy} onPress={() => openLegal(LegalDoc.PRIVACY)} />
               <MenuDivider />
               <MenuItem label={TOP_BAR_COPY.signOut} onPress={signOut} danger />
             </MenuPanel>

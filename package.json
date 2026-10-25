@@ -9,7 +9,9 @@
   "scripts": {
     "mobile": "npm run start --workspace @qampus/mobile",
     "staff": "npm run web --workspace @qampus/staff",
-    "lint": "npm run lint --workspaces --if-present"
+    "lint": "npm run lint --workspaces --if-present",
+    "legal:check": "npm run legal:check --workspace @qampus/core",
+    "legal:accept": "npm run legal:accept --workspace @qampus/core"
   },
   "dependencies": {
     "expo": "~57.0.31",
