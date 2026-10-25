@@ -3,7 +3,7 @@ import BottomNav from '@/components/shell/BottomNav';
 import NotificationToast from '@/components/shell/NotificationToast';
 import { AppTab, TicketStatus } from '@/constants';
 import { useBiometric } from '@/providers/BiometricProvider';
-import { useMyTickets, useNotificationToast, useTheme, useThemedStyles } from '@/hooks';
+import { useMyTickets, useNotificationToast, usePushRegistration, useTheme, useThemedStyles } from '@/hooks';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -30,6 +30,9 @@ export default function AppLayout() {
       ? null
       : (active.find((t) => t.status === TicketStatus.YOUR_TURN && !dismissedIds.has(t.id)) ?? null);
   const dismiss = (id) => setDismissedIds((prev) => new Set(prev).add(id));
+
+  // "Your turn" push: register this phone while push is on, and open Home when one is tapped
+  usePushRegistration();
 
   // A subtle banner from the top for a new notification while the app is open (not on the Notifications screen)
   const { toast, dismiss: dismissToast } = useNotificationToast({ muted: pathname === '/notifications' });

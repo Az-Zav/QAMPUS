@@ -12,6 +12,7 @@ import { useOfficeOffenses } from '@/hooks/useOfficeOffenses';
 import { useOfficeTickets } from '@/hooks/useOfficeTickets';
 import { useTodayQueue } from '@/hooks/useTodayQueue';
 import { db } from '@/lib/firebase';
+import { pushYourTurn } from '@/lib/push';
 import {
   callNext as callNextTicket,
   callTicket,
@@ -139,15 +140,17 @@ export function QueueProvider({ children }) {
   // The listeners on the queue and ticket docs update the console; a refused write shows a banner (`notice`)
   const callNext = () => {
     if (office) {
-      callNextTicket(db, { office, tickets: officeTickets, actor }).catch(refused('call the next ticket'));
+      callNextTicket(db, { office, tickets: officeTickets, actor })
+        .then((called) => pushYourTurn(called, office))
+        .catch(refused('call the next ticket'));
     }
   };
 
   const overrideCall = (ticketId, reason = null) => {
     if (office) {
-      callTicket(db, { office, ticketId, actor, tickets: officeTickets, override: true, reason }).catch(
-        refused('call that ticket'),
-      );
+      callTicket(db, { office, ticketId, actor, tickets: officeTickets, override: true, reason })
+        .then((called) => pushYourTurn(called, office))
+        .catch(refused('call that ticket'));
     }
   };
 

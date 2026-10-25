@@ -8,6 +8,7 @@ export { useJoinQueue } from './useJoinQueue';
 export { useMyTickets } from './useMyTickets';
 export { useNotifications } from './useNotifications';
 export { useNotificationToast } from './useNotificationToast';
+export { usePushRegistration } from './usePushRegistration';
 export { useNow } from './useNow';
 export { useOffices } from './useOffices';
 export { usePenaltyRecord } from './usePenaltyRecord';

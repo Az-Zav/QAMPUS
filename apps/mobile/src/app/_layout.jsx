@@ -1,5 +1,6 @@
 import { THEMES } from '@/constants';
 import { useTheme } from '@/hooks';
+import { configurePushHandler } from '@/lib/push';
 import { BiometricProvider } from '@/providers/BiometricProvider';
 import { QueueDataProvider } from '@/providers/QueueDataProvider';
 import { SessionProvider } from '@/providers/SessionProvider';
@@ -14,6 +15,7 @@ import { Platform, StatusBar as RNStatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
+configurePushHandler();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({

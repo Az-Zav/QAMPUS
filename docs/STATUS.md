@@ -30,14 +30,18 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Terms of Service and Privacy Policy (built, awaiting device test)**: one reader screen (`/legal/terms`, `/legal/privacy`) opened from the Login footer links and a new LEGAL section in Settings; text in `constants/legal.js`, a draft for the school's DPO to review.
 =======
 - **QR scan and biometric unlock (tested)**: the Scan tab shows the live camera in the corner frame and reads the display QR (`parseCheckInPayload`, shared with the display via `checkInPayload`); a QR of another office gets its own message; the typed field stays as the fallback. Settings > Biometric unlock asks for a fingerprint, face or device PIN when the app opens or returns after more than a minute away (students and guests, per-device, default off).
+<<<<<<< HEAD
 >>>>>>> d4b9a20d2b6a74b080ae8fc1e16346e049277a81
+=======
+- **Push notifications (tested locally)**: a phone registers its Expo token (`users.push_token`), the Settings switch saves `push_enabled`, sign-out clears the token; after a staff call the console asks the relay (`relay/`, a Cloudflare Worker, run locally at localhost:8787), which checks the caller is staff and sends the fixed "It's your turn" push. The relay is not deployed yet.
+>>>>>>> 31736025154bf9fc0bcbb9ad378d45cb4de15f05
 - **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff, guests and the display are real. Still mock: staff notifications (maintenance text only) and the programs list.
 
 ## In progress
-Nothing active. QR scan and biometric unlock are tested and pushed; the dev build with the camera, biometric and notification modules is installed.
+Push notifications work locally (token saved, the Google credential verified, staff call -> relay on the PC -> the push arrived). Remaining: deploy the relay to Cloudflare and point the staff `.env` at it.
 
 ## Next
-1. Push notifications through the Cloudflare relay (plan in `NEXT_SESSION.md` 6.5-C; the developer's Google credential step is done). 2. UI polish (spacing, responsiveness, remove dev previews). 3. Preview deployment for end-to-end testing. Small items: the cutoff tweak (measured average after 3+ visits), backfill of old student IDs, the root `eas.json`.
+1. Deploy the push relay to Cloudflare (plan in `NEXT_SESSION.md` 6.5-C, step 6). 2. UI polish (spacing, responsiveness, remove dev previews). 3. Preview deployment for end-to-end testing. Small items: the cutoff tweak (measured average after 3+ visits), backfill of old student IDs, the root `eas.json`.
 
 ## Known issues
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).
