@@ -1,14 +1,31 @@
-import { MOCK_NOTIFICATIONS } from '@qampus/core/mock';
-import { useMemo } from 'react';
+import { db } from '@/lib/firebase';
+import { useQueueData } from '@/providers/QueueDataProvider';
+import { markAllNotificationsRead, markNotificationRead } from '@qampus/backend';
+import { useCallback, useMemo } from 'react';
 
-// The signed-in user's in-app notifications (R-25).
-// Backend swap: replace MOCK_NOTIFICATIONS with a Firestore `users/{uid}/notifications` subscription.
+// The signed-in student's in-app notifications (R-25), newest first, live. `markRead(id)` marks one read;
+// `markAllRead()` marks them all. A failed mark only logs: the list stays as it was.
 export function useNotifications() {
+  const { notifications, uid } = useQueueData();
+
+  const markRead = useCallback(
+    (id) => {
+      if (uid) markNotificationRead(db, uid, id).catch((error) => console.warn('Could not mark it read', error));
+    },
+    [uid],
+  );
+
+  const markAllRead = useCallback(() => {
+    if (uid) markAllNotificationsRead(db, uid).catch((error) => console.warn('Could not mark them read', error));
+  }, [uid]);
+
   return useMemo(
     () => ({
-      notifications: MOCK_NOTIFICATIONS,
-      unreadCount: MOCK_NOTIFICATIONS.filter((n) => !n.is_read).length,
+      notifications,
+      unreadCount: notifications.filter((n) => !n.is_read).length,
+      markRead,
+      markAllRead,
     }),
-    [],
+    [notifications, markRead, markAllRead],
   );
 }

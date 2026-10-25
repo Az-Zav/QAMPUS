@@ -1,11 +1,11 @@
 // Live queue data for the student app: every office, today's queue per office, and the signed-in
-// student's own tickets. One set of Firestore listeners for the whole app; the hooks read from here.
+// student's own tickets and notifications. One set of Firestore listeners for the whole app; the hooks read from here.
 // Guests have no Firebase account yet, so they see no live data until their slice exists.
 
 import { USER_ROLE } from '@/constants';
 import { db } from '@/lib/firebase';
 import { useSession } from '@/providers/SessionProvider';
-import { watchBoard, watchMyOffenses, watchMyTickets, watchProfile } from '@qampus/backend';
+import { watchBoard, watchMyNotifications, watchMyOffenses, watchMyTickets, watchProfile } from '@qampus/backend';
 import { campusDate } from '@qampus/core/format';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -14,6 +14,7 @@ const QueueDataContext = createContext(null);
 const EMPTY_BOARD = Object.freeze({ offices: [], queues: {} });
 const EMPTY_TICKETS = Object.freeze([]);
 const EMPTY_OFFENSES = Object.freeze([]);
+const EMPTY_NOTIFICATIONS = Object.freeze([]);
 
 const warn = (label) => (error) => console.warn(label, error);
 
@@ -31,6 +32,7 @@ export function QueueDataProvider({ children }) {
   const [board, setBoard] = useState(EMPTY_BOARD);
   const [tickets, setTickets] = useState(EMPTY_TICKETS);
   const [offenses, setOffenses] = useState(EMPTY_OFFENSES);
+  const [notifications, setNotifications] = useState(EMPTY_NOTIFICATIONS);
   // The student's own profile, live: the session copy is read once at sign-in, so strikes and bans would be stale
   const [profile, setProfile] = useState(null);
 
@@ -54,6 +56,11 @@ export function QueueDataProvider({ children }) {
     return watchProfile(db, uid, setProfile, warn('Could not load the profile'));
   }, [uid]);
 
+  useEffect(() => {
+    if (!uid) return undefined;
+    return watchMyNotifications(db, uid, setNotifications, warn('Could not load notifications'));
+  }, [uid]);
+
   // Signed out (or a guest): show nothing, whatever the last student left in state
   const value = useMemo(
     () => ({
@@ -61,8 +68,10 @@ export function QueueDataProvider({ children }) {
       tickets: uid ? tickets : EMPTY_TICKETS,
       offenses: uid ? offenses : EMPTY_OFFENSES,
       profile: uid ? profile : null,
+      notifications: uid ? notifications : EMPTY_NOTIFICATIONS,
+      uid,
     }),
-    [uid, board, tickets, offenses, profile],
+    [uid, board, tickets, offenses, profile, notifications],
   );
 
   return <QueueDataContext.Provider value={value}>{children}</QueueDataContext.Provider>;

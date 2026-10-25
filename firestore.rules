@@ -391,6 +391,34 @@ service cloud.firestore {
         && (e.reason == null || (e.reason is string && e.reason.size() <= 500));
     }
 
+    // A notification in a student's mailbox: fixed fields, unread, stamped with server time. Shape checks only
+    // (no lookups). Staff write them for any student in the transaction of the change that causes them (call,
+    // no-show, office cancel, revoke); the student writes their own QUEUE_CONFIRMED (join) and WARNING (cancelling
+    // a called ticket is an offense they cause themselves).
+    function validNotification(n) {
+      return n.keys().hasOnly(['type', 'title', 'message', 'ticket_id', 'office_id', 'is_read', 'created_at', 'read_at'])
+        && n.keys().hasAll(['type', 'title', 'message', 'ticket_id', 'office_id', 'is_read', 'created_at', 'read_at'])
+        && n.type in ['QUEUE_CONFIRMED', 'YOUR_TURN', 'APPROACHING_TURN', 'NO_SHOW', 'QUEUE_CANCELLED',
+                      'SERVICE_COMPLETED', 'WARNING', 'OFFENSE_REVOKED', 'GLOBAL_ANNOUNCEMENT']
+        && n.title is string && n.title.size() <= 150
+        && n.message is string && n.message.size() <= 500
+        && n.ticket_id is string && n.office_id is string
+        && n.is_read == false && n.read_at == null
+        && n.created_at == request.time;
+    }
+
+    // users/{uid}/notifications/{id}: only the owner reads; the owner may only mark one read.
+    match /users/{uid}/notifications/{notificationId} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && validNotification(request.resource.data)
+        && ((request.auth.uid == uid && request.resource.data.type in ['QUEUE_CONFIRMED', 'WARNING'])
+            || (request.auth.uid != uid && isStaff()));
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read', 'read_at'])
+        && request.resource.data.is_read == true
+        && request.resource.data.read_at == request.time;
+    }
+
     // events/{id}: create-only; staff read their own office's log.
     match /events/{eventId} {
       allow read: if isStaff() && resource.data.office_id == staffOfficeId();

@@ -108,33 +108,6 @@ export const MOCK_OFFICES = Object.freeze([
   },
 ]);
 
-export const MOCK_NOTIFICATIONS = Object.freeze([
-  {
-    id: 'notif_001',
-    type: 'YOUR_TURN',
-    title: 'Your Turn at Registrar!',
-    message: 'Ticket R-015 has been called. Please proceed to Room 101 and scan the QR code within 1 minute.',
-    is_read: false,
-    created_at: new Date(Date.now() - 20000).toISOString(),
-  },
-  {
-    id: 'notif_002',
-    type: 'APPROACHING_TURN',
-    title: 'Almost Your Turn (Cashier)',
-    message: 'You are now 3rd in line for Cashier & Student Accounts. Please head towards Finance Hall.',
-    is_read: false,
-    created_at: minutesAgo(5),
-  },
-  {
-    id: 'notif_003',
-    type: 'QUEUE_CONFIRMED',
-    title: 'Queue Joined',
-    message: 'You joined the queue for Cashier & Student Accounts as Ticket C-048.',
-    is_read: true,
-    created_at: minutesAgo(30),
-  },
-]);
-
 
 // ---------------------------------------------------------------------------
 // Staff web (apps/staff) — notifications (the queue, offenses and activity log are real)

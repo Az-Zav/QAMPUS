@@ -7,7 +7,7 @@
 // `active_offices` (office id -> true) holds the offices where the student has an active ticket, so a student
 // cannot join the same office twice; it is set by a join and cleared by the same writes that lower the counter.
 
-import { ACTIVITY_ACTION, CANCELLED_BY, QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
+import { ACTIVITY_ACTION, CANCELLED_BY, NOTIFICATION_TYPE, QUEUE_STATUS, RULES, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDate } from '@qampus/core/format';
 import {
   collection,
@@ -23,6 +23,8 @@ import {
 } from 'firebase/firestore';
 import { EVENT_ENTITY } from '../events/build.js';
 import { logEvent } from '../events/service.js';
+import { approachingTicket } from '../notifications/build.js';
+import { notify } from '../notifications/service.js';
 import { buildOffense, OFFENSE_TYPE } from '../penalties/offense.js';
 import { nextPenalty } from '../penalties/progress.js';
 import { chunkByHolder, isActiveTicket, waitingTickets } from './derive.js';
@@ -181,6 +183,9 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
         ACTIVITY_ACTION.JOINED,
         { to: TICKET_STATUS.WAITING },
       );
+      notify(db, tx, user.id, NOTIFICATION_TYPE.QUEUE_CONFIRMED, {
+        ticket: { id: ticketRef.id, office_id: office.id, office_name: office.name, ticket_number: ticketNumber },
+      });
       return { id: ticketRef.id, ticket_number: ticketNumber };
     });
   } catch (error) {
@@ -190,8 +195,13 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
 
 // Staff: call one WAITING ticket to the window. The queue (current ticket, last called number) and the
 // ticket (CALLED, called_at) change in one atomic write, so two staff cannot call different tickets.
-// `override` marks a call out of order (logged as OVERRIDE); `reason` is kept on that log line.
-export async function callTicket(db, { office, ticketId, actor, override = false, reason = null, now = new Date() }) {
+// `override` marks a call out of order (logged as OVERRIDE); `reason` is kept on that log line. The called
+// student is told it is their turn; `tickets` (the office's tickets for today) lets the student a few places
+// back be told theirs is near.
+export async function callTicket(
+  db,
+  { office, ticketId, actor, tickets = [], override = false, reason = null, now = new Date() },
+) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticketId);
   try {
@@ -216,6 +226,11 @@ export async function callTicket(db, { office, ticketId, actor, override = false
         override ? ACTIVITY_ACTION.OVERRIDE : ACTIVITY_ACTION.CALLED,
         { from: TICKET_STATUS.WAITING, to: TICKET_STATUS.CALLED, reason },
       );
+      notify(db, tx, ticket.user_id, NOTIFICATION_TYPE.YOUR_TURN, { ticket: { id: ticketRef.id, ...ticket } });
+      const near = approachingTicket(waitingTickets(tickets), ticketRef.id);
+      if (near && near.user_id !== ticket.user_id) {
+        notify(db, tx, near.user_id, NOTIFICATION_TYPE.APPROACHING_TURN, { ticket: near, position: RULES.APPROACHING_PLACE });
+      }
     });
   } catch (error) {
     throw asFailure(error);
@@ -226,7 +241,7 @@ export async function callTicket(db, { office, ticketId, actor, override = false
 export async function callNext(db, { office, tickets, actor, now = new Date() }) {
   const [first] = waitingTickets(tickets);
   if (!first) throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
-  await callTicket(db, { office, ticketId: first.id, actor, now });
+  await callTicket(db, { office, ticketId: first.id, actor, tickets, now });
 }
 
 // CALLED -> IN_SERVICE. Rules allow it only inside the grace period (called_at + 60 s, by server time).
@@ -326,6 +341,10 @@ export async function markTicketNoShow(db, { office, ticket, actor, reason = '',
         to: TICKET_STATUS.NO_SHOW,
         reason: trimmed,
       });
+      notify(db, tx, current.user_id, NOTIFICATION_TYPE.NO_SHOW, {
+        ticket: current,
+        resultedInBan: penalty.resulted_in_ban,
+      });
     });
   } catch (error) {
     throw asFailure(error);
@@ -360,6 +379,10 @@ export async function cancelOwnTicket(db, { ticket, now = new Date() }) {
         tx.update(queueRef, { current_ticket_id: null, updated_at: serverTimestamp() });
         releaseHolder(db, tx, current, penaltyFields(penalty));
         recordOffense(db, tx, current, OFFENSE_TYPE.CANCELLED_AFTER_CALL, penalty);
+        notify(db, tx, current.user_id, NOTIFICATION_TYPE.WARNING, {
+          ticket: current,
+          resultedInBan: penalty.resulted_in_ban,
+        });
       } else {
         releaseHolder(db, tx, current);
       }
@@ -412,6 +435,7 @@ export async function cancelOfficeQueue(db, { office, reason, actor, now = new D
       if (current) {
         releaseHolder(db, tx, current);
         tx.update(doc(db, 'tickets', current.id), cancelled());
+        notify(db, tx, current.user_id, NOTIFICATION_TYPE.QUEUE_CANCELLED, { ticket: current, reason: trimmed });
       }
     });
 
@@ -425,8 +449,10 @@ export async function cancelOfficeQueue(db, { office, reason, actor, now = new D
         const snaps = await Promise.all(chunk.map((t) => tx.get(doc(db, 'tickets', t.id))));
         for (const snap of snaps) {
           if (!snap.exists() || snap.data().status !== TICKET_STATUS.WAITING) continue;
-          releaseHolder(db, tx, { id: snap.id, ...snap.data() });
+          const waitingTicket = { id: snap.id, ...snap.data() };
+          releaseHolder(db, tx, waitingTicket);
           tx.update(snap.ref, cancelled());
+          notify(db, tx, waitingTicket.user_id, NOTIFICATION_TYPE.QUEUE_CANCELLED, { ticket: waitingTicket, reason: trimmed });
         }
       });
     }

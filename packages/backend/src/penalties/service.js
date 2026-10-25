@@ -1,7 +1,9 @@
 // Penalty writes. Recording an offense happens inside the ticket transactions (ticketing/service.js); this file
 // holds the revoke. Every function takes `db` first.
 
+import { NOTIFICATION_TYPE } from '@qampus/core/domain';
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { notify } from '../notifications/service.js';
 import { TicketingError, TicketingFailure } from '../ticketing/preflight.js';
 import { revokeEffect } from './progress.js';
 
@@ -27,6 +29,15 @@ export async function revokeOffense(db, { offense, reason, staffEmail }) {
         revoked_at: serverTimestamp(),
         revoked_by: staffEmail,
         revoke_reason: trimmed,
+      });
+      notify(db, tx, offense.user_id, NOTIFICATION_TYPE.OFFENSE_REVOKED, {
+        ticket: {
+          id: offense.ticket_id,
+          office_id: offense.office_id,
+          office_name: offense.office_name,
+          ticket_number: offense.ticket_number,
+        },
+        reason: trimmed,
       });
     });
   } catch (error) {

@@ -35,20 +35,13 @@ const OPENS_BANS = new Set([NOTIFICATION_TYPE.WARNING, NOTIFICATION_TYPE.NO_SHOW
 export default function NotificationsScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const { notifications: liveNotifications } = useNotifications();
+  const { notifications: liveNotifications, markRead } = useNotifications();
   const { active } = useMyTickets();
   const now = useNow(60000);
 
   const preview = usePreview('notifications'); // DEV-PREVIEW
-  const notifications = preview.data?.notifications ?? liveNotifications; // DEV-PREVIEW
-  // Read state is local until the notifications hook can mark items read
-  const [readIds, setReadIds] = useState(() => new Set());
+  const items = preview.data?.notifications ?? liveNotifications; // DEV-PREVIEW
   const [calledTicketId, setCalledTicketId] = useState(null);
-
-  const items = useMemo(
-    () => notifications.map((n) => ({ ...n, is_read: n.is_read || readIds.has(n.id) })),
-    [notifications, readIds],
-  );
   const unread = items.filter((n) => !n.is_read).length;
 
   const sections = useMemo(
@@ -65,7 +58,7 @@ export default function NotificationsScreen() {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/home'));
 
   const onPressItem = (notification) => {
-    setReadIds((ids) => new Set(ids).add(notification.id));
+    if (!notification.is_read) markRead(notification.id);
 
     if (notification.type === NOTIFICATION_TYPE.YOUR_TURN) {
       // Opens M05 only while the ticket is still CALLED; otherwise it's just marked read

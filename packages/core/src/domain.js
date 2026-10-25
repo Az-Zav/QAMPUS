@@ -47,6 +47,7 @@ export const RULES = Object.freeze({
   MAX_ACTIVE_TICKETS: 3, // R-07
   OFFENSES_PER_BAN: 2, // R-13
   BAN_HOURS: 24, // R-13
+  APPROACHING_PLACE: 3, // R-24: the student this far back in line is told their turn is near
 });
 
 // ---------------------------------------------------------------------------

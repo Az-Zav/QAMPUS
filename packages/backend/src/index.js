@@ -3,5 +3,6 @@
 // Pure files (ids, derive, preflight) import no Firebase and are unit tested in test/.
 
 export * from './events/index.js';
+export * from './notifications/index.js';
 export * from './ticketing/index.js';
 export * from './penalties/index.js';

@@ -128,7 +128,7 @@ export function QueueProvider({ children }) {
 
   const overrideCall = (ticketId, reason = null) => {
     if (office) {
-      callTicket(db, { office, ticketId, actor, override: true, reason }).catch((error) =>
+      callTicket(db, { office, ticketId, actor, tickets: officeTickets, override: true, reason }).catch((error) =>
         console.warn('Could not call the ticket', error),
       );
     }
