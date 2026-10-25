@@ -3,6 +3,7 @@
 
 import { USER_ROLE } from '@/constants';
 import { auth, db, SCHOOL_EMAIL_DOMAIN } from '@/lib/firebase';
+import { clearPushToken } from '@/lib/push';
 import { loadOrCreateGuest, loadOrCreateStudent, saveGuestDetails, saveStudentProgram } from '@/lib/users';
 import { claimStudentProfile, issueGuestProfile } from '@qampus/backend';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
@@ -101,6 +102,8 @@ export function SessionProvider({ children }) {
       },
 
       signOut: async () => {
+        // This phone must stop receiving this account's pushes (best effort, before the session ends)
+        if (user) await clearPushToken(user.id).catch(() => {});
         // Also clear Google's cached account, or the picker is skipped next time
         await GoogleSignin.signOut().catch(() => {});
         await firebaseSignOut(auth).catch(() => {});

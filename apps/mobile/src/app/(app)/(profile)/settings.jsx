@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import ThemeSelector from '@/components/primitives/ThemeSelector';
@@ -10,16 +9,23 @@ import SubHeader from '@/components/shell/SubHeader';
 
 import { RADII, SETTINGS_COPY, SPACING, withOpacity } from '@/constants';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
+import { savePushEnabled } from '@/lib/push';
 import { useBiometric } from '@/providers/BiometricProvider';
+import { useQueueData } from '@/providers/QueueDataProvider';
 
-// S16 Settings (UIUX §4.14). Theme and biometric unlock work; push saves its switch with the push slice.
+// S16 Settings (UIUX §4.14). Theme, biometric unlock and push all work.
 // The theme follows the device until a half is picked; the choice lasts until the app restarts.
 
 export default function SettingsScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const { user } = useSession();
-  const [pushEnabled, setPushEnabled] = useState(user?.push_enabled ?? true);
+  // The live profile, so the switch shows what is saved (it saves the moment it is flipped)
+  const { profile } = useQueueData();
+  const pushEnabled = profile ? profile.push_enabled !== false : true;
+  const setPushEnabled = (on) => {
+    if (user) savePushEnabled(user.id, on).catch((error) => console.warn('Could not save the push setting', error));
+  };
   const { scheme, setPreference } = useTheme();
   const biometric = useBiometric();
 

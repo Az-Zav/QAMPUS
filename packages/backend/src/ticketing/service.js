@@ -213,6 +213,7 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
 // `override` marks a call out of order (logged as OVERRIDE); `reason` is kept on that log line. The called
 // student is told it is their turn; `tickets` (the office's tickets for today) lets the student a few places
 // back be told theirs is near.
+// Resolves to { id, user_id, ticket_number } of the ticket that was called (the staff console uses it to push the student).
 export async function callTicket(
   db,
   { office, ticketId, actor, tickets = [], override = false, reason = null, now = new Date() },
@@ -220,12 +221,12 @@ export async function callTicket(
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticketId);
   try {
-    await runTransaction(db, async (tx) => {
+    return await runTransaction(db, async (tx) => {
       const [queueSnap, ticketSnap] = await Promise.all([tx.get(queueRef), tx.get(ticketRef)]);
       const queue = queueSnap.exists() ? queueSnap.data() : null;
       const ticket = ticketSnap.exists() ? ticketSnap.data() : null;
-      const reason = checkCall({ officeId: office.id, queue, ticket });
-      if (reason) throw new TicketingFailure(reason);
+      const refusal = checkCall({ officeId: office.id, queue, ticket });
+      if (refusal) throw new TicketingFailure(refusal);
 
       tx.update(queueRef, {
         last_called_seq: Math.max(queue.last_called_seq, ticket.daily_sequence),
@@ -246,6 +247,7 @@ export async function callTicket(
       if (near && near.user_id !== ticket.user_id) {
         notify(db, tx, near.user_id, NOTIFICATION_TYPE.APPROACHING_TURN, { ticket: near, position: RULES.APPROACHING_PLACE });
       }
+      return { id: ticketRef.id, user_id: ticket.user_id, ticket_number: ticket.ticket_number };
     });
   } catch (error) {
     throw asFailure(error);
@@ -256,7 +258,7 @@ export async function callTicket(
 export async function callNext(db, { office, tickets, actor, now = new Date() }) {
   const [first] = waitingTickets(tickets);
   if (!first) throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
-  await callTicket(db, { office, ticketId: first.id, actor, tickets, now });
+  return callTicket(db, { office, ticketId: first.id, actor, tickets, now });
 }
 
 // CALLED -> IN_SERVICE. Rules allow it only inside the grace period (called_at + 60 s, by server time).

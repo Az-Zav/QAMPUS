@@ -1,0 +1,12 @@
+{
+  "name": "qampus-push-relay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker that sends the QAMPUS 'your turn' push for the staff console",
+  "scripts": {
+    "dev": "npx wrangler@latest dev",
+    "deploy": "npx wrangler@latest deploy",
+    "test": "node --test"
+  }
+}
