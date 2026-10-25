@@ -103,7 +103,7 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 4. **Slices that need a new native package, batched into ONE dev build** (so only one rebuild): QR scan with `expo-camera`,
    biometric unlock with `expo-local-authentication`, and `expo-notifications` for push (its JS waits for the relay). Plan LOCKED in 6.5.
 5. **UI polish**: improve spacing of components on the screens, responsiveness (phone sizes and the staff web at different widths),
-   and remove the dev preview states (`// DEV-PREVIEW` markers, `usePreview`, `src/dev/previews.jsx`, `playground.jsx`).
+   (the dev preview states, `usePreview`, `src/dev/previews.jsx` and `playground.jsx` were REMOVED 2026-10-25; `EmptyStateType.OFFLINE` stays as an unused design variant until offline handling exists).
 6. **Deploy as a preview for end-to-end testing** (EAS preview build/update for the apps, and a hosted preview of the staff web;
    decide the hosting when reached). Also decide then whether to use a separate dev Firebase project.
 
@@ -117,7 +117,7 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 - Still open for later: the `ui-mock-final` tag (a pushed tag is outward-facing: ask first) and the separate dev Firebase project
   question (decide at the preview deployment step).
 
-### 6.6 Guests (DONE 2026-10-25, tested and pushed; reasons in DECISIONS.md)
+### 6.6 Guests (DONE 2026-10-25, tested and pushed; reasons in DECISIONS.md; the account is now made on the form's Continue, see DECISIONS 2026-10-25 "Guest account is made on Continue")
 Anonymous sign-in on the device, a guest form that issues a unique `G` + six digits, `institutionalIds/{id}` claims (`{ uid }`,
 create-only) for guest and student IDs (a taken student ID is refused), guests use the app like students, guest sign-out warns that the
 identity is lost, `packages/backend/src/identity`. Students with an ID saved before 6.6 have no claim (not backfilled).
@@ -195,8 +195,8 @@ Why a relay: the staff web page cannot call Expo's push API (its CORS preflight 
 | 3 | Agent (BUILT 2026-10-25) | Student app: permission, channel, push token saved, the Settings switch saves `push_enabled`, sign-out clears the token |
 | 4 | Agent (BUILT, `relay/`, 7 unit tests) | Write the relay in `relay/` and test it locally |
 | 5 | Agent (BUILT, `apps/staff/src/lib/push.js`) | Staff console calls the relay after a call commits |
-| 6 | Developer (NEXT) | Put the relay online on Cloudflare |
-| 7 | Both | Test (the local run passed on 2026-10-25; repeat against the deployed relay) |
+| 6 | Developer (DONE 2026-10-25) | Put the relay online on Cloudflare: https://qampus-push.qampus-push.workers.dev |
+| 7 | Both | Test (passed on 2026-10-25, locally and against the deployed relay) |
 
 **Step 1 (developer, DONE).** Firebase console, project `qampus-d0718`: Project settings -> Service accounts -> Generate new private key
 (JSON, never committed). Upload to Expo: expo.dev -> the project -> Project settings -> Credentials -> Android (`com.qampus.app`) ->

@@ -1,5 +1,6 @@
 import { Button, FormField, Input } from '@qampus/ui';
 import Picker from '@/components/primitives/Picker';
+import SubHeader from '@/components/shell/SubHeader';
 import { GUEST_TYPE_LABEL, IconSet, InputType, lineHeightFor, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { isValidEmail } from '@/utils';
@@ -17,11 +18,13 @@ const guestTypeFromLabel = (label) =>
   Object.keys(GUEST_TYPE_LABEL).find((key) => GUEST_TYPE_LABEL[key] === label) ?? null;
 
 // S06: guest profile form, then the issued Guest ID (R-02). Exit -> Home.
+// Nothing exists until Continue succeeds: the anonymous account and the profile are made together then, so backing out
+// (or a failed save) leaves no account behind.
 export default function GuestProfileScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const { completeGuestProfile } = useSession();
+  const { user, signOut, completeGuestProfile } = useSession();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -35,6 +38,19 @@ export default function GuestProfileScreen() {
   const nameError = submitted && !name.trim() ? COPY.nameError : null;
   const emailError = submitted && emailInvalid ? COPY.emailError : null;
   const guestTypeError = submitted && !guestType ? COPY.guestTypeError : null;
+
+  const goBack = async () => {
+    if (saving) return;
+    // An older guest who signed in before filling the form: leaving means leaving that empty account too
+    if (user) {
+      await signOut();
+      router.replace('/login');
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/login');
+    }
+  };
 
   const handleSubmit = async () => {
     setSubmitted(true);
@@ -72,13 +88,11 @@ export default function GuestProfileScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.screen}>
+    <SafeAreaView style={styles.screen} edges={['bottom', 'left', 'right']}>
+      <SubHeader title={COPY.title} onBack={goBack} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.intro}>
-            <Text style={styles.title} accessibilityRole="header">
-              {COPY.title}
-            </Text>
             <Text style={styles.body}>{COPY.intro}</Text>
           </View>
 
@@ -134,7 +148,7 @@ const makeStyles = (c) => StyleSheet.create({
   },
   content: {
     paddingHorizontal: SPACING.xxl,
-    paddingTop: SPACING.huge,
+    paddingTop: SPACING.md,
     paddingBottom: SPACING.xl,
     gap: SPACING.lg, // space between fields
   },

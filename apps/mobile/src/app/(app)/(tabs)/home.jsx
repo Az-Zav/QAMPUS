@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -12,7 +13,6 @@ import TicketModal from '@/components/modals/TicketModal';
 import TicketStubCard from '@/components/tickets/TicketStubCard';
 
 import { EmptyStateType, IconSet, InfoCardType, MODAL_COPY, ModalTone, SPACING, TicketStatus, TYPOGRAPHY } from '@/constants';
-import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
 import {
   useCancelTicket,
   useJoinQueue,
@@ -36,16 +36,15 @@ const HomeModal = Object.freeze({
 export default function HomeScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { user } = useSession();
-  const { active: liveActive, now } = useMyTickets();
+  const { active, now } = useMyTickets();
   const { offices } = useOffices();
   const { unreadCount } = useNotifications();
   const { join, joining } = useJoinQueue();
   const { cancel, cancelling } = useCancelTicket();
 
-  const preview = usePreview('home', { barStyle: styles.previewBar }); // DEV-PREVIEW
-  const active = preview.data?.active ?? liveActive; // DEV-PREVIEW
   const [modal, setModal] = useState(null);
   // Selections persist after close so the modal keeps its content while fading out
   const [selectedTicketId, setSelectedTicketId] = useState(null);
@@ -88,12 +87,8 @@ export default function HomeScreen() {
   };
 
   const renderActiveQueues = () => {
-    if (preview.data?.offline) { // DEV-PREVIEW
-      return <EmptyState type={EmptyStateType.OFFLINE} />;
-    }
-
     if (active.length === 0) {
-      return <EmptyState type={EmptyStateType.NO_TICKETS} onAction={() => router.push('/queue')} />;
+      return <EmptyState type={EmptyStateType.NO_TICKETS} onAction={() => router.push('/queue')} style={styles.emptyState} />;
     }
 
     return (
@@ -114,9 +109,7 @@ export default function HomeScreen() {
     <View style={styles.screen}>
       <Header title="HOME" hasNotification={unreadCount > 0} onBellPress={() => router.push('/notifications')} onAvatarPress={() => router.push('/profile')} />
 
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {preview.bar /* DEV-PREVIEW */}
-
+      <ScrollView contentContainerStyle={[styles.container, { paddingBottom: navClearance }]} showsVerticalScrollIndicator={false}>
         <Text style={styles.greeting}>
           {greetingFor(now)}, <Text style={styles.userName}>{user?.name.split(' ')[0]}</Text>
         </Text>
@@ -197,9 +190,7 @@ const makeStyles = (c) => StyleSheet.create({
   container: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: SPACING.xxl * 2,
   },
-  previewBar: { marginBottom: SPACING.md }, // DEV-PREVIEW
   greeting: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontSize: TYPOGRAPHY.size.xl,
@@ -217,6 +208,10 @@ const makeStyles = (c) => StyleSheet.create({
   },
   ticketList: {
     marginBottom: SPACING.md,
+  },
+  // The empty state sits a little lower, nearer the middle of the visible area
+  emptyState: {
+    paddingTop: SPACING.huge + SPACING.xl,
   },
   operatingHeader: {
     flexDirection: 'row',

@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -18,6 +19,7 @@ const QueueModal = Object.freeze({ JOIN_CONFIRM: 'join', SUCCESS: 'success', FAI
 
 export default function Queue() {
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { offices } = useOffices();
   const { history, now } = useMyTickets();
@@ -78,7 +80,7 @@ export default function Queue() {
       </View>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: navClearance }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -158,7 +160,6 @@ const makeStyles = (c) => StyleSheet.create({
   content: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
-    paddingBottom: 112,
   },
   pageTitle: {
     color: c.onGold,

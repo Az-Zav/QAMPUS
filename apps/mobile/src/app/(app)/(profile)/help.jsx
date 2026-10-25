@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@qampus/ui';
-import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import InfoCard from '@/components/shell/InfoCard';
 import SubHeader from '@/components/shell/SubHeader';
 
@@ -18,6 +18,7 @@ const SUPPORT_MAILTO = 'mailto:?subject=QAMPUS%20support';
 export default function HelpScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/profile'));
@@ -26,7 +27,7 @@ export default function HelpScreen() {
     <View style={styles.screen}>
       <SubHeader title="Help & Support" onBack={goBack} />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: navClearance }]} showsVerticalScrollIndicator={false}>
         <View style={styles.faqHead}>
           <Text style={styles.faqTitle} accessibilityRole="header">{HELP_COPY.faqTitle}</Text>
           <Text style={styles.faqCount}>{HELP_COPY.faqCount(FAQ_ITEMS.length)}</Text>
@@ -64,7 +65,6 @@ const makeStyles = (c) => StyleSheet.create({
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: BOTTOM_NAV_CLEARANCE,
   },
   faqHead: {
     flexDirection: 'row',

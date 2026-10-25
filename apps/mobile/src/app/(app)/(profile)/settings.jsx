@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 
 import ThemeSelector from '@/components/primitives/ThemeSelector';
 import { Toggle } from '@qampus/ui';
-import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import ListRow from '@/components/shell/ListRow';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
@@ -19,6 +19,7 @@ import { useQueueData } from '@/providers/QueueDataProvider';
 
 export default function SettingsScreen() {
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { user } = useSession();
   // The live profile, so the switch shows what is saved (it saves the moment it is flipped)
@@ -36,7 +37,7 @@ export default function SettingsScreen() {
     <View style={styles.screen}>
       <SubHeader title="Settings" onBack={goBack} />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: navClearance }]} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <SectionLabel text={SETTINGS_COPY.generalLabel} />
           <View style={styles.group}>
@@ -87,7 +88,6 @@ const makeStyles = (c) => StyleSheet.create({
     gap: SPACING.huge,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: BOTTOM_NAV_CLEARANCE,
   },
   section: { gap: SPACING.sm },
   group: {

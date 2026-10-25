@@ -1,4 +1,4 @@
-import { ButtonType, IconSet, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, IconSet, SPACING, TYPOGRAPHY } from '@/constants';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { Button } from '@qampus/ui';
 import { useRouter } from 'expo-router';
@@ -9,7 +9,7 @@ export default function Login() {
   const { colors, isDark } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const { signInAsStudent, signInAsGuest } = useSession();
+  const { signInAsStudent } = useSession();
 
   const handleGoogleLogin = async () => {
     try {
@@ -28,16 +28,8 @@ export default function Login() {
   };
 
 
-  const handleGuestLogin = async () => {
-    try {
-      await signInAsGuest();
-      router.replace('/');
-    } catch (error) {
-      // TODO: swap Alert for NoticeModal once error copy exists
-      console.warn('Guest sign-in failed', error);
-      Alert.alert('Guest sign-in failed', PROFILE_COPY.guestSignInFailed);
-    }
-  };
+  // No account is made here: the guest form makes the anonymous account when its Continue succeeds, so a cancel leaves nothing
+  const handleGuestLogin = () => router.push('/guest-profile');
 
   return (
     <SafeAreaView style={styles.container}>
@@ -120,8 +112,8 @@ const makeStyles = (c) => StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: SPACING.xxl,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.xxl,
   },
 
   /* Header */
@@ -156,14 +148,14 @@ const makeStyles = (c) => StyleSheet.create({
   mainContainer: {
     flex: 1,
     justifyContent: 'center',
-    marginTop: -SPACING.lg,
+    marginTop: SPACING.md,
   },
 
   /* Hero */
   heroContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.xxxl,
   },
   heroIllustration: {
     width: '100%',
@@ -195,8 +187,10 @@ const makeStyles = (c) => StyleSheet.create({
     zIndex: 10,
     elevation: 10,
   },
+  // 56 dp tall (above the 48 dp minimum), 16 dp apart
   buttonMargin: {
-    marginBottom: SPACING.md,
+    height: 56,
+    marginBottom: SPACING.lg,
   },
   termsText: {
     marginTop: SPACING.sm,

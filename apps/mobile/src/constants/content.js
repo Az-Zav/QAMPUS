@@ -166,7 +166,6 @@ export const PROFILE_COPY = Object.freeze({
     guestTypeError: 'Choose a guest type.',
   },
   guestFailed: 'Couldn’t set up your guest profile. Check your connection and try again.',
-  guestSignInFailed: 'Couldn’t start a guest session. Check your connection and try again.',
   guestIssued: {
     title: 'You’re all set',
     body: 'This is your Guest ID. Staff use it to look you up if your phone can’t scan the code. You can find it any time in your profile.',

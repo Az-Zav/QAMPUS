@@ -8,6 +8,7 @@ import {
   RADII,
   SPACING,
   TicketStatus,
+  TOUCH,
   TYPOGRAPHY,
   withOpacity,
 } from '@/constants';
@@ -37,8 +38,8 @@ function MenuRow({ title, icon, pill, destructive }) {
 
   return (
     <>
-      <View style={[styles.iconCircle, destructive ? styles.dangerTint : styles.goldTint]}>
-        {!!icon && <IconSet name={icon} size={18} color={accent} />}
+      <View style={[styles.iconCircle, styles.menuIconCircle, destructive ? styles.dangerTint : styles.goldTint]}>
+        {!!icon && <IconSet name={icon} size={20} color={accent} />}
       </View>
       <Text style={[styles.title, styles.flex, { color: accent }]}>{title}</Text>
       {!!pill && (
@@ -185,6 +186,7 @@ const makeStyles = (c) => StyleSheet.create({
   menu: {
     borderTopWidth: 1,
     borderTopColor: c.border,
+    minHeight: TOUCH.MIN_TARGET + SPACING.sm, // 56: a comfortable row to hit
   },
   noDivider: { borderTopWidth: 0 },
   notification: {
@@ -217,6 +219,7 @@ const makeStyles = (c) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  menuIconCircle: { width: 40, height: 40 },
   goldTint: { backgroundColor: withOpacity(c.gold, 0.15) },
   goldOutline: { borderWidth: 1, borderColor: withOpacity(c.gold, 0.3) },
   dangerTint: { backgroundColor: withOpacity(c.error, 0.08) },

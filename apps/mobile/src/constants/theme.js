@@ -169,3 +169,7 @@ export const EmptyStateType = Object.freeze({
   NO_RESULTS: 'noResults',
   OFFLINE: 'offline',
 });
+
+// Touch ergonomics: every tappable thing is at least MIN_TARGET wide and tall (Material 48 dp, Apple 44 pt, WCAG 2.2),
+// with GAP between neighbours. A smaller drawn icon is fine if its padding makes the tappable area this big.
+export const TOUCH = Object.freeze({ MIN_TARGET: 48, GAP: 8 });
