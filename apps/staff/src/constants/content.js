@@ -50,7 +50,7 @@ export const TOP_BAR_COPY = Object.freeze({
   assignedStaff: 'assigned staff',
   officeAssignment: 'Office assignment',
   help: 'Help & support',
-  terms: 'Terms of Use',
+  terms: 'Terms of Service',
   privacy: 'Privacy Policy',
   signOut: 'Sign out',
 });
