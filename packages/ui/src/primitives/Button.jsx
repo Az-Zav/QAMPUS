@@ -13,7 +13,13 @@ const makeVariants = (c) => ({
 
 const SIZES = {
   [ComponentSize.MD]: { height: 48, paddingHorizontal: SPACING.lg, fontSize: TYPOGRAPHY.size.md },
-  [ComponentSize.SM]: { height: 32, paddingHorizontal: SPACING.md, fontSize: TYPOGRAPHY.size.xs },
+  // 32 dp drawn, 48 dp tappable (8 dp of touch margin each side), so the small button stays small but is easy to hit
+  [ComponentSize.SM]: {
+    height: 32,
+    paddingHorizontal: SPACING.md,
+    fontSize: TYPOGRAPHY.size.xs,
+    hitSlop: { top: 8, bottom: 8, left: 8, right: 8 },
+  },
 };
 
 export default function Button({
@@ -36,6 +42,7 @@ export default function Button({
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      hitSlop={sizing.hitSlop}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled }}

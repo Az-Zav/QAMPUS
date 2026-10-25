@@ -1,4 +1,4 @@
-import { ELEVATION, GUEST_TYPE_LABEL, IconSet, RADII, SPACING, TYPOGRAPHY, withOpacity } from '@/constants';
+import { ELEVATION, GUEST_TYPE_LABEL, IconSet, RADII, SPACING, TOUCH, TYPOGRAPHY, withOpacity } from '@/constants';
 import { useTheme, useThemedStyles } from '@/hooks';
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -21,7 +21,8 @@ const IDENTITY_OFFSET = 65; // actions row -> avatar
 const IDENTITY_BLOCK = 222; // avatar top -> header bottom (323 total in Figma)
 const CORNER_RADIUS = 28;
 const AVATAR = 80;
-const ACTION = 40;
+const ACTION = TOUCH.MIN_TARGET; // back / edit: the whole 48 dp is tappable
+const ACTIONS_DROP = SPACING.md; // the action row sits this much lower than the Figma offset
 
 function metaLine(context, user) {
   if (context === 'profileGuest') return [user.institutional_id, GUEST_TYPE_LABEL[user.guest_type]];
@@ -32,8 +33,9 @@ export default function ProfileHeader({ context, user, onBack, onEdit }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
-  const actionsTop = Math.max(insets.top, ACTIONS_TOP);
-  const identityTop = actionsTop + IDENTITY_OFFSET;
+  const baseTop = Math.max(insets.top, ACTIONS_TOP);
+  const actionsTop = baseTop + ACTIONS_DROP;
+  const identityTop = baseTop + IDENTITY_OFFSET;
   const meta = metaLine(context, user).filter(Boolean);
   const initial = user.name?.trim()[0]?.toUpperCase();
 
@@ -41,11 +43,11 @@ export default function ProfileHeader({ context, user, onBack, onEdit }) {
     <View style={[styles.container, { height: identityTop + IDENTITY_BLOCK }]}>
       <View style={[styles.actions, { top: actionsTop }]}>
         <Pressable onPress={onBack} style={styles.action} accessibilityRole="button" accessibilityLabel="Go back">
-          <IconSet name="arrow-back" size={22} color={withOpacity(colors.onInverse, 0.8)} />
+          <IconSet name="arrow-back" size={24} color={withOpacity(colors.onInverse, 0.8)} />
         </Pressable>
         {!!onEdit && (
           <Pressable onPress={onEdit} style={styles.action} accessibilityRole="button" accessibilityLabel="Edit profile">
-            <IconSet name="create-outline" size={20} color={colors.onInverse} />
+            <IconSet name="create-outline" size={24} color={colors.onInverse} />
           </Pressable>
         )}
       </View>

@@ -88,7 +88,7 @@ export default function HomeScreen() {
 
   const renderActiveQueues = () => {
     if (active.length === 0) {
-      return <EmptyState type={EmptyStateType.NO_TICKETS} onAction={() => router.push('/queue')} />;
+      return <EmptyState type={EmptyStateType.NO_TICKETS} onAction={() => router.push('/queue')} style={styles.emptyState} />;
     }
 
     return (
@@ -208,6 +208,10 @@ const makeStyles = (c) => StyleSheet.create({
   },
   ticketList: {
     marginBottom: SPACING.md,
+  },
+  // The empty state sits a little lower, nearer the middle of the visible area
+  emptyState: {
+    paddingTop: SPACING.huge + SPACING.xl,
   },
   operatingHeader: {
     flexDirection: 'row',

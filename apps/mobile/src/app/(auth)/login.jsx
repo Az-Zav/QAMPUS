@@ -112,8 +112,8 @@ const makeStyles = (c) => StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: SPACING.xxl,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.xxl,
   },
 
   /* Header */
@@ -148,14 +148,14 @@ const makeStyles = (c) => StyleSheet.create({
   mainContainer: {
     flex: 1,
     justifyContent: 'center',
-    marginTop: -SPACING.lg,
+    marginTop: SPACING.md,
   },
 
   /* Hero */
   heroContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.xxxl,
   },
   heroIllustration: {
     width: '100%',
@@ -187,8 +187,10 @@ const makeStyles = (c) => StyleSheet.create({
     zIndex: 10,
     elevation: 10,
   },
+  // 56 dp tall (above the 48 dp minimum), 16 dp apart
   buttonMargin: {
-    marginBottom: SPACING.md,
+    height: 56,
+    marginBottom: SPACING.lg,
   },
   termsText: {
     marginTop: SPACING.sm,
