@@ -6,6 +6,7 @@
   "main": "./src/index.js",
   "exports": {
     ".": "./src/index.js",
+    "./events": "./src/events/index.js",
     "./ticketing": "./src/ticketing/index.js",
     "./penalties": "./src/penalties/index.js"
   },

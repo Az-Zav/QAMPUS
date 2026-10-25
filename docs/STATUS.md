@@ -2,8 +2,9 @@
 
 Living snapshot. Overwrite sections as things change; keep it under ~60 lines.
 Decisions and their reasons live in `DECISIONS.md`. Product spec: `KnowledgeBase/QAMPUS_PRD.md`.
+**Next session: read `NEXT_SESSION.md`** (working agreements, environment, code map, lessons, and the ordered plan).
 
-_Last updated: 2026-10-24_
+_Last updated: 2026-10-25_
 _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tickets, offenses locked)._
 
 ## Built
@@ -20,18 +21,14 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Three-ticket limit (R-07) tested on device and staff browser**: `users.active_count` is raised by a join (rules require it) and lowered by every finish/cancel. Join is refused with a message at three; the Join button is disabled at three. A hand-made client could cheat the counter (accepted for the prototype). Office cancel runs in small transactions.
 - **One active ticket per office tested on device and staff browser**: `users.active_offices` (office id -> true) is set by a join and cleared by every finish/cancel. A second join of the same office is refused with a message, and its Join button is disabled.
 - **Penalties tested on device and staff browser**: offenses (`offenses/{ticketId}`), strikes and a 24-hour ban after the second, recorded with the no-show and the cancel-while-called in the same transaction; a ban blocks joining; the student's Bans & Warnings screen and the staff Offenses screen read real data; staff revoke with a reason. `MOCK_OFFENSES` and `MOCK_STAFF_OFFENSES` are deleted.
-- **UI**: all screens exist. The whole ticket flow is real. Still mock: the staff activity log (no entries are added by real actions yet), notifications and push, guests, programs, public display (`MOCK_OFFICES`).
+- **Activity log (`events`) built, awaiting the developer's test**: every staff action and the student join/cancel/check-in writes one `events` line inside its transaction; the staff Activity Log reads them 50 per page (Newer/Older). Needs `firebase deploy --only firestore:rules,firestore:indexes --project qampus-d0718` before it works. `MOCK_STAFF_ACTIVITY` and the mock reducer are gone.
+- **UI**: all screens exist. The whole ticket flow and the activity log are real. Still mock: notifications and push, guests, programs, public display (`MOCK_OFFICES`), staff cutoff override.
 
 ## In progress
-Nothing active. Penalties (offenses, strikes, 24-hour ban, revoke) passed manual testing. Next slice to be chosen.
+Slice 6.1 (activity log): code done, 49 unit tests, lint and staff build pass. Waiting for the rules/index deploy and the developer's manual test, then commit.
 
 ## Next
-Planned slices, each with a commit after the developer tests:
-- Activity log (`events`): real entries when staff and students act, replacing the mock log.
-- Notifications: in-app list (your turn, no-show, cancelled by office, offense revoked); push needs a decision (relay or in-app only).
-- Capacity cutoff and wait times: refuse joins near closing, staff override, real service-time average (`completed_count`, `service_seconds_total` are already stored).
-- Public display (needs rules for reads without a login), QR scan (`expo-camera`, new dev build), guests.
-- Small issues: Edit Profile save, on-screen messages for refused staff actions.
+Ordered plan with designs, rules notes and decisions: `NEXT_SESSION.md` section 6. In order: 6.2 notifications (in-app, stage A then B), 6.3 capacity cutoff and wait times, then public display, QR scan (new dev build), guests, small issues.
 
 ## Known issues
 - `edit-profile.jsx` calls `updateProfile`, which `SessionProvider` does not define; saving a profile throws.

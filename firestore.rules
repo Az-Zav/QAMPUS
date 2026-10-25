@@ -366,5 +366,35 @@ service cloud.firestore {
       allow create: if signedIn() && validOffense(ticketId, request.resource.data);
       allow update: if isStaff() && validRevoke(resource.data, request.resource.data);
     }
+
+    // An activity log line: fixed fields, written by the person who did the action, stamped with server time.
+    // No lookups (each one counts against the limit of the write it rides on). It is an audit aid, not a gate:
+    // nothing requires a line alongside a ticket change, and a hand-made client could write a false line into
+    // an office's log (accepted for the prototype, see docs/DECISIONS.md).
+    function validEvent(e) {
+      return e.keys().hasOnly(['entity_type', 'entity_id', 'action', 'from_status', 'to_status', 'actor_uid',
+                               'actor_name', 'reason', 'office_id', 'ticket_number', 'created_at'])
+        && e.keys().hasAll(['entity_type', 'entity_id', 'action', 'from_status', 'to_status', 'actor_uid',
+                            'actor_name', 'reason', 'office_id', 'ticket_number', 'created_at'])
+        && e.entity_type in ['TICKET', 'QUEUE']
+        && e.action in ['JOINED', 'CALLED', 'OVERRIDE', 'SERVICE_STARTED', 'COMPLETED', 'CANCELLED', 'NO_SHOW',
+                        'INVALID_SCAN', 'QUEUE_OPENED', 'QUEUE_CLOSED', 'QUEUE_CANCELLED', 'CUTOFF_OVERRIDE',
+                        'OFFENSE_RECORDED', 'OFFENSE_REVOKED']
+        && e.actor_uid == request.auth.uid
+        && e.created_at == request.time
+        && e.entity_id is string && e.entity_id.size() <= 100
+        && e.office_id is string && e.office_id.size() <= 100
+        && e.actor_name is string && e.actor_name.size() <= 100
+        && (e.from_status == null || e.from_status is string)
+        && (e.to_status == null || e.to_status is string)
+        && (e.ticket_number == null || (e.ticket_number is string && e.ticket_number.size() <= 40))
+        && (e.reason == null || (e.reason is string && e.reason.size() <= 500));
+    }
+
+    // events/{id}: create-only; staff read their own office's log.
+    match /events/{eventId} {
+      allow read: if isStaff() && resource.data.office_id == staffOfficeId();
+      allow create: if signedIn() && validEvent(request.resource.data);
+    }
   }
 }

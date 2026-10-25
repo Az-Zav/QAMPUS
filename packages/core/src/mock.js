@@ -2,13 +2,6 @@
 // Read only through hooks in each app's src/hooks — screens and components never import this file.
 
 const minutesAgo = (m) => new Date(Date.now() - m * 60000).toISOString();
-const secondsAgo = (s) => new Date(Date.now() - s * 1000).toISOString();
-const daysAgo = (d, hour, minute = 0) => {
-  const date = new Date();
-  date.setDate(date.getDate() - d);
-  date.setHours(hour, minute, 0, 0);
-  return date.toISOString();
-};
 
 export const MOCK_USER_GUEST = Object.freeze({
   id: 'usr_gst_002',
@@ -144,97 +137,8 @@ export const MOCK_NOTIFICATIONS = Object.freeze([
 
 
 // ---------------------------------------------------------------------------
-// Staff web (apps/staff) — the Registrar's live queue, offenses and activity log
+// Staff web (apps/staff) — notifications (the queue, offenses and activity log are real)
 // ---------------------------------------------------------------------------
-
-// Full ticket number (R-08a): CODE-MM-DD-SEQ, dated `days` ago
-const fullTicketNumber = (code, seq, days = 0) => {
-  const date = new Date();
-  date.setDate(date.getDate() - days);
-  const pad = (n, width = 2) => String(n).padStart(width, '0');
-  return `${code}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(seq, 3)}`;
-};
-
-// Newest first. `from`/`to` are TICKET_STATUS values; entries without them are queue-level actions.
-export const MOCK_STAFF_ACTIVITY = Object.freeze([
-  {
-    id: 'log_006',
-    action: 'CALLED',
-    ticket_number: fullTicketNumber('R', 5),
-    actor: 'N. Reyes',
-    from: 'WAITING',
-    to: 'CALLED',
-    reason: null,
-    note: null,
-    created_at: secondsAgo(18),
-  },
-  {
-    id: 'log_005',
-    action: 'NO_SHOW',
-    ticket_number: fullTicketNumber('R', 4),
-    actor: 'N. Reyes',
-    from: 'CALLED',
-    to: 'NO_SHOW',
-    reason: 'grace period lapsed',
-    note: null,
-    created_at: minutesAgo(4),
-  },
-  {
-    id: 'log_004',
-    action: 'CALLED',
-    ticket_number: fullTicketNumber('R', 4),
-    actor: 'N. Reyes',
-    from: 'WAITING',
-    to: 'CALLED',
-    reason: null,
-    note: null,
-    created_at: minutesAgo(6),
-  },
-  {
-    id: 'log_003',
-    action: 'COMPLETED',
-    ticket_number: fullTicketNumber('R', 3),
-    actor: 'N. Reyes',
-    from: 'IN_SERVICE',
-    to: 'COMPLETED',
-    reason: null,
-    note: null,
-    created_at: minutesAgo(9),
-  },
-  {
-    id: 'log_002',
-    action: 'SERVICE_STARTED',
-    ticket_number: fullTicketNumber('R', 3),
-    actor: 'System',
-    from: 'CALLED',
-    to: 'IN_SERVICE',
-    reason: null,
-    note: 'Verified by QR',
-    created_at: minutesAgo(15),
-  },
-  {
-    id: 'log_001',
-    action: 'OVERRIDE',
-    ticket_number: fullTicketNumber('R', 3),
-    actor: 'N. Reyes',
-    from: 'WAITING',
-    to: 'CALLED',
-    reason: 'called ahead of FIFO, priority case',
-    note: null,
-    created_at: minutesAgo(16),
-  },
-  {
-    id: 'log_000',
-    action: 'QUEUE_CLOSED',
-    ticket_number: null,
-    actor: 'N. Reyes',
-    from: null,
-    to: null,
-    reason: null,
-    note: 'End of day',
-    created_at: daysAgo(1, 17, 0),
-  },
-]);
 
 export const MOCK_STAFF_NOTIFICATIONS = Object.freeze([
   {

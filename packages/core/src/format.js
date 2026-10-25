@@ -95,6 +95,13 @@ export function todayHours(hours, now = new Date()) {
   return hours?.[DAY_KEYS[campus.getUTCDay()]] ?? null;
 }
 
+// The instant the campus day starts (00:00 at UTC+8), `daysAgo` days before the day of `now`
+export function campusDayStart(now = new Date(), daysAgo = 0) {
+  const campus = new Date(new Date(now).getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);
+  const startUtc = Date.UTC(campus.getUTCFullYear(), campus.getUTCMonth(), campus.getUTCDate() - daysAgo);
+  return new Date(startUtc - CAMPUS_UTC_OFFSET_MINUTES * 60000);
+}
+
 // Campus calendar date for `now`: { key: 20261024, month: 10, day: 24 }. `key` names the daily queue.
 export function campusDate(now = new Date()) {
   const campus = new Date(new Date(now).getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);

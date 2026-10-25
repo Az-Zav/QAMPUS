@@ -7,7 +7,7 @@
 // `active_offices` (office id -> true) holds the offices where the student has an active ticket, so a student
 // cannot join the same office twice; it is set by a join and cleared by the same writes that lower the counter.
 
-import { CANCELLED_BY, QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
+import { ACTIVITY_ACTION, CANCELLED_BY, QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDate } from '@qampus/core/format';
 import {
   collection,
@@ -18,9 +18,11 @@ import {
   query,
   runTransaction,
   serverTimestamp,
-  updateDoc,
   where,
+  writeBatch,
 } from 'firebase/firestore';
+import { EVENT_ENTITY } from '../events/build.js';
+import { logEvent } from '../events/service.js';
 import { buildOffense, OFFENSE_TYPE } from '../penalties/offense.js';
 import { nextPenalty } from '../penalties/progress.js';
 import { chunkByHolder, isActiveTicket, waitingTickets } from './derive.js';
@@ -68,12 +70,32 @@ function recordOffense(db, tx, ticket, type, penalty) {
   });
 }
 
+// The activity log line for a change to one ticket / to the queue, saved with the change (events/service.js)
+const logTicket = (db, target, ticket, actor, action, { from = null, to = null, reason = null } = {}) =>
+  logEvent(db, target, {
+    entity: EVENT_ENTITY.TICKET,
+    entityId: ticket.id,
+    action,
+    officeId: ticket.office_id,
+    ticketNumber: ticket.ticket_number,
+    from,
+    to,
+    actor,
+    reason,
+  });
+
+const logQueue = (db, target, queueRef, officeId, actor, action, reason = null) =>
+  logEvent(db, target, { entity: EVENT_ENTITY.QUEUE, entityId: queueRef.id, action, officeId, actor, reason });
+
 // Staff: open today's queue. Creates the doc on the first open of the day, reopens a closed one.
-export async function openQueue(db, office, now = new Date()) {
+// `actor` is { uid, name } of the signed-in person; it names who did it in the activity log.
+export async function openQueue(db, office, actor, now = new Date()) {
   const ref = doc(db, 'queues', queueIdFor(office.id, now));
   try {
     await runTransaction(db, async (tx) => {
       const snap = await tx.get(ref);
+      if (snap.exists() && snap.data().status === QUEUE_STATUS.OPEN) return;
+      logQueue(db, tx, ref, office.id, actor, ACTIVITY_ACTION.QUEUE_OPENED);
       if (!snap.exists()) {
         tx.set(ref, {
           status: QUEUE_STATUS.OPEN,
@@ -86,7 +108,7 @@ export async function openQueue(db, office, now = new Date()) {
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
         });
-      } else if (snap.data().status !== QUEUE_STATUS.OPEN) {
+      } else {
         tx.update(ref, { status: QUEUE_STATUS.OPEN, updated_at: serverTimestamp() });
       }
     });
@@ -96,12 +118,13 @@ export async function openQueue(db, office, now = new Date()) {
 }
 
 // Staff: stop new joins. Tickets already issued stay valid. A queue that was never opened is already closed.
-export async function closeQueue(db, office, now = new Date()) {
+export async function closeQueue(db, office, actor, now = new Date()) {
+  const ref = doc(db, 'queues', queueIdFor(office.id, now));
   try {
-    await updateDoc(doc(db, 'queues', queueIdFor(office.id, now)), {
-      status: QUEUE_STATUS.CLOSED,
-      updated_at: serverTimestamp(),
-    });
+    const batch = writeBatch(db);
+    batch.update(ref, { status: QUEUE_STATUS.CLOSED, updated_at: serverTimestamp() });
+    logQueue(db, batch, ref, office.id, actor, ACTIVITY_ACTION.QUEUE_CLOSED);
+    await batch.commit();
   } catch (error) {
     if (error?.code !== 'not-found') throw asFailure(error);
   }
@@ -150,6 +173,14 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
         status: TICKET_STATUS.WAITING,
         joined_at: serverTimestamp(),
       });
+      logTicket(
+        db,
+        tx,
+        { id: ticketRef.id, office_id: office.id, ticket_number: ticketNumber },
+        { uid: user.id, name: user.name },
+        ACTIVITY_ACTION.JOINED,
+        { to: TICKET_STATUS.WAITING },
+      );
       return { id: ticketRef.id, ticket_number: ticketNumber };
     });
   } catch (error) {
@@ -159,7 +190,8 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
 
 // Staff: call one WAITING ticket to the window. The queue (current ticket, last called number) and the
 // ticket (CALLED, called_at) change in one atomic write, so two staff cannot call different tickets.
-export async function callTicket(db, { office, ticketId, now = new Date() }) {
+// `override` marks a call out of order (logged as OVERRIDE); `reason` is kept on that log line.
+export async function callTicket(db, { office, ticketId, actor, override = false, reason = null, now = new Date() }) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticketId);
   try {
@@ -176,6 +208,14 @@ export async function callTicket(db, { office, ticketId, now = new Date() }) {
         updated_at: serverTimestamp(),
       });
       tx.update(ticketRef, { status: TICKET_STATUS.CALLED, called_at: serverTimestamp() });
+      logTicket(
+        db,
+        tx,
+        { id: ticketRef.id, ...ticket },
+        actor,
+        override ? ACTIVITY_ACTION.OVERRIDE : ACTIVITY_ACTION.CALLED,
+        { from: TICKET_STATUS.WAITING, to: TICKET_STATUS.CALLED, reason },
+      );
     });
   } catch (error) {
     throw asFailure(error);
@@ -183,19 +223,26 @@ export async function callTicket(db, { office, ticketId, now = new Date() }) {
 }
 
 // Staff: call the first waiting ticket (FIFO). `tickets` are the office's tickets for today.
-export async function callNext(db, { office, tickets, now = new Date() }) {
+export async function callNext(db, { office, tickets, actor, now = new Date() }) {
   const [first] = waitingTickets(tickets);
   if (!first) throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
-  await callTicket(db, { office, ticketId: first.id, now });
+  await callTicket(db, { office, ticketId: first.id, actor, now });
 }
 
 // CALLED -> IN_SERVICE. Rules allow it only inside the grace period (called_at + 60 s, by server time).
-async function startService(db, ticketId) {
+// `actor` is the student who checked in or the staff member who verified.
+async function startService(db, ticket, actor) {
   try {
-    await updateDoc(doc(db, 'tickets', ticketId), {
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'tickets', ticket.id), {
       status: TICKET_STATUS.IN_SERVICE,
       service_started_at: serverTimestamp(),
     });
+    logTicket(db, batch, ticket, actor, ACTIVITY_ACTION.SERVICE_STARTED, {
+      from: TICKET_STATUS.CALLED,
+      to: TICKET_STATUS.IN_SERVICE,
+    });
+    await batch.commit();
   } catch (error) {
     throw asFailure(error);
   }
@@ -206,19 +253,19 @@ async function startService(db, ticketId) {
 export async function checkInByCode(db, { ticket, office, code, now = new Date() }) {
   const reason = checkCheckIn({ ticket, office, code, now });
   if (reason) throw new TicketingFailure(reason);
-  await startService(db, ticket.id);
+  await startService(db, ticket, { uid: ticket.user_id, name: ticket.holder_name });
 }
 
 // Staff: verify the called ticket by the holder's student or guest ID.
-export async function verifyByHolderId(db, { ticket, idNumber, now = new Date() }) {
+export async function verifyByHolderId(db, { ticket, idNumber, actor, now = new Date() }) {
   const reason = checkVerifyById({ ticket, idNumber, now });
   if (reason) throw new TicketingFailure(reason);
-  await startService(db, ticket.id);
+  await startService(db, ticket, actor);
 }
 
 // Staff: finish service. The ticket becomes COMPLETED, the window is freed and the holder's slot is released in
 // one atomic write; the queue also counts the visit and its length, which later feed the service-time average.
-export async function completeTicket(db, { office, ticket, now = new Date() }) {
+export async function completeTicket(db, { office, ticket, actor, now = new Date() }) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticket.id);
   try {
@@ -239,6 +286,10 @@ export async function completeTicket(db, { office, ticket, now = new Date() }) {
       });
       releaseHolder(db, tx, current);
       tx.update(ticketRef, { status: TICKET_STATUS.COMPLETED, completed_at: serverTimestamp() });
+      logTicket(db, tx, current, actor, ACTIVITY_ACTION.COMPLETED, {
+        from: TICKET_STATUS.IN_SERVICE,
+        to: TICKET_STATUS.COMPLETED,
+      });
     });
   } catch (error) {
     throw asFailure(error);
@@ -247,7 +298,7 @@ export async function completeTicket(db, { office, ticket, now = new Date() }) {
 
 // Staff: mark the current ticket a no-show, free the window, release the holder's slot and record the offense
 // (R-11, R-12, R-23a): the holder's strikes move in the same transaction, and the second offense sets the ban.
-export async function markTicketNoShow(db, { office, ticket, reason = '', now = new Date() }) {
+export async function markTicketNoShow(db, { office, ticket, actor, reason = '', now = new Date() }) {
   const queueRef = doc(db, 'queues', queueIdFor(office.id, now));
   const ticketRef = doc(db, 'tickets', ticket.id);
   const userRef = doc(db, 'users', ticket.user_id);
@@ -269,6 +320,11 @@ export async function markTicketNoShow(db, { office, ticket, reason = '', now = 
         status: TICKET_STATUS.NO_SHOW,
         no_show_at: serverTimestamp(),
         ...(trimmed ? { reason: trimmed } : {}),
+      });
+      logTicket(db, tx, current, actor, ACTIVITY_ACTION.NO_SHOW, {
+        from: current.status,
+        to: TICKET_STATUS.NO_SHOW,
+        reason: trimmed,
       });
     });
   } catch (error) {
@@ -308,6 +364,10 @@ export async function cancelOwnTicket(db, { ticket, now = new Date() }) {
         releaseHolder(db, tx, current);
       }
       tx.update(ticketRef, cancelled);
+      logTicket(db, tx, current, { uid: current.user_id, name: current.holder_name }, ACTIVITY_ACTION.CANCELLED, {
+        from: current.status,
+        to: TICKET_STATUS.CANCELLED,
+      });
     });
   } catch (error) {
     throw asFailure(error);
@@ -320,7 +380,7 @@ export async function cancelOwnTicket(db, { ticket, now = new Date() }) {
 // a handful of document lookups per write. A holder never appears twice in one transaction (their counter would
 // be lowered twice in one write). The reason is stored on every cancelled ticket. Running it again finishes
 // whatever an interrupted run left behind.
-export async function cancelOfficeQueue(db, { office, reason, now = new Date() }) {
+export async function cancelOfficeQueue(db, { office, reason, actor, now = new Date() }) {
   const trimmed = String(reason ?? '').trim();
   if (!trimmed) throw new TicketingFailure(TicketingError.REASON_REQUIRED);
 
@@ -346,6 +406,8 @@ export async function cancelOfficeQueue(db, { office, reason, now = new Date() }
           current = { id: currentSnap.id, ...currentSnap.data() };
         }
       }
+      // One log line for the whole cancellation, not one per ticket (after the reads: a transaction reads first)
+      logQueue(db, tx, queueRef, office.id, actor, ACTIVITY_ACTION.QUEUE_CANCELLED, trimmed);
       tx.update(queueRef, { status: QUEUE_STATUS.CLOSED, current_ticket_id: null, updated_at: serverTimestamp() });
       if (current) {
         releaseHolder(db, tx, current);

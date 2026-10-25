@@ -118,7 +118,9 @@ export const OFFENSES_COPY = Object.freeze({
 export const ACTIVITY_LOG_COPY = Object.freeze({
   title: 'Activity log',
   subtitle: (office) => `${office.short_name} · every action affecting someone’s place in line`,
-  summary: (range, n) => `${range} · ${n} ${n === 1 ? 'entry' : 'entries'}`,
+  pageSummary: (range, entries) => `${range} · entries ${entries}`,
+  newer: 'Newer',
+  older: 'Older',
   allActions: 'All actions',
   reason: (reason) => `Reason: ${reason}`,
   noTicket: '—',

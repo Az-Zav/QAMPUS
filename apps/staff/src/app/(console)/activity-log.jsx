@@ -1,3 +1,4 @@
+import ActionButton from '@/components/primitives/ActionButton';
 import FilterSelect from '@/components/primitives/FilterSelect';
 import { LogRow } from '@/components/records/RecordRow';
 import ConsolePage from '@/components/shell/ConsolePage';
@@ -7,6 +8,7 @@ import {
   ACTIVITY_ACTION,
   ACTIVITY_ACTION_LABEL,
   ACTIVITY_LOG_COPY,
+  ButtonType,
   EMPTY_COPY,
   FOOTER_COPY,
   STAFF_FONT,
@@ -30,7 +32,7 @@ export default function ActivityLog() {
   const [action, setAction] = useState(null);
   const [rangeKey, setRangeKey] = useState(RANGE_OPTIONS[0].key);
   const range = RANGE_OPTIONS.find((option) => option.key === rangeKey);
-  const { entries } = useActivityLog({ action, days: range.days });
+  const { entries, rangeLabel, hasNewer, hasOlder, newer, older } = useActivityLog({ action, days: range.days });
 
   return (
     <ConsolePage topSpacing={44} footer={{ center: FOOTER_COPY.logScope(office), right: FOOTER_COPY.logNote }}>
@@ -57,7 +59,25 @@ export default function ActivityLog() {
         <EmptyState {...EMPTY_COPY.noRecords} />
       ) : (
         <>
-          <Text style={styles.count}>{ACTIVITY_LOG_COPY.summary(range.label, entries.length)}</Text>
+          <View style={styles.pager}>
+            <Text style={styles.count}>{ACTIVITY_LOG_COPY.pageSummary(range.label, rangeLabel)}</Text>
+            <View style={styles.pagerButtons}>
+              <ActionButton
+                label={ACTIVITY_LOG_COPY.newer}
+                type={ButtonType.SECONDARY}
+                disabled={!hasNewer}
+                onPress={newer}
+                style={styles.pagerButton}
+              />
+              <ActionButton
+                label={ACTIVITY_LOG_COPY.older}
+                type={ButtonType.SECONDARY}
+                disabled={!hasOlder}
+                onPress={older}
+                style={styles.pagerButton}
+              />
+            </View>
+          </View>
           {entries.map((entry) => (
             <LogRow key={entry.id} entry={entry} />
           ))}
@@ -71,4 +91,7 @@ const makeStyles = (c) =>
   StyleSheet.create({
     filters: { flexDirection: 'row', gap: 12 },
     count: { fontFamily: STAFF_FONT.semibold, fontSize: TYPOGRAPHY.size.md, color: c.slate },
+    pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    pagerButtons: { flexDirection: 'row', gap: 8 },
+    pagerButton: { height: 36, paddingHorizontal: 16 },
   });

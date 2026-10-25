@@ -11,7 +11,7 @@ Final shape for V1, locked one collection at a time. Locking a collection fixes 
 | `queues` | **LOCKED** | |
 | `tickets` | **LOCKED** | no push token and no offense fields |
 | `offenses` | **LOCKED** | separate collection, not folded into tickets; implemented in slice 2 |
-| `events` | draft | finalize when implemented |
+| `events` | **LOCKED** | activity log; create-only, one line per action, written with the change; implemented in slice 6.1 |
 | `users/{uid}/notifications` | draft | finalize when implemented |
 | `announcements` | draft | finalize when implemented |
 
@@ -119,7 +119,7 @@ erDiagram
     string id PK
     string entity_type "TICKET QUEUE OFFICE USER OFFENSE"
     string entity_id "polymorphic, no FK"
-    string action
+    string action "ACTIVITY_ACTION in packages/core domain.js"
     string from_status
     string to_status
     string actor_uid FK
@@ -180,4 +180,4 @@ erDiagram
 
 ## Open items
 1. Push: where the holder's token lives depends on the push option (relay or in-app only). If it needs a ticket field, add it by a new decision.
-2. `events`, `notifications`, `announcements`: shapes above are drafts until their slices.
+2. `notifications`, `announcements`: shapes above are drafts until their slices. `events` is locked: every field is always present (null when unused); `ticket_number` is the full number (CODE-MM-DD-SEQ); `entity_id` is the ticket id or the queue id; indexes live in `firestore.indexes.json`.
