@@ -1,6 +1,6 @@
 import ModalShell from '@/components/modals/ModalShell';
 import NoticeModal from '@/components/modals/NoticeModal';
-import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import { ButtonType, IconSet, MODAL_COPY, RADII, SCAN_COPY, SPACING, TYPOGRAPHY } from '@/constants';
 import { useCheckIn, useThemedStyles } from '@/hooks';
 import { parseCheckInPayload, TicketingError } from '@qampus/backend';
@@ -10,6 +10,7 @@ import { useIsFocused, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CheckInModal = Object.freeze({ SUCCESS: 'success', FAILED: 'failed' });
 
@@ -30,6 +31,8 @@ export default function Scan() {
   const router = useRouter();
   const isFocused = useIsFocused();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const navClearance = useBottomNavClearance();
   const { checkIn, checkingIn } = useCheckIn();
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -116,7 +119,7 @@ export default function Scan() {
       <View pointerEvents="none" style={[styles.veil, { top: windowTop, left: windowLeft + WINDOW, right: 0, height: WINDOW }]} />
 
       {/* The light sheet the floating nav bar sits on, its top corners rounded over the camera */}
-      <View pointerEvents="none" style={styles.sheet} />
+      <View pointerEvents="none" style={[styles.sheet, { height: SHEET_HEIGHT + insets.bottom }]} />
 
       <Text style={styles.title}>{SCAN_COPY.title}</Text>
 
@@ -145,7 +148,7 @@ export default function Scan() {
       </Text>
 
       <TextInput
-        style={styles.codeInput}
+        style={[styles.codeInput, { bottom: navClearance + SPACING.lg }]}
         placeholder={SCAN_COPY.manualPlaceholder}
         placeholderTextColor={ON_VEIL_SOFT}
         keyboardType="number-pad"
@@ -218,7 +221,6 @@ const makeStyles = (c) => StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: SHEET_HEIGHT,
     backgroundColor: c.paper,
     borderTopLeftRadius: RADII.xl,
     borderTopRightRadius: RADII.xl,
@@ -305,7 +307,6 @@ const makeStyles = (c) => StyleSheet.create({
     position: 'absolute',
     left: '6%',
     right: '6%',
-    bottom: BOTTOM_NAV_CLEARANCE + SPACING.lg,
     height: 64,
     paddingHorizontal: 24,
     borderWidth: 1.5,

@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } fr
 
 import { Button, Input } from '@qampus/ui';
 import Picker from '@/components/primitives/Picker';
-import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 
@@ -73,6 +73,7 @@ function Field({ label, hint, error, children }) {
 
 export default function EditProfileScreen() {
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { user, updateProfile } = useSession();
   const [form, setForm] = useState(() => (user ? initialForm(user) : null));
@@ -116,7 +117,7 @@ export default function EditProfileScreen() {
 
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[styles.content, { paddingBottom: navClearance }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -208,7 +209,6 @@ const makeStyles = (c) => StyleSheet.create({
     gap: SPACING.xxl,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: BOTTOM_NAV_CLEARANCE,
   },
   section: { gap: SPACING.md },
   field: { gap: SPACING.xs },

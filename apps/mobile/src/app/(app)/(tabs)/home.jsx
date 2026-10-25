@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -35,6 +36,7 @@ const HomeModal = Object.freeze({
 export default function HomeScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { user } = useSession();
   const { active, now } = useMyTickets();
@@ -107,7 +109,7 @@ export default function HomeScreen() {
     <View style={styles.screen}>
       <Header title="HOME" hasNotification={unreadCount > 0} onBellPress={() => router.push('/notifications')} onAvatarPress={() => router.push('/profile')} />
 
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.container, { paddingBottom: navClearance }]} showsVerticalScrollIndicator={false}>
         <Text style={styles.greeting}>
           {greetingFor(now)}, <Text style={styles.userName}>{user?.name.split(' ')[0]}</Text>
         </Text>
@@ -188,7 +190,6 @@ const makeStyles = (c) => StyleSheet.create({
   container: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: SPACING.xxl * 2,
   },
   greeting: {
     fontFamily: TYPOGRAPHY.fontFamily.regular,

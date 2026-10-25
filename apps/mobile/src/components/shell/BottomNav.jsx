@@ -1,17 +1,25 @@
-import { AppTab, ELEVATION, IconSet, RADII, SPACING, TYPOGRAPHY } from '@/constants';
+import { AppTab, ELEVATION, IconSet, RADII, SPACING, TOUCH, TYPOGRAPHY } from '@/constants';
 import { useTheme, useThemedStyles } from '@/hooks';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TAB_ICONS = { [AppTab.HOME]: 'home', [AppTab.SCAN]: 'qr-code', [AppTab.QUEUE]: 'ticket' };
 
-// Bottom padding a scrolling screen needs so its last item clears the bar and Scan disc.
-export const BOTTOM_NAV_CLEARANCE = 126;
+// Bottom padding a scrolling screen needs so its last item clears the bar and the Scan disc, before the phone's own
+// bottom inset (the system navigation buttons or gesture bar the bar floats above). Screens use the hook below.
+export const BOTTOM_NAV_CLEARANCE = 132;
+
+export function useBottomNavClearance() {
+  const { bottom } = useSafeAreaInsets();
+  return BOTTOM_NAV_CLEARANCE + bottom;
+}
 
 export default function BottomNav({ active, onNavigate }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, SPACING.sm) + SPACING.sm }]}>
       <View style={styles.bar}>
         <NavItem tab={AppTab.HOME} label="Home" active={active === AppTab.HOME} onPress={() => onNavigate(AppTab.HOME)} />
         <Pressable
@@ -48,7 +56,7 @@ function NavItem({ tab, label, active, onPress }) {
       accessibilityLabel={label}
       accessibilityState={{ selected: active }}
     >
-      <IconSet name={TAB_ICONS[tab]} color={color} size={22} />
+      <IconSet name={TAB_ICONS[tab]} color={color} size={24} />
       <Text style={[styles.label, { color }]}>{label.toUpperCase()}</Text>
     </Pressable>
   );
@@ -62,7 +70,6 @@ const makeStyles = (c) => StyleSheet.create({
     right: 0,
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
   },
   bar: {
     flexDirection: 'row',
@@ -71,14 +78,16 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.inverse,
     borderRadius: RADII.full,
     paddingHorizontal: SPACING.xl + SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
     width: '100%',
     ...ELEVATION.sm,
   },
   navItem: {
     alignItems: 'center',
+    justifyContent: 'center',
     gap: SPACING.xxxs,
     minWidth: 64,
+    minHeight: TOUCH.MIN_TARGET,
   },
   centerSpacer: {
     width: 64,

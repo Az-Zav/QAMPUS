@@ -2,7 +2,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { SectionList, StyleSheet, View } from 'react-native';
 
-import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import { CountBadge } from '@qampus/ui';
 import EmptyState from '@/components/shell/EmptyState';
 import ListRow from '@/components/shell/ListRow';
@@ -21,6 +21,7 @@ const OPENS_BANS = new Set([NOTIFICATION_TYPE.WARNING, NOTIFICATION_TYPE.NO_SHOW
 
 export default function NotificationsScreen() {
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { notifications: items, markRead } = useNotifications();
   const { active } = useMyTickets();
@@ -82,7 +83,7 @@ export default function NotificationsScreen() {
         keyExtractor={(n) => n.id}
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingBottom: navClearance }]}
         ListHeaderComponent={(
           <View style={styles.header}>
             {unread > 0 && <CountBadge label={NOTIFICATIONS_COPY.newCount(unread)} />}
@@ -123,7 +124,6 @@ const makeStyles = (c) => StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: BOTTOM_NAV_CLEARANCE,
   },
   header: { gap: SPACING.md, marginBottom: SPACING.xs },
   sectionLabel: { marginTop: SPACING.md, paddingHorizontal: 0 },

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import ConfirmModal from '@/components/modals/ConfirmModal';
-import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import ListRow from '@/components/shell/ListRow';
 import ProfileHeader from '@/components/shell/ProfileHeader';
 
@@ -53,6 +53,7 @@ function IdCard({ label, value }) {
 
 export default function ProfileScreen() {
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { user, signOut } = useSession();
   const [logOutOpen, setLogOutOpen] = useState(false);
@@ -72,7 +73,7 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scroll} bounces={false} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: navClearance }} bounces={false} showsVerticalScrollIndicator={false}>
         <ProfileHeader
           context={isGuest ? 'profileGuest' : 'profileStudent'}
           user={user}
@@ -115,7 +116,6 @@ export default function ProfileScreen() {
 
 const makeStyles = (c) => StyleSheet.create({
   screen: { flex: 1, backgroundColor: c.paper },
-  scroll: { paddingBottom: BOTTOM_NAV_CLEARANCE },
   body: {
     gap: SPACING.md,
     paddingHorizontal: SPACING.xl,

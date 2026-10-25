@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import EmptyState from '@/components/shell/EmptyState';
 import InfoCard from '@/components/shell/InfoCard';
 import ListRow from '@/components/shell/ListRow';
@@ -23,6 +23,7 @@ function offenseState(offense) {
 export default function BansScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
+  const navClearance = useBottomNavClearance();
   const router = useRouter();
   const now = useNow(60000);
   const { strikeCount, bannedUntil, offenses } = usePenaltyRecord();
@@ -37,7 +38,7 @@ export default function BansScreen() {
     <View style={styles.screen}>
       <SubHeader title="Bans & Warnings" onBack={goBack} />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: navClearance }]} showsVerticalScrollIndicator={false}>
         {banned ? (
           <InfoCard
             type={InfoCardType.BAN_BANNER}
@@ -85,7 +86,6 @@ const makeStyles = (c) => StyleSheet.create({
     gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: BOTTOM_NAV_CLEARANCE,
   },
   policyLink: {
     flexDirection: 'row',
