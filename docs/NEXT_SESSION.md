@@ -171,7 +171,13 @@ placeholder reading "Not available in this version"; PRD V1 scope lists Biometri
 - Tests: toggle needs a fingerprint or face; enable then close and reopen = lock appears; fail or cancel stays locked; device PIN
   works; a guest gets it too; sign out and in as another account = that account's own (off) setting; background 10 s = no lock, 90 s = lock.
 
-**C. Push notifications (`expo-notifications`): BLOCKED, nothing is built yet. Design for when the blockers clear.**
+**C. Push notifications (`expo-notifications`): DECIDED 2026-10-25: option A, a relay on Cloudflare Workers (free); nothing built yet.
+Order of work: (1) developer: Phase 1 credentials (service account key uploaded to EAS); (2) the rebuild from the batch; (3) student
+app JS (token, channel, settings switch, sign-out clears the token); (4) the relay in `relay/` (repo root, outside the npm
+workspaces, `wrangler.jsonc`, tested with `npx wrangler dev` at localhost:8787 before any deploy); (5) staff console calls the relay
+after a call commits; (6) developer deploys with `npx wrangler deploy` and puts the URL in the staff `.env`
+(`EXPO_PUBLIC_PUSH_RELAY_URL`); (7) test list in the chat history of 2026-10-25 (credential via expo.dev/notifications, relay by curl,
+background push, foreground silent, switch off, sign-out). Rejected: Firebase Cloud Functions (Blaze plan, a billing card).**
 - Blockers: (1) Spark has no server and Cloud Functions need the Blaze plan; (2) the staff browser cannot call Expo's push API itself
   (verified 2026-10-25: its CORS preflight returns no `Access-Control-Allow-Origin`), so a small RELAY is needed; (3) Android push needs
   the FCM V1 service-account key uploaded to the EAS project (a developer step in the Expo and Firebase consoles); (4) the native module
