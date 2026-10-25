@@ -6,6 +6,7 @@
 
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { isStudentId, randomGuestId } from './ids.js';
+import { buildGuestProfile } from './profile.js';
 
 export const IdentityError = Object.freeze({
   ID_TAKEN: 'ID_TAKEN',
@@ -39,8 +40,9 @@ async function reserve(db, tx, uid, id) {
   return true;
 }
 
-// Guest: save the profile and issue a unique Guest ID in one write. Resolves to the guest's ID (the one they
-// already hold, if the profile was saved before). `random` is injectable for tests.
+// Guest: create the profile and issue a unique Guest ID in one write: nothing exists until it succeeds. Resolves to the
+// guest's ID (the one they already hold, if the profile was saved before). A profile document that already exists
+// (an older guest who signed in before filling the form) is updated instead of created. `random` is injectable for tests.
 export async function issueGuestProfile(db, { uid, name, email = null, guestType, random = Math.random }) {
   const userRef = doc(db, 'users', uid);
   for (let attempt = 0; attempt < GUEST_ID_ATTEMPTS; attempt += 1) {
@@ -51,13 +53,18 @@ export async function issueGuestProfile(db, { uid, name, email = null, guestType
         const existing = userSnap.exists() ? userSnap.data().institutional_id : null;
         if (existing) return existing;
         if (!(await reserve(db, tx, uid, candidate))) throw new IdentityFailure(IdentityError.ID_TAKEN);
-        tx.update(userRef, {
-          name: String(name).trim(),
-          email: String(email ?? '').trim() || null,
-          guest_type: guestType,
-          institutional_id: candidate,
-          updated_at: serverTimestamp(),
-        });
+        const profile = buildGuestProfile({ name, email, guestType, id: candidate });
+        if (userSnap.exists()) {
+          tx.update(userRef, {
+            name: profile.name,
+            email: profile.email,
+            guest_type: profile.guest_type,
+            institutional_id: candidate,
+            updated_at: serverTimestamp(),
+          });
+        } else {
+          tx.set(userRef, { ...profile, created_at: serverTimestamp() });
+        }
         return candidate;
       });
     } catch (error) {

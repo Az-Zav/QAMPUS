@@ -5,7 +5,7 @@ import { USER_ROLE } from '@/constants';
 import { auth, db, SCHOOL_EMAIL_DOMAIN } from '@/lib/firebase';
 import { clearPushToken } from '@/lib/push';
 import { loadOrCreateGuest, loadOrCreateStudent, saveGuestDetails, saveStudentProgram } from '@/lib/users';
-import { claimStudentProfile, issueGuestProfile } from '@qampus/backend';
+import { buildGuestProfile, claimStudentProfile, issueGuestProfile } from '@qampus/backend';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
 import {
@@ -35,7 +35,7 @@ export function SessionProvider({ children }) {
     // False until Firebase has read the persisted session, so the app doesn't flash Login
   const [authReady, setAuthReady] = useState(false);
 
-  // Set while signInAsStudent or signInAsGuest runs, so the listener doesn't load the same profile twice
+  // Set while signInAsStudent or completeGuestProfile runs, so the listener doesn't load the same profile twice
   const signingIn = useRef(false);
 
   useEffect(() => {
@@ -87,20 +87,6 @@ export function SessionProvider({ children }) {
         return true;
       },
 
-      // Guests have no credentials: an anonymous Firebase account bound to this device (R-02)
-      signInAsGuest: async () => {
-        signingIn.current = true;
-        try {
-          const { user: firebaseUser } = await signInAnonymously(auth);
-          setUser(await loadOrCreateGuest(firebaseUser));
-        } catch (error) {
-          await firebaseSignOut(auth).catch(() => {});
-          throw error;
-        } finally {
-          signingIn.current = false;
-        }
-      },
-
       signOut: async () => {
         // This phone must stop receiving this account's pushes (best effort, before the session ends)
         if (user) await clearPushToken(user.id).catch(() => {});
@@ -126,11 +112,34 @@ export function SessionProvider({ children }) {
         await saveStudentProgram(user.id, changes.program);
         setUser((prev) => ({ ...prev, program: changes.program }));
       },
-      // Saves the guest's details and issues their unique Guest ID (R-02). Resolves to the ID.
+      // Guests have no credentials (R-02): an anonymous Firebase account bound to this device. It is made HERE, when the
+      // guest form's Continue succeeds, together with the profile and the unique Guest ID, so cancelling the form creates
+      // nothing and a failed save removes the account again. Resolves to the Guest ID.
       completeGuestProfile: async ({ name, email, guestType }) => {
-        const guestId = await issueGuestProfile(db, { uid: user.id, name, email, guestType });
-        setUser((prev) => ({ ...prev, name, email: email || null, guest_type: guestType, institutional_id: guestId }));
-        return guestId;
+        // An older guest who signed in before filling the form already has an (empty) account: reuse it
+        const existing = user?.role === USER_ROLE.GUEST ? user : null;
+        let created = null;
+        signingIn.current = true;
+        try {
+          if (!existing) created = (await signInAnonymously(auth)).user;
+          const uid = existing?.id ?? created.uid;
+          const guestId = await issueGuestProfile(db, { uid, name, email, guestType });
+          setUser({
+            ...(existing ?? buildGuestProfile({ name, email, guestType, id: guestId })),
+            id: uid,
+            name: name.trim(),
+            email: email.trim() || null,
+            guest_type: guestType,
+            institutional_id: guestId,
+          });
+          return guestId;
+        } catch (error) {
+          // Leave nothing behind: no account, no half-made profile (the profile and the ID are one transaction)
+          if (created) await created.delete().catch(() => firebaseSignOut(auth).catch(() => {}));
+          throw error;
+        } finally {
+          signingIn.current = false;
+        }
       },
     }),
     [user, hasOnboarded, authReady],

@@ -117,7 +117,7 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 - Still open for later: the `ui-mock-final` tag (a pushed tag is outward-facing: ask first) and the separate dev Firebase project
   question (decide at the preview deployment step).
 
-### 6.6 Guests (DONE 2026-10-25, tested and pushed; reasons in DECISIONS.md)
+### 6.6 Guests (DONE 2026-10-25, tested and pushed; reasons in DECISIONS.md; the account is now made on the form's Continue, see DECISIONS 2026-10-25 "Guest account is made on Continue")
 Anonymous sign-in on the device, a guest form that issues a unique `G` + six digits, `institutionalIds/{id}` claims (`{ uid }`,
 create-only) for guest and student IDs (a taken student ID is refused), guests use the app like students, guest sign-out warns that the
 identity is lost, `packages/backend/src/identity`. Students with an ID saved before 6.6 have no claim (not backfilled).
