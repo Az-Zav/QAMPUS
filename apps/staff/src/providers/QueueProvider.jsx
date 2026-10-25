@@ -5,8 +5,9 @@ import { QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
 
 import { toShortTicketNumber } from '@qampus/core/ticket';
 
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+import { ACTION_ERROR_COPY } from '@/constants';
 import { useOfficeOffenses } from '@/hooks/useOfficeOffenses';
 import { useOfficeTickets } from '@/hooks/useOfficeTickets';
 import { useTodayQueue } from '@/hooks/useTodayQueue';
@@ -84,6 +85,20 @@ export function QueueProvider({ children }) {
   // The signed-in staff member, as the activity log names them
   const actor = useMemo(() => ({ uid: user?.id, name: user?.name }), [user?.id, user?.name]);
 
+  // The last refused action, shown as a banner on every console screen until dismissed or 8 seconds pass
+  const [notice, setNotice] = useState(null);
+  useEffect(() => {
+    if (!notice) return undefined;
+    const id = setTimeout(() => setNotice(null), 8000);
+    return () => clearTimeout(id);
+  }, [notice]);
+  // The catch handler of an action: log it and tell the staff member why it did not go through
+  const refused = (what) => (error) => {
+    console.warn(`Couldn't ${what}`, error);
+    const reason = ACTION_ERROR_COPY.reasons[error?.code] ?? ACTION_ERROR_COPY.reasons.UNKNOWN;
+    setNotice({ message: `${ACTION_ERROR_COPY.prefix(what)} ${reason}` });
+  };
+
   // The whole ticket flow, the offenses and the activity log are real (Firestore). Notifications are still
   // mock until their slice.
   // No queue doc for today means staff have not opened the queue.
@@ -121,19 +136,17 @@ export function QueueProvider({ children }) {
   // WM01: CALL NEXT / OVERRIDE FIFO
   // =================================================
 
-  // The listeners on the queue and ticket docs update the console; a refused write only logs for now
+  // The listeners on the queue and ticket docs update the console; a refused write shows a banner (`notice`)
   const callNext = () => {
     if (office) {
-      callNextTicket(db, { office, tickets: officeTickets, actor }).catch((error) =>
-        console.warn('Could not call next', error),
-      );
+      callNextTicket(db, { office, tickets: officeTickets, actor }).catch(refused('call the next ticket'));
     }
   };
 
   const overrideCall = (ticketId, reason = null) => {
     if (office) {
-      callTicket(db, { office, ticketId, actor, tickets: officeTickets, override: true, reason }).catch((error) =>
-        console.warn('Could not call the ticket', error),
+      callTicket(db, { office, ticketId, actor, tickets: officeTickets, override: true, reason }).catch(
+        refused('call that ticket'),
       );
     }
   };
@@ -180,9 +193,7 @@ export function QueueProvider({ children }) {
   // Staff finish the ticket in service; the window is free again once the write lands
   const completeService = () => {
     if (office && currentTicket) {
-      completeTicket(db, { office, ticket: currentTicket, actor }).catch((error) =>
-        console.warn('Could not complete the ticket', error),
-      );
+      completeTicket(db, { office, ticket: currentTicket, actor }).catch(refused('complete the service'));
     }
   };
 
@@ -190,26 +201,26 @@ export function QueueProvider({ children }) {
   // QUEUE CONTROLS
   // =================================================
 
-  // The listener on today's queue doc flips the console state; a refused write only logs for now
+  // The listener on today's queue doc flips the console state; a refused write shows a banner (`notice`)
   const openQueue = () => {
-    if (office) openQueueDoc(db, office, actor).catch((error) => console.warn('Could not open the queue', error));
+    if (office) openQueueDoc(db, office, actor).catch(refused('open the queue'));
   };
 
   const closeQueue = () => {
-    if (office) closeQueueDoc(db, office, actor).catch((error) => console.warn('Could not close the queue', error));
+    if (office) closeQueueDoc(db, office, actor).catch(refused('close the queue'));
   };
 
   // Office cancels the whole queue (R-16): every unfinished ticket is cancelled by the office, nobody is penalized
   const cancelQueue = (reason) => {
     if (office) {
-      cancelOfficeQueue(db, { office, reason, actor }).catch((error) => console.warn('Could not cancel the queue', error));
+      cancelOfficeQueue(db, { office, reason, actor }).catch(refused('cancel the queue'));
     }
   };
 
   // WM07: let students join past the cutoff for the rest of the day (logged)
   const overrideCutoff = () => {
     if (office) {
-      overrideCutoffDoc(db, office, actor).catch((error) => console.warn('Could not override the cutoff', error));
+      overrideCutoffDoc(db, office, actor).catch(refused('override the cutoff'));
     }
   };
 
@@ -218,13 +229,11 @@ export function QueueProvider({ children }) {
   // =================================================
 
   // Revoke an offense of this office (R-15): it stays on record, marked revoked, and the student's strikes
-  // and ban are corrected. A refused write only logs for now.
+  // and ban are corrected. A refused write shows a banner (`notice`).
   const revokeOffense = (offenseId, reason) => {
     const offense = officeOffenses.find((item) => item.id === offenseId);
     if (!offense) return;
-    revokeOffenseDoc(db, { offense, reason, staffEmail: user.email }).catch((error) =>
-      console.warn('Could not revoke the offense', error),
-    );
+    revokeOffenseDoc(db, { offense, reason, staffEmail: user.email }).catch(refused('revoke the offense'));
   };
 
   // Keep existing hook and screen interfaces.
@@ -232,6 +241,8 @@ export function QueueProvider({ children }) {
     queue,
     offenses,
     notifications: MOCK_STAFF_NOTIFICATIONS,
+    notice,
+    dismissNotice: () => setNotice(null),
 
     callNext,
     overrideCall,

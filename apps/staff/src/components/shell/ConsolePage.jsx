@@ -1,3 +1,4 @@
+import ActionNotice from '@/components/shell/ActionNotice';
 import StatusFooter from '@/components/shell/StatusFooter';
 import { CONTENT_MAX_WIDTH, PAGE_GUTTER } from '@/constants';
 import { useThemedStyles } from '@/hooks';
@@ -10,7 +11,10 @@ export default function ConsolePage({ children, footer, topSpacing = 36 }) {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-      <View style={[styles.column, styles.body, { paddingTop: topSpacing }]}>{children}</View>
+      <View style={[styles.column, styles.body, { paddingTop: topSpacing }]}>
+        <ActionNotice />
+        {children}
+      </View>
       <View style={[styles.column, styles.footer]}>
         <StatusFooter {...footer} />
       </View>

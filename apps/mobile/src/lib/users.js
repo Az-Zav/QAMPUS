@@ -30,3 +30,7 @@ export async function loadOrCreateStudent(firebaseUser) {
 
 export const saveStudentProfile = (uid, { studentId, program }) =>
   updateDoc(doc(db, 'users', uid), { institutional_id: studentId, program });
+
+// Edit Profile (S14): a student may change their program; the student ID stays as first saved (R-01, and the
+// rules refuse a change once it is set).
+export const saveStudentProgram = (uid, program) => updateDoc(doc(db, 'users', uid), { program });

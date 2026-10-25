@@ -1,56 +1,41 @@
-# Welcome to your Expo app 👋
+# QAMPUS
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A campus queueing app: students join an office's queue from their phone, offices call people from a staff web console, and a
+public display shows who is being served. Backend: Firebase (Auth and Firestore on the Spark plan, no Cloud Functions).
 
-## Get started
+## Layout
 
-1. Install dependencies
+| Folder | What it is |
+|---|---|
+| `apps/mobile` | Student and guest app (Expo, React Native, Expo Router). Needs a development build, not Expo Go. |
+| `apps/staff` | Staff web console (Expo web). |
+| `packages/backend` | `@qampus/backend`: the shared Firestore layer (ticketing, penalties, events, notifications). Unit tested. |
+| `packages/core` | `@qampus/core`: shared enums, formats and mock data. |
+| `packages/ui` | `@qampus/ui`: shared components and theme tokens. |
+| `firestore.rules`, `firestore.indexes.json` | Security Rules and indexes: the source of truth for the database. |
+| `docs/` | Project state: `STATUS.md`, `NEXT_SESSION.md`, `DECISIONS.md`, `SCHEMA.md`. The product spec is `KnowledgeBase/QAMPUS_PRD.md`. |
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Run it
 
 ```bash
-npm run reset-project
+npm install
+npm run staff                                              # staff web console
+cd apps/mobile && npx expo start --dev-client --tunnel     # student app, in the Expo development build on a phone
+cd packages/backend && npm test                            # unit tests
+npm run lint                                               # lint both apps
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Each app reads its Firebase config from its own `.env` (`EXPO_PUBLIC_FIREBASE_*`).
 
-### Other setup steps
+## Deploy the database rules
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+firebase deploy --only firestore:rules,firestore:indexes --project qampus-d0718
+```
 
-## Learn more
+Never edit rules in the Firebase console: the next deploy replaces them with `firestore.rules`.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Building the apps
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Native changes need a new development build (`eas build --profile development` from `apps/mobile`). JavaScript-only changes reload
+without a rebuild.

@@ -131,6 +131,22 @@ export const ACTIVITY_LOG_COPY = Object.freeze({
   ]),
 });
 
+// A refused staff action (call, complete, open or close the queue, cancel, override, revoke): the banner reads
+// "Couldn't <what>. <why>", where the why is keyed by the backend's TicketingError code
+export const ACTION_ERROR_COPY = Object.freeze({
+  prefix: (what) => `Couldn't ${what}.`,
+  dismiss: 'Dismiss',
+  reasons: Object.freeze({
+    QUEUE_CLOSED: 'The queue is closed.',
+    WINDOW_BUSY: 'A ticket is already at the window.',
+    TICKET_UNAVAILABLE: 'That ticket is no longer available. It may have been cancelled or called already.',
+    NOT_IN_SERVICE: 'No ticket is in service right now.',
+    REASON_REQUIRED: 'A reason is required.',
+    DENIED: 'The change was not accepted. Check your connection and try again.',
+    UNKNOWN: 'Something went wrong. Try again in a moment.',
+  }),
+});
+
 // Staff/EmptyState contexts
 export const EMPTY_COPY = Object.freeze({
   noOneWaiting: { title: 'No one waiting', body: 'New tickets will appear here as people join.' },

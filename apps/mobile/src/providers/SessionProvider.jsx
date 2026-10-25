@@ -3,7 +3,7 @@
 
 import { USER_ROLE } from '@/constants';
 import { auth, SCHOOL_EMAIL_DOMAIN } from '@/lib/firebase';
-import { loadOrCreateStudent, saveStudentProfile } from '@/lib/users';
+import { loadOrCreateStudent, saveStudentProfile, saveStudentProgram } from '@/lib/users';
 import { MOCK_USER_GUEST } from '@qampus/core/mock';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { GoogleSignin, isSuccessResponse } from '@react-native-google-signin/google-signin';
@@ -93,6 +93,16 @@ export function SessionProvider({ children }) {
       completeStudentProfile: async ({ studentId, program }) => {
         await saveStudentProfile(user.id, { studentId, program });
         setUser((prev) => ({ ...prev, institutional_id: studentId, program }));
+      },
+      // Edit Profile: a student's program is saved to Firestore (the student ID is locked, R-01); a guest's details
+      // change in memory only until the guest slice gives guests a profile document.
+      updateProfile: async (changes) => {
+        if (user.role === USER_ROLE.GUEST) {
+          setUser((prev) => ({ ...prev, ...changes }));
+          return;
+        }
+        await saveStudentProgram(user.id, changes.program);
+        setUser((prev) => ({ ...prev, program: changes.program }));
       },
       // Backend swap: the guest profile moves to Firestore with the guest slice.
       // The server issues the Guest ID (R-02, R-30); the mock passes back a fixed one.

@@ -93,40 +93,60 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
   completed_count`; very fast test visits make the cutoff sit at closing time (reset both counters in the console to test with the
   default). Candidate follow-up: use the measured average only after 3+ visits and never below 1 minute.
 
-### 6.4 Public display (D01), PRD R-20, R-21
-Goal: `/display/[code]` in the staff app shows Now Serving, the next three, the office QR and the manual code, with no staff login; delete `MOCK_OFFICES`.
-Design: the display device signs in anonymously (`signInAnonymously`); existing rules already allow any signed-in user to read `offices`
-and `queues`, and tickets stay private, so no rules change is expected. Developer step: enable the Anonymous provider in Firebase Auth.
-Now serving comes from `queues.last_called_seq` (short number `CODE-SEQ`); the next three are the following numbers up to `last_seq`
-(cancelled numbers can appear, accepted imprecision, same as the waiting count). Look the office up by its code (`where code == ...`).
-The QR encodes `qampus://check-in/{code}/{check_in_code}` (`checkInPayload` already exists). Closed state: "This queue is closed".
-Tests: manual on a second browser window.
+### Roadmap (agreed with the developer 2026-10-25; follow this order)
+1. **6.7 Small issues** (in progress; see below). The optional cutoff tweak (measured average only after 3+ visits) is NOT part of it.
+2. **6.4 Public display**, planned after 6.7 (design below), then built.
+3. **6.6 Guests / anonymous sign-in**: first finalize the flow with the developer, write the plan here, then execute.
+4. **Slices that need a new native package, batched into ONE dev build** (so only one rebuild): QR scan with `expo-camera` (6.5),
+   push notifications with `expo-notifications` (needs the sender decision first), biometric sign-in/unlock. Plan each when reached.
+5. **UI polish**: improve spacing of components on the screens, responsiveness (phone sizes and the staff web at different widths),
+   and remove the dev preview states (`// DEV-PREVIEW` markers, `usePreview`, `src/dev/previews.jsx`, `playground.jsx`).
+6. **Deploy as a preview for end-to-end testing** (EAS preview build/update for the apps, and a hosted preview of the staff web;
+   decide the hosting when reached). Also decide then whether to use a separate dev Firebase project.
 
-### 6.5 QR scan on the student Scan tab, PRD R-20, R-21, R-31
-Needs `npx expo install expo-camera`, the camera permission plugin in `apps/mobile/app.json`, and a new dev build
-(`eas build --profile development`); the developer runs the build. Parse the payload, take the digits, call the same `checkInByCode` as
-manual entry (identical validation, R-21); camera denied or unavailable falls back to the manual field. Do this after 6.4 so the display QR exists to scan.
+### 6.7 Small issues (DONE 2026-10-25, awaiting the developer's test; the optional cutoff tweak was left out on purpose)
+- Edit Profile: `useSession().updateProfile` saves a student's program (`saveStudentProgram`); the student ID is locked (R-01, and the
+  rules already refuse a change once it is set). A guest's edit changes memory only until 6.6.
+- A refused staff action shows a red banner on every console screen (`ActionNotice` in `ConsolePage`, text in `ACTION_ERROR_COPY`,
+  state `notice` in `QueueProvider`), auto-dismissed after 8 seconds.
+- The stray root `app.json` (a different EAS project and owner than `apps/mobile/app.json`) was removed and the root `README.md`
+  rewritten. Root `eas.json` was left alone (looks like a leftover too; decide with the developer).
+- Still open for later: the `ui-mock-final` tag (a pushed tag is outward-facing: ask first) and the separate dev Firebase project
+  question (decide at the preview deployment step).
 
-### 6.6 Guests, PRD R-02, R-30
-Goal: guest sign-in (anonymous account, device bound), guest profile (name, type, optional email) and a unique Guest ID `G` + six digits.
-Design: `institutionalIds/{id}` claim docs (create-only, `uid`) keep student and guest IDs unique; the student `complete-profile` should
-claim the student ID too (not done yet: two students can currently save the same ID). The rules already allow a GUEST `users` create for
-anonymous accounts. `QueueDataProvider` currently subscribes for students only; include guests. Replace `MOCK_USER_GUEST` in the mobile
-`SessionProvider`. Guest ID generation under Spark: pick a random candidate and claim it with a transaction, retry on collision (a client
-helper is acceptable here because rules enforce uniqueness; record that this departs from R-30's "server issues it").
+### 6.4 Public display (D01), PRD R-20, R-21 (the developer's model; plan in detail after 6.7)
+Model: in the staff web app a **"Launch public display" button** opens the display in a **new browser tab or window**
+(`window.open` to `/display/[code]`), meant for the TV at the counter. The display shows Now Serving, the next three tickets, the manual
+code and the **office QR that encodes `check_in_code`** (`checkInPayload` already builds `qampus://check-in/{code}/{check_in_code}`),
+with a "This queue is closed" state; it needs no staff action once launched. Delete `MOCK_OFFICES` and `useOfficeByCode`'s mock.
+To settle when planning: the display page's sign-in (a new tab of the same browser already has the staff session, so it may simply
+reuse it; a separate TV browser needs `signInAnonymously` and the Anonymous provider enabled in Firebase Auth, which the developer
+does), a QR component for the web (a small library or SVG), full-screen button, and auto-refresh via the existing queue listener.
+Now serving comes from `queues.last_called_seq`; the next three are the following numbers up to `last_seq` (cancelled numbers can
+appear, the same accepted imprecision as the waiting count). Rules already let any signed-in user read `offices` and `queues`.
 
-### 6.7 Small issues (can ride along with any slice)
-- `edit-profile.jsx` calls `updateProfile`, which `SessionProvider` does not define, so saving throws. Open question to ask first:
-  is the student ID editable (PRD R-01 says locked, DoD #22 says editable)?
-- Staff actions that are refused only log to the console; add an on-screen message (`InlineBanner` exists).
-- Seeded `offices/off_reg_001.hours`: `close_min` should be 1020 and MON to FRI must be present. The developer edits this in the Firebase
-  console (the agent cannot write Firestore). Needed before the 6.3 test. Numbers must be the `number` type; a missing day means closed.
-  Proposed: `hours` map with MON, TUE, WED, THU, FRI each `{ open_min: 480, close_min: 1020 }` (08:00 to 17:00), no SAT or SUN.
-- Stray root `app.json`; root `README.md` is the Expo template; the `ui-mock-final` tag was never created.
-- Open question: a separate dev Firebase project?
+### 6.6 Guests / anonymous sign-in (flow to be finalized with the developer before any code)
+Goal: guest sign-in (anonymous account, device bound), guest profile (name, type, optional email) and a unique Guest ID `G` + six
+digits (PRD R-02, R-30). Starting design: `institutionalIds/{id}` claim docs (create-only, `uid`) keep student and guest IDs unique;
+the student `complete-profile` should claim the student ID too (two students can currently save the same ID). The rules already allow
+a GUEST `users` create for anonymous accounts. `QueueDataProvider` currently subscribes for students only; include guests. Replace
+`MOCK_USER_GUEST` in the mobile `SessionProvider`. Guest ID under Spark: pick a random candidate and claim it in a transaction,
+retry on collision (a client helper; rules enforce uniqueness; this departs from R-30's "server issues it"). Questions for the
+planning conversation: what a guest may do (limits vs students), what happens when the device loses its anonymous account, and
+whether a guest can later link to a school account.
+
+### 6.5 and the native slices (after 6.6, one rebuild)
+- QR scan on the student Scan tab (R-20, R-21, R-31): `npx expo install expo-camera`, the camera permission plugin in
+  `apps/mobile/app.json`; parse the payload, take the digits, call the same `checkInByCode` as manual entry (identical validation);
+  camera denied or unavailable falls back to the manual field.
+- Push (R-25: only "your turn" is pushed, respects `push_enabled`): `expo-notifications`, the device token on `users.push_token`, and
+  a sender (the staff client through Expo's push API using the student's token, or a small relay). Decide the sender first. In-app
+  notifications already work without it.
+- Biometric sign-in/unlock: to be planned (likely `expo-local-authentication`).
+The developer runs the build: `eas build --profile development`.
 
 ## 7. Start of the next session
 1. Read the four docs above; confirm `git status` is clean and the branch is `claude/expo-google-signin-d8d7du`.
-2. Run `npm test` in `packages/backend` (expect 65 passing).
-3. Ask the developer which slice to start (recommended order: 6.4, 6.5, 6.6; push; 6.7 whenever convenient) and answer the
-   "Decision for the developer" questions of that slice before writing code.
+2. Run `npm test` in `packages/backend` (expect 65 passing, plus any added since).
+3. Continue the roadmap in section 6 in order. After 6.7 is committed: plan 6.4 with the developer (the questions listed there), then
+   build it; then finalize and plan 6.6 before executing it.

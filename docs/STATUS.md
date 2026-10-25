@@ -27,18 +27,19 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **UI**: all screens exist. The ticket flow, activity log, notifications and cutoff are real. Still mock: staff notifications (maintenance text only), guests, programs, public display (`MOCK_OFFICES`).
 
 ## In progress
-Nothing active. Slices 6.1 to 6.3 passed manual testing and are pushed. Next slice to be chosen.
+6.7 small issues are coded and checked (profile save, staff refusal banner, root README, stray root app.json removed); waiting for the developer's test, then commit. Slices 6.1 to 6.3 passed testing and are pushed.
 
 ## Next
-Ordered plan with designs and decisions: `NEXT_SESSION.md` section 6. Remaining: public display (6.4), QR scan (6.5, new dev build), guests (6.6), push (needs a decision), small issues (6.7). Candidate tweak: measured average only after 3+ visits.
+Roadmap in `NEXT_SESSION.md` section 6: 6.7, then the public display (a "Launch public display" button opening a new tab, with the
+`check_in_code` QR), then guests / anonymous sign-in (flow finalized first), then the native-package slices in one rebuild (QR camera
+scan, push, biometric), then UI polish (spacing, responsiveness, remove dev previews), then a preview deployment for end-to-end testing.
 
 ## Known issues
-- `edit-profile.jsx` calls `updateProfile`, which `SessionProvider` does not define; saving a profile throws.
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).
 - Any Google account that signs in on the staff app leaves an empty Firebase Auth user (no Firestore access). Accepted.
-- A refused open/close/call/complete on staff only logs to the console (no on-screen message yet).
 - Cutoff is enforced in the client only (a hand-made client could join past it); an office with no hours for today has no cutoff.
-- Stray root `app.json`; root README is still the Expo template.
+- Root `eas.json` (and an untracked root `android/`) look like leftovers of an older root-level EAS setup; `apps/mobile` has its own `eas.json`. Not touched.
+- A guest's Edit Profile changes live in memory only until the guest slice (6.6).
 
 ## Open questions
 - Dev Firebase project separate from the real one?
