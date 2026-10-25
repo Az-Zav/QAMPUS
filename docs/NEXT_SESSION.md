@@ -171,29 +171,79 @@ placeholder reading "Not available in this version"; PRD V1 scope lists Biometri
 - Tests: toggle needs a fingerprint or face; enable then close and reopen = lock appears; fail or cancel stays locked; device PIN
   works; a guest gets it too; sign out and in as another account = that account's own (off) setting; background 10 s = no lock, 90 s = lock.
 
-**C. Push notifications (`expo-notifications`): DECIDED 2026-10-25: option A, a relay on Cloudflare Workers (free); nothing built yet.
-Order of work: (1) developer: Phase 1 credentials (service account key uploaded to EAS); (2) the rebuild from the batch; (3) student
-app JS (token, channel, settings switch, sign-out clears the token); (4) the relay in `relay/` (repo root, outside the npm
-workspaces, `wrangler.jsonc`, tested with `npx wrangler dev` at localhost:8787 before any deploy); (5) staff console calls the relay
-after a call commits; (6) developer deploys with `npx wrangler deploy` and puts the URL in the staff `.env`
-(`EXPO_PUBLIC_PUSH_RELAY_URL`); (7) test list in the chat history of 2026-10-25 (credential via expo.dev/notifications, relay by curl,
-background push, foreground silent, switch off, sign-out). Rejected: Firebase Cloud Functions (Blaze plan, a billing card).**
-- Blockers: (1) Spark has no server and Cloud Functions need the Blaze plan; (2) the staff browser cannot call Expo's push API itself
-  (verified 2026-10-25: its CORS preflight returns no `Access-Control-Allow-Origin`), so a small RELAY is needed; (3) Android push needs
-  the FCM V1 service-account key uploaded to the EAS project (a developer step in the Expo and Firebase consoles); (4) the native module
-  must be in the rebuild (covered above); (5) the Settings "Push notifications" switch only changes local state, it does not save
-  `users.push_enabled` yet.
-- Relay (one HTTPS endpoint, e.g. a Cloudflare Worker, free and no card; or a plain Node script on the developer's PC for a
-  prototype test): the staff console POSTs `{ token, ticketId, officeName }` with its Firebase ID token. The relay verifies that ID
-  token against Google's public keys, then reads `staff/{email}` over the Firestore REST API with that same ID token (the rules already
-  let a user read only their own staff doc), so no admin credentials are stored. If the caller is staff it builds a fixed message
-  ("It's your turn at {office}. Check in within 1 minute.", no personal data) and POSTs it to Expo's push API server to server,
-  with CORS headers for the staff origin. It sends nothing else.
-- Student app: ask permission, create the Android channel first, `getExpoPushTokenAsync({ projectId })`, save `users.push_token`
-  (users may update their own doc; staff may `get` it); respect `push_enabled`; `setNotificationHandler` shows nothing in the foreground
-  (the in-app banner and dialog already do); a tap opens Notifications.
-- Staff app: after the call transaction commits, best effort (a failure never undoes the call), read the student's `push_token` and
-  `push_enabled` and call the relay.
+**C. Push notifications (`expo-notifications`): DECIDED 2026-10-25: option A, a RELAY on Cloudflare Workers (free). Rejected:
+Firebase Cloud Functions (Blaze plan, a billing card). The step-by-step plan agreed with the developer:**
+
+What the chain looks like:
+```
+staff presses Call next
+  -> the ticket is called (the existing transaction)
+  -> the staff console reads the student's push_token and POSTs to the RELAY
+  -> the relay checks the caller is staff, then POSTs to Expo's push service
+  -> Expo -> Google FCM -> the student's phone (app closed or in the background)
+```
+Why a relay: the staff web page cannot call Expo's push API (its CORS preflight returns no Access-Control-Allow-Origin, verified
+2026-10-25), the phone cannot wake itself when the app is closed, and Spark has no server. The relay is the missing server.
+
+| Step | Who | What |
+|---|---|---|
+| 1 | Developer | Google credential for push (DONE 2026-10-25) |
+| 2 | Agent, then developer | Install the native packages and add their plugins; the developer rebuilds the dev client once |
+| 3 | Agent | Student app: permission, channel, push token saved, the Settings switch saves `push_enabled`, sign-out clears the token |
+| 4 | Agent | Write the relay in `relay/` and test it locally |
+| 5 | Agent | Staff console calls the relay after a call commits |
+| 6 | Developer | Put the relay online on Cloudflare |
+| 7 | Both | Test |
+
+**Step 1 (developer, DONE).** Firebase console, project `qampus-d0718`: Project settings -> Service accounts -> Generate new private key
+(JSON, never committed). Upload to Expo: expo.dev -> the project -> Project settings -> Credentials -> Android (`com.qampus.app`) ->
+Service credentials -> FCM V1 service account key -> Add -> upload -> Save (or `eas credentials`). If the upload complains about
+permissions, add the "Firebase Cloud Messaging API Admin" role to that service account in Google Cloud, and check that the
+"Firebase Cloud Messaging API (V1)" is enabled for the project.
+
+**Step 2.** `npx expo install expo-camera expo-local-authentication expo-notifications` in `apps/mobile`, plugins in `app.json`, then
+the developer runs `eas build --profile development --platform android` from `apps/mobile` and installs the APK. Until that APK is
+installed the old dev client cannot run this branch.
+
+**Step 3 (student app, JS only).** After sign-in with a complete profile and push on: ask notification permission, create the Android
+channel FIRST (otherwise Android 13 never shows the prompt), `getExpoPushTokenAsync({ projectId })`, save `users.push_token` (users may
+update their own doc; staff may `get` it). The Settings "Push notifications" row saves `push_enabled` for real (today it only changes
+local state). Sign-out (students and guests) clears the token before signing out, so the next user of the phone does not get the
+previous user's pushes. `setNotificationHandler` shows nothing in the foreground (the in-app banner and the called dialog already do);
+a tap opens the app, and the called dialog appears from the ticket as today.
+
+**Step 4 (the relay, about 80 lines, `relay/` at the repo root, outside the npm workspaces, `wrangler.jsonc`).**
+- `POST /push` with the staff member's Firebase ID token in `Authorization` and `{ to, officeName }` as the body.
+- Staff check without a server key: the relay reads `staff/{email}` over Firestore's web API with that same ID token. The rules already
+  let a user read only their own staff doc, so Firestore itself validates the token; a forged or non-staff token is refused and no admin
+  credentials live in the relay.
+- Message: it ignores any text from the caller and sends a fixed one ("It's your turn at {office}. Check in within 1 minute."), with
+  `channelId` matching the app's channel, `priority: high`, `ttl: 120` (a call expires after 60 s), `data: { type: 'YOUR_TURN' }`, to
+  `POST https://exp.host/--/api/v2/push/send` (server to server, so no CORS problem).
+- CORS: only the staff origins (a variable) plus localhost. Config `vars`: `FIREBASE_PROJECT_ID`, `ALLOWED_ORIGINS`. No secret is needed
+  unless Expo's enhanced push security is turned on. Local test: `npx wrangler dev` serves at http://localhost:8787 (local-only values
+  go in `.dev.vars`, which is git-ignored).
+
+**Step 5 (staff console).** After the call transaction commits, as a best-effort step that never undoes the call: read the student's
+`push_token` and `push_enabled` (staff may `get` a profile), then call the relay with `auth.currentUser.getIdToken()`. New staff `.env`
+value `EXPO_PUBLIC_PUSH_RELAY_URL` (first `http://localhost:8787`, so everything can be tested on the developer's PC). Only "your turn"
+is pushed (R-25).
+
+**Step 6 (developer, about 15 minutes).** Sign up at dash.cloudflare.com with an email (the setup page does not mention a card; if it asks
+for one, say so). From `relay/` run `npx wrangler deploy`; on the first deploy Wrangler opens the browser to log in and asks to register a
+`workers.dev` subdomain (Cloudflare says a first push can show a 523 for about a minute). Copy the printed URL
+(`https://qampus-push.<name>.workers.dev`) into the staff `.env` as `EXPO_PUBLIC_PUSH_RELAY_URL` and restart the staff app. The relay needs no secrets. Free limits: 100,000 requests a day and 10 ms of CPU per request (time waiting on
+network does not count). Other free hosts (Vercel Hobby, Supabase Edge Functions, Deno Deploy) would run the same logic.
+
+**Step 7 (tests).** (1) the credential: expo.dev/notifications with a token from the profile document must arrive on the phone; (2) the
+relay alone: a request with the developer's ID token succeeds, one without a token is refused; (3) the real flow: app in the
+background, staff call, the push arrives, a tap opens the app; (4) foreground: only the in-app banner and dialog, no second
+notification; (5) Push switched off in Settings: nothing arrives; (6) sign out, then call the old ticket: no push to that phone.
+
+Limits: Android only; delivery receipts are not processed (no scheduled job on this setup; Expo says to check them about 15 minutes
+after sending), so a dead token fails silently; staff can read a student's push token (they already read the profile for strikes) but
+the relay only ever sends the fixed message; remote push does not work in Expo Go on Android (dev build only). If the project later
+moves to Blaze, a Firestore-triggered Cloud Function would replace the relay.
 
 ## 7. Start of the next session
 1. Read the four docs above; confirm `git status` is clean and the branch is `claude/expo-google-signin-d8d7du`.
