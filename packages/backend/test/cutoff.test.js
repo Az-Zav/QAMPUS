@@ -58,7 +58,18 @@ test('a measured average replaces the office default', () => {
   assert.equal(averageServiceMinutes(office, queue()), 10);
   assert.equal(averageServiceMinutes(office, null), 10);
   assert.equal(estimatedWaitMinutes(4, office, measured), 20);
-  assert.equal(estimatedWaitMinutes(3, office, queue({ completed_count: 2, service_seconds_total: 330 })), 8);
+  assert.equal(estimatedWaitMinutes(3, office, queue({ completed_count: 3, service_seconds_total: 495 })), 8);
+});
+
+test('fewer than three completed visits keep the office default', () => {
+  assert.equal(averageServiceMinutes(office, queue({ completed_count: 2, service_seconds_total: 20 })), 10);
+  assert.equal(averageServiceMinutes(office, queue({ completed_count: 1, service_seconds_total: 600 })), 10);
+});
+
+test('a measured visit length is never below one minute', () => {
+  assert.equal(averageServiceMinutes(office, queue({ completed_count: 4, service_seconds_total: 40 })), 1);
+  assert.equal(averageServiceMinutes(office, queue({ completed_count: 3, service_seconds_total: 120 })), 1);
+  assert.equal(averageServiceMinutes(office, queue({ completed_count: 3, service_seconds_total: 270 })), 1.5);
 });
 
 test('a day without hours has no cutoff and names the next opening day', () => {

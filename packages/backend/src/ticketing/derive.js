@@ -13,11 +13,12 @@ export const peopleAhead = (ticket, queue) =>
   queue ? Math.max(0, ticket.daily_sequence - queue.last_called_seq - 1) : 0;
 
 // Average minutes per visit: measured from today's completed visits (the queue doc keeps their count and total
-// seconds), else the office default. Today only; the PRD says today and yesterday (a prototype simplification).
+// seconds) once there are at least RULES.MIN_MEASURED_VISITS of them, and never below RULES.MIN_VISIT_MINUTES; until
+// then the office default. Today only; the PRD says today and yesterday (a prototype simplification).
 export function averageServiceMinutes(office, queue) {
   const done = queue?.completed_count ?? 0;
   const seconds = queue?.service_seconds_total ?? 0;
-  if (done > 0 && seconds > 0) return seconds / done / 60;
+  if (done >= RULES.MIN_MEASURED_VISITS && seconds > 0) return Math.max(RULES.MIN_VISIT_MINUTES, seconds / done / 60);
   return office?.default_service_minutes ?? 0;
 }
 
