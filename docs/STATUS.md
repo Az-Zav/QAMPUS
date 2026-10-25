@@ -29,11 +29,10 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff, guests and the display are real. Still mock: staff notifications (maintenance text only) and the programs list.
 
 ## In progress
-6.4 public display is coded and checked (74 unit tests, lint, staff build); waiting for the developer's test, then commit. 6.6 (guests) is pushed.
+Nothing active. Slices 6.1 to 6.7 are tested and pushed. The native-package batch (QR scan, biometric unlock, push) is planned in `NEXT_SESSION.md` 6.5: QR scan and biometric are locked and ready to build with one rebuild; push is blocked on a relay, the FCM credential and the Settings switch.
 
 ## Next
-Roadmap in `NEXT_SESSION.md` section 6: after the display, the native-package slices in one rebuild (QR camera scan, push,
-biometric), then UI polish (spacing, responsiveness, remove dev previews), then a preview deployment for end-to-end testing.
+1. Native batch: install `expo-camera`, `expo-local-authentication`, `expo-notifications`, build the QR scan and biometric unlock, the developer rebuilds the dev client once. 2. UI polish (spacing, responsiveness, remove dev previews). 3. Preview deployment for end-to-end testing. 4. Push JS once the relay exists.
 
 ## Known issues
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).

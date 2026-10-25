@@ -97,14 +97,14 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 1. **6.7 Small issues** (in progress; see below). The optional cutoff tweak (measured average only after 3+ visits) is NOT part of it.
 2. **6.6 Guests / anonymous sign-in**: DONE and pushed.
 3. **6.4 Public display**: built, awaiting the developer's test.
-4. **Slices that need a new native package, batched into ONE dev build** (so only one rebuild): QR scan with `expo-camera` (6.5),
-   push notifications with `expo-notifications` (needs the sender decision first), biometric sign-in/unlock. Plan each when reached.
+4. **Slices that need a new native package, batched into ONE dev build** (so only one rebuild): QR scan with `expo-camera`,
+   biometric unlock with `expo-local-authentication`, and `expo-notifications` for push (its JS waits for the relay). Plan LOCKED in 6.5.
 5. **UI polish**: improve spacing of components on the screens, responsiveness (phone sizes and the staff web at different widths),
    and remove the dev preview states (`// DEV-PREVIEW` markers, `usePreview`, `src/dev/previews.jsx`, `playground.jsx`).
 6. **Deploy as a preview for end-to-end testing** (EAS preview build/update for the apps, and a hosted preview of the staff web;
    decide the hosting when reached). Also decide then whether to use a separate dev Firebase project.
 
-### 6.7 Small issues (DONE 2026-10-25, awaiting the developer's test; the optional cutoff tweak was left out on purpose)
+### 6.7 Small issues (DONE 2026-10-25, tested and pushed; the optional cutoff tweak was left out on purpose)
 - Edit Profile: `useSession().updateProfile` saves a student's program (`saveStudentProgram`); the student ID is locked (R-01, and the
   rules already refuse a change once it is set). A guest's edit changes memory only until 6.6.
 - A refused staff action shows a red banner on every console screen (`ActionNotice` in `ConsolePage`, text in `ACTION_ERROR_COPY`,
@@ -114,7 +114,12 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 - Still open for later: the `ui-mock-final` tag (a pushed tag is outward-facing: ask first) and the separate dev Firebase project
   question (decide at the preview deployment step).
 
-### 6.4 Public display (D01), PRD R-20, R-21 (BUILT 2026-10-25, awaiting the developer's test)
+### 6.6 Guests (DONE 2026-10-25, tested and pushed; reasons in DECISIONS.md)
+Anonymous sign-in on the device, a guest form that issues a unique `G` + six digits, `institutionalIds/{id}` claims (`{ uid }`,
+create-only) for guest and student IDs (a taken student ID is refused), guests use the app like students, guest sign-out warns that the
+identity is lost, `packages/backend/src/identity`. Students with an ID saved before 6.6 have no claim (not backfilled).
+
+### 6.4 Public display (D01), PRD R-20, R-21 (DONE 2026-10-25, tested and pushed)
 The staff Queue screen's strip has a **Launch public display** button: `window.open('/display/{office code}', '_blank')`. The display
 (`apps/staff/src/app/display/[code].jsx`, designed on a 1920x1080 canvas and scaled) shows Now Serving, the next three numbers, the
 office QR (`checkInPayload`: `qampus://check-in/{code}/{check_in_code}`), the manual code, and "This queue is closed" with the next
@@ -126,15 +131,63 @@ signs in anonymously only when there is none (the counter's TV; needs the Anonym
 `SessionProvider` ignores anonymous accounts. No rules change (offices and queues are readable by any signed-in user; tickets stay
 private). A listener error shows the Outage screen. `MOCK_OFFICES` and the `?outage=1` dev aid are gone. No fullscreen button (use F11).
 
-### 6.5 and the native slices (after 6.6, one rebuild)
-- QR scan on the student Scan tab (R-20, R-21, R-31): `npx expo install expo-camera`, the camera permission plugin in
-  `apps/mobile/app.json`; parse the payload, take the digits, call the same `checkInByCode` as manual entry (identical validation);
-  camera denied or unavailable falls back to the manual field.
-- Push (R-25: only "your turn" is pushed, respects `push_enabled`): `expo-notifications`, the device token on `users.push_token`, and
-  a sender (the staff client through Expo's push API using the student's token, or a small relay). Decide the sender first. In-app
-  notifications already work without it.
-- Biometric sign-in/unlock: to be planned (likely `expo-local-authentication`).
-The developer runs the build: `eas build --profile development`.
+### 6.5 The native-package batch (PLAN LOCKED 2026-10-25 for QR scan and biometric; push is blocked, see below)
+Strategy: install all three packages (`npx expo install expo-camera expo-local-authentication expo-notifications` in `apps/mobile`)
+and add their plugins in ONE change, so ONE rebuild (`eas build --profile development --platform android`, run by the developer)
+covers the camera, biometric and the future push JS. After the packages are installed the OLD dev client cannot run this branch
+(missing native module), so test only on the new APK, and never `eas update` to the `development` channel before it is installed.
+Build the QR scan and biometric now; push JS follows later as an over-the-air update once its blockers are cleared.
+
+**A. QR scan on the Scan tab (`expo-camera`; R-20, R-21, R-31). Decisions: a QR of another office gets its own message; an invalid
+scan does NOT log an `INVALID_SCAN` event (skipped).**
+- The display QR encodes `qampus://check-in/{officeCode}/{check_in_code}`. A shared pure pair in `@qampus/backend` (new
+  `ticketing/checkin.js`): `checkInPayload(office)` (moved from the staff utils, which then imports it) and
+  `parseCheckInPayload(data)` -> `{ officeCode, code }` or null (wrong scheme or host, not 6 digits, extra segments). Unit tested.
+- Scan screen: `CameraView` (`facing="back"`, `barcodeScannerSettings={{ barcodeTypes: ['qr'] }}`, `onBarcodeScanned`) inside the
+  existing corner frame. It is mounted only while the tab is focused (`useIsFocused`) and no dialog is open (one preview at a time).
+  `onBarcodeScanned` fires repeatedly, so a ref locks after the first valid read until the result dialog closes. The digits go to the
+  same `useCheckIn().checkIn(code)` as manual entry (identical validation). A parsed `officeCode` different from the called ticket's
+  office code shows "This QR is for a different office" (new `TicketingError.WRONG_OFFICE`, checked in the screen/hook before the write).
+- Permission states from `useCameraPermissions()`: loading = nothing; not asked = an "Allow camera" button; denied for good
+  (`canAskAgain` false) = a message and an "Open settings" button (`Linking.openSettings()`); the manual field is always shown.
+- `app.json`: `["expo-camera", { "cameraPermission": "Allow Qampus to use the camera to scan the office QR code and check you in.", "recordAudioAndroid": false }]`.
+- Tests (phone, new APK, display on another screen): scan with a called ticket checks in; no called ticket = "no ticket being
+  called"; another office's QR or a random QR = the right message; camera denied still allows typing and Open settings works; leaving and
+  returning to the tab restarts the camera; a scan after the 60 s grace says expired.
+
+**B. Biometric unlock (`expo-local-authentication`). Decisions: it only UNLOCKS an already signed-in session (it never replaces
+sign-in); it applies to students and guests; the switch is the existing "Biometric login" row in Settings (today a disabled, always-on
+placeholder reading "Not available in this version"; PRD V1 scope lists Biometric Login).**
+- Setting: a per-device preference in AsyncStorage keyed by uid (`qampus.biometric.{uid}`), default OFF; it is not stored in Firestore.
+  The toggle is disabled with "Set up a fingerprint or face on this device first" unless `hasHardwareAsync()` and `isEnrolledAsync()`;
+  turning it on first requires a successful `authenticateAsync` (proves it works).
+- Lock: a `LockScreen` cover in the signed-in layout (`(app)/_layout.jsx`, with an `AppState` listener). It shows on a cold start and
+  when the app returns from the background after more than 60 seconds, while the setting is on, until `authenticateAsync({ promptMessage,
+  cancelLabel })` succeeds. It has an "Unlock" retry button. The device PIN/pattern fallback stays enabled (`disableDeviceFallback`
+  false), so nobody is locked out; no sign-out escape is needed (a guest sign-out would delete their identity). The cover renders until
+  the stored preference has been read, so there is no flash of the app.
+- Honest limit: this gates the screen only; the Firebase session still sits in AsyncStorage. Good enough for the prototype.
+- `app.json`: `"expo-local-authentication"` (iOS `faceIDPermission` text only if iOS is ever built).
+- Tests: toggle needs a fingerprint or face; enable then close and reopen = lock appears; fail or cancel stays locked; device PIN
+  works; a guest gets it too; sign out and in as another account = that account's own (off) setting; background 10 s = no lock, 90 s = lock.
+
+**C. Push notifications (`expo-notifications`): BLOCKED, nothing is built yet. Design for when the blockers clear.**
+- Blockers: (1) Spark has no server and Cloud Functions need the Blaze plan; (2) the staff browser cannot call Expo's push API itself
+  (verified 2026-10-25: its CORS preflight returns no `Access-Control-Allow-Origin`), so a small RELAY is needed; (3) Android push needs
+  the FCM V1 service-account key uploaded to the EAS project (a developer step in the Expo and Firebase consoles); (4) the native module
+  must be in the rebuild (covered above); (5) the Settings "Push notifications" switch only changes local state, it does not save
+  `users.push_enabled` yet.
+- Relay (one HTTPS endpoint, e.g. a Cloudflare Worker, free and no card; or a plain Node script on the developer's PC for a
+  prototype test): the staff console POSTs `{ token, ticketId, officeName }` with its Firebase ID token. The relay verifies that ID
+  token against Google's public keys, then reads `staff/{email}` over the Firestore REST API with that same ID token (the rules already
+  let a user read only their own staff doc), so no admin credentials are stored. If the caller is staff it builds a fixed message
+  ("It's your turn at {office}. Check in within 1 minute.", no personal data) and POSTs it to Expo's push API server to server,
+  with CORS headers for the staff origin. It sends nothing else.
+- Student app: ask permission, create the Android channel first, `getExpoPushTokenAsync({ projectId })`, save `users.push_token`
+  (users may update their own doc; staff may `get` it); respect `push_enabled`; `setNotificationHandler` shows nothing in the foreground
+  (the in-app banner and dialog already do); a tap opens Notifications.
+- Staff app: after the call transaction commits, best effort (a failure never undoes the call), read the student's `push_token` and
+  `push_enabled` and call the relay.
 
 ## 7. Start of the next session
 1. Read the four docs above; confirm `git status` is clean and the branch is `claude/expo-google-signin-d8d7du`.
