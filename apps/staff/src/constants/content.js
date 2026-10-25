@@ -1,3 +1,4 @@
+
 // Staff web user-facing copy (Figma: QAMPUS Staff Web App).
 
 export const BRAND_COPY = Object.freeze({
@@ -85,7 +86,8 @@ export const QUEUE_COPY = Object.freeze({
   openQueue: 'Open queue',
   closeQueue: 'Close queue',
   cancelQueue: 'Cancel queue',
-  cutoffBanner: (minutes) => `Joining closes soon — ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} until the cutoff.`,
+  cutoffBanner: (minutes) =>
+    `Joining closes soon — ${minutes} ${minutes === 1 ? 'minute' : 'minutes'} until the cutoff.`,
   waiting: 'Waiting',
   next: 'NEXT',
   override: 'Override',
@@ -109,14 +111,16 @@ export const FOOTER_COPY = Object.freeze({
   updated: 'Updated just now',
   queueSummary: (office, avg) =>
     `${office.short_name} · open ${office.hours} · average service ${avg} min`,
-  offensesScope: (office) => `Showing offenses for ${office.short_name} only`,
+  offensesScope: (office) =>
+    `Showing offenses for ${office.short_name} only`,
   offensesNote: 'Revoked offenses stay on the record',
   logScope: (office) => `Showing all actions for ${office.short_name}`,
 });
 
 export const OFFENSES_COPY = Object.freeze({
   title: 'Offenses',
-  subtitle: (office) => `${office.short_name} · revoking reverses the strike and lifts any ban it caused`,
+  subtitle: (office) =>
+    `${office.short_name} · revoking reverses the strike and lifts any ban it caused`,
   search: 'Search by name or ID',
   results: (n) => `${n} ${n === 1 ? 'result' : 'results'}`,
   causedBan: 'Caused a 24-hour ban',
@@ -159,20 +163,35 @@ export const ACTION_ERROR_COPY = Object.freeze({
 
 // Staff/EmptyState contexts
 export const EMPTY_COPY = Object.freeze({
-  noOneWaiting: { title: 'No one waiting', body: 'New tickets will appear here as people join.' },
-  noRecords: { title: 'Nothing to show yet', body: 'Actions affecting the queue will appear here.' },
-  noOffenses: { title: 'Nothing to show yet', body: 'Offenses from this office’s tickets will appear here.' },
-  noSearchResults: { title: 'No matching records', body: 'Check the student ID or Guest ID and try again.' },
+  noOneWaiting: {
+    title: 'No one waiting',
+    body: 'New tickets will appear here as people join.',
+  },
+  noRecords: {
+    title: 'Nothing to show yet',
+    body: 'Actions affecting the queue will appear here.',
+  },
+  noOffenses: {
+    title: 'Nothing to show yet',
+    body: 'Offenses from this office’s tickets will appear here.',
+  },
+  noSearchResults: {
+    title: 'No matching records',
+    body: 'Check the student ID or Guest ID and try again.',
+  },
 });
 
-// WM01–WM08. The safe choice is `cancel` (Gold, primary slot); `confirm` is labelled by its effect.
+// Staff modals WM01–WM08.
 export const MODAL_COPY = Object.freeze({
+  // FIX #4: Reason is required for FIFO overrides.
   override: (number) => ({
     title: `Call ${number} ahead of the queue?`,
-    body: `${number} isn't next in line. The queue won't be reordered, and this will be logged.`,
+    body: `You are about to call ${number} ahead of other waiting tickets. Provide a reason for this priority override. Your action will be recorded in the Activity Log.`,
+    placeholder: 'e.g. Priority assistance required',
     cancel: 'Cancel',
     confirm: `Call ${number}`,
   }),
+
   verifyById: (number) => ({
     title: `Verify ${number} by ID`,
     body: 'Enter the student ID or Guest ID of the person at the window. This starts their service, the same as a QR scan.',
@@ -182,24 +201,28 @@ export const MODAL_COPY = Object.freeze({
     noMatch: "That ID doesn't match this ticket. Nothing has changed — check the ID and try again.",
     expired: 'This ticket has expired and can no longer be verified. Mark it as a no-show instead.',
   }),
+
   markNoShow: (number) => ({
     title: `Mark ${number} as a no-show?`,
     body: 'This records an offense for the user. They will be notified. You will need to call the next ticket separately.',
     cancel: 'Cancel',
     confirm: 'Mark no-show',
   }),
+
   completeService: (number) => ({
     title: `Mark ${number} as served?`,
     body: "This completes the ticket and clears the window. It moves to the user's history.",
     cancel: 'Cancel',
     confirm: 'Mark as served',
   }),
+
   closeQueue: () => ({
     title: 'Close the queue?',
     body: 'No new tickets can be issued. Tickets already issued stay valid and can still be served.',
     cancel: 'Keep open',
     confirm: 'Close queue',
   }),
+
   cancelQueue: () => ({
     title: 'Cancel the queue?',
     body: 'All tickets will be cancelled and everyone holding one will be notified with your reason. No one is penalized.',
@@ -207,12 +230,14 @@ export const MODAL_COPY = Object.freeze({
     cancel: 'Keep queue',
     confirm: 'Cancel all tickets',
   }),
+
   cutoffOverride: (office) => ({
     title: 'Allow joining past the cutoff?',
     body: `The ${office.short_name} can't serve anyone else before it closes at ${office.closes}. Joining will reopen and this will be logged.`,
     cancel: 'Cancel',
     confirm: 'Allow joining',
   }),
+
   revokeOffense: () => ({
     title: 'Revoke this offense?',
     body: 'Revoking reverses the strike and lifts any ban it caused. The user is notified. This is recorded in the activity log with your name.',

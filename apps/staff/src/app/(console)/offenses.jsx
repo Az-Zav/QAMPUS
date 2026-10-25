@@ -159,10 +159,10 @@ export default function Offenses() {
       <StaffModal
         visible={!!revoking}
         {...copy}
-        field={ModalField.REASONS}
+        field={ModalField.REASON_SELECT}
         reasonAction={REASON_ACTION.OFFENSE_REVOCATION}
-        reasonValue={reasons}
-        onReasonChange={setReasons}
+        reasonSelection={reasons}
+        onReasonSelectionChange={setReasons}
         confirmDisabled={!isReasonComplete(REASON_ACTION.OFFENSE_REVOCATION, reasons)}
         cancelLabel={copy.cancel}
         confirmLabel={copy.confirm}

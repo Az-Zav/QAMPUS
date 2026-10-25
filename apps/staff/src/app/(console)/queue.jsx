@@ -102,7 +102,7 @@ export default function Queue() {
           ...MODAL_COPY.override(
             modal.ticket.short_ticket_number,
           ),
-          field: ModalField.REASONS,
+          field: ModalField.REASON_SELECT,
           reasonAction: REASON_ACTION.FIFO_OVERRIDE,
           confirmDisabled: !isReasonComplete(REASON_ACTION.FIFO_OVERRIDE, reasons),
           onConfirm: run(() =>
@@ -165,7 +165,7 @@ export default function Queue() {
           // Require a reason for IN_SERVICE -> NO_SHOW.
           ...(reversingVerification
             ? {
-                field: ModalField.REASONS,
+                field: ModalField.REASON_SELECT,
                 reasonAction: REASON_ACTION.VERIFIED_NO_SHOW,
                 confirmDisabled: !isReasonComplete(REASON_ACTION.VERIFIED_NO_SHOW, reasons),
               }
@@ -228,7 +228,7 @@ export default function Queue() {
       case QueueModal.CANCEL:
         return {
           ...MODAL_COPY.cancelQueue(),
-          field: ModalField.REASONS,
+          field: ModalField.REASON_SELECT,
           reasonAction: REASON_ACTION.QUEUE_CANCELLATION,
           destructive: true,
           confirmDisabled: !isReasonComplete(REASON_ACTION.QUEUE_CANCELLATION, reasons),
@@ -352,8 +352,8 @@ export default function Queue() {
       <StaffModal
         visible={!!modalProps}
         {...modalProps}
-        reasonValue={reasons}
-        onReasonChange={(selection) => {
+        reasonSelection={reasons}
+        onReasonSelectionChange={(selection) => {
           setReasons(selection);
           setError(null);
         }}
@@ -375,6 +375,7 @@ const styles = StyleSheet.create({
   columns: {
     gap: 24,
     marginTop: 6,
+    minWidth: 0,
   },
 
   columnsRow: {
