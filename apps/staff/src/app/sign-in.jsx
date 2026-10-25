@@ -1,5 +1,5 @@
 import ActionButton from '@/components/primitives/ActionButton';
-import { ButtonType, SIGN_IN_COPY, SIGN_IN_SPLIT_BREAKPOINT, STAFF_FONT, SPACING, TYPOGRAPHY } from '@/constants';
+import { ButtonType, SIGN_IN_COPY, SIGN_IN_SPLIT_BREAKPOINT, SPACING, STAFF_FONT, TYPOGRAPHY } from '@/constants';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { IconSet, ShieldCheck, Timer, UserRoundCheck } from '@/icons';
 import { SignInStatus } from '@/providers/SessionProvider';
@@ -24,7 +24,15 @@ export default function SignIn() {
     <View style={styles.screen}>
       {split && (
         <View style={styles.hero}>
-          <Image source={LOGO} style={styles.logo} contentFit="contain" accessibilityLabel="QAMPUS" />
+          <View style={styles.logoRow}>
+  <Image
+    source={LOGO}
+    style={styles.logo}
+    contentFit="contain"
+    accessibilityLabel="QAMPUS logo"
+  />
+  <Text style={styles.logoText}>QAMPUS</Text>
+</View>
           <Text style={styles.headline}>{SIGN_IN_COPY.headline}</Text>
           <Text style={styles.heroBody}>{SIGN_IN_COPY.body}</Text>
           <View style={styles.highlights}>
@@ -95,7 +103,21 @@ const makeStyles = (c) =>
       paddingRight: '6.25%',
       paddingVertical: 88,
     },
-    logo: { width: 80, height: 80 },
+    logoRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 16,
+},
+logo: {
+  width: 84,
+  height: 84,
+},
+logoText: {
+  fontFamily: TYPOGRAPHY.fontFamily.bold,
+  fontSize: 36,
+  color: c.onInverse,
+  letterSpacing: 3,
+},
     headline: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: 45, lineHeight: 54, color: c.onInverse },
     heroBody: {
       fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -115,7 +137,7 @@ const makeStyles = (c) =>
     },
     panel: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xxl },
     card: { width: '100%', maxWidth: 540, alignItems: 'center', gap: 22 },
-    title: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: 35, color: c.ink, textAlign: 'center' },
+    title: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: 35, color: c.gold, textAlign: 'center' },
     subtitle: { fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.size.lg, color: c.slate, textAlign: 'center' },
     cta: { alignSelf: 'stretch' },
     error: { fontFamily: STAFF_FONT.semibold, fontSize: 17, lineHeight: 24, color: c.error, textAlign: 'center' },
