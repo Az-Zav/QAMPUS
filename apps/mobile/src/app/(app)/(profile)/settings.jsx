@@ -5,10 +5,11 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import ThemeSelector from '@/components/primitives/ThemeSelector';
 import { Toggle } from '@qampus/ui';
 import { BOTTOM_NAV_CLEARANCE } from '@/components/shell/BottomNav';
+import ListRow from '@/components/shell/ListRow';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 
-import { RADII, SETTINGS_COPY, SPACING, withOpacity } from '@/constants';
+import { ListRowType, RADII, SETTINGS_COPY, SPACING, withOpacity } from '@/constants';
 import { useSession, useTheme, useThemedStyles } from '@/hooks';
 
 // S16 Settings (UIUX §4.14). Push and theme are functional; biometric is inert in V1 (PRD §5).
@@ -50,6 +51,22 @@ export default function SettingsScreen() {
           <SectionLabel text={SETTINGS_COPY.appearanceLabel} />
           <ThemeSelector value={scheme} onChange={setPreference} />
         </View>
+
+        <View style={styles.section}>
+          <SectionLabel text={SETTINGS_COPY.legalLabel} />
+          <View style={styles.group}>
+            {SETTINGS_COPY.legal.map((item, i) => (
+              <ListRow
+                key={item.id}
+                type={ListRowType.MENU}
+                icon={item.icon}
+                title={item.title}
+                onPress={() => router.push(item.href)}
+                style={i === 0 && styles.firstRow}
+              />
+            ))}
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -72,4 +89,5 @@ const makeStyles = (c) => StyleSheet.create({
     overflow: 'hidden',
     padding: 1,
   },
+  firstRow: { borderTopWidth: 0 },
 });

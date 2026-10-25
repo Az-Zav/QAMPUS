@@ -26,6 +26,7 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Capacity cutoff and measured wait times tested**: `cutoffState` refuses a join when the minutes left before closing, divided by the average visit, are fewer than the waiting plus one (client side only); the Join button reason and the staff banner/strip use it; staff Override cutoff writes `cutoff_overridden` plus a `CUTOFF_OVERRIDE` event. Wait estimates use today's measured average. A day with no hours has no cutoff.
 - **Guests (6.6, built, awaiting test)**: "Continue as guest" signs in anonymously (device bound), the guest form issues a unique `G` + six digits reserved in `institutionalIds`; student IDs are reserved the same way (a taken ID is refused). Guests use the app like students; guest Sign out warns that the ID and tickets are lost.
 - **Public display (6.4, built, awaiting test)**: staff Queue has a "Launch public display" button that opens `/display/{office code}` in a new tab. It shows Now Serving, the next three numbers, the `check_in_code` QR and manual code, and a closed state, from the live office and queue (no names). A tab opened from the console reuses the staff session; a bare screen signs in anonymously. `MOCK_OFFICES` is deleted.
+- **Terms of Service and Privacy Policy (built, awaiting device test)**: one reader screen (`/legal/terms`, `/legal/privacy`) opened from the Login footer links and a new LEGAL section in Settings; text in `constants/legal.js`, a draft for the school's DPO to review.
 - **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff, guests and the display are real. Still mock: staff notifications (maintenance text only) and the programs list.
 
 ## In progress
@@ -44,4 +45,5 @@ Nothing active. Slices 6.1 to 6.7 are tested and pushed. The native-package batc
 ## Open questions
 - Dev Firebase project separate from the real one?
 - Student ID editable in Profile? PRD R-01 says locked, DoD #22 says editable.
+- Support/DPO contact address for Help & Support and the legal text.
 - Push option (relay vs in-app only). Program list stays hardcoded for now.

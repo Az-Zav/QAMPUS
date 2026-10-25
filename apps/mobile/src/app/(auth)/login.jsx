@@ -1,8 +1,7 @@
-import { Button } from '@qampus/ui';
-import { useSession, useTheme, useThemedStyles } from '@/hooks';
 import { ButtonType, IconSet, PROFILE_COPY, SPACING, TYPOGRAPHY } from '@/constants';
+import { useSession, useTheme, useThemedStyles } from '@/hooks';
+import { Button } from '@qampus/ui';
 import { useRouter } from 'expo-router';
-import React from 'react';
 import { Alert, Image, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -97,9 +96,14 @@ export default function Login() {
             />
 
             <Text style={styles.termsText}>
-              By continuing, you agree to our{' '}
-              <Text style={styles.termsLink}>Terms</Text> &{' '}
-              <Text style={styles.termsLink}>Privacy Policy</Text>
+              By continuing you agree to our{'\n'}
+              <Text style={styles.termsLink} onPress={() => router.push('/legal/terms')} accessibilityRole="link">
+                Terms of Service
+              </Text>{' '}
+              &{' '}
+              <Text style={styles.termsLink} onPress={() => router.push('/legal/privacy')} accessibilityRole="link">
+                Privacy Policy
+              </Text>
             </Text>
           </View>
         </View>
@@ -197,10 +201,10 @@ const makeStyles = (c) => StyleSheet.create({
   termsText: {
     marginTop: SPACING.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontSize: TYPOGRAPHY.size.sm,
+    fontSize: TYPOGRAPHY.size.base,
     color: c.slate,
     textAlign: 'center',
-    lineHeight: TYPOGRAPHY.size.sm * TYPOGRAPHY.lineHeight.relaxed,
+    lineHeight: TYPOGRAPHY.size.base * TYPOGRAPHY.lineHeight.relaxed,
   },
   termsLink: {
     fontFamily: TYPOGRAPHY.fontFamily.bold,

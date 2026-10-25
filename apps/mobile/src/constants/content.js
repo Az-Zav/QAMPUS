@@ -238,6 +238,11 @@ export const SETTINGS_COPY = Object.freeze({
   appearanceLabel: 'APPEARANCE',
   push: { title: 'Push notifications', subtitle: 'In-app notifications always persist. Push is used for your turn.' },
   biometric: { title: 'Biometric login', subtitle: 'Not available in this version.' },
+  legalLabel: 'LEGAL',
+  legal: [
+    { id: 'terms', title: 'Terms of Service', icon: 'document-text-outline', href: '/legal/terms' },
+    { id: 'privacy', title: 'Privacy Policy', icon: 'shield-checkmark-outline', href: '/legal/privacy' },
+  ],
 });
 
 export const HELP_COPY = Object.freeze({
