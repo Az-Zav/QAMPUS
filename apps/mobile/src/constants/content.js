@@ -286,6 +286,7 @@ export const MODAL_COPY = Object.freeze({
     body: (reason) =>
       ({
         QUEUE_CLOSED: 'This queue is closed right now. Try again when the office opens it.',
+        PAST_CUTOFF: 'Joining has closed: the office cannot serve one more person before it closes.',
         BANNED: 'You are banned from joining queues for now. Bans & Warnings shows when it ends.',
         ALREADY_QUEUED: 'You already have an active ticket for this office. Finish or cancel it to join again.',
         LIMIT_REACHED: `You already hold ${RULES.MAX_ACTIVE_TICKETS} active tickets. Finish or cancel one to join another queue.`,

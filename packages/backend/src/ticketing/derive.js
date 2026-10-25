@@ -2,6 +2,7 @@
 // Pure: no Firebase.
 
 import { RULES, TICKET_STATUS } from '@qampus/core/domain';
+import { campusDayStart, nextOpening, todayHours } from '@qampus/core/format';
 import { shortTicketNumber } from './ids.js';
 
 // Waiting is approximated as last_seq - last_called_seq (a cancelled ticket still counts until called past)
@@ -11,8 +12,57 @@ export const waitingCount = (queue) => (queue ? Math.max(0, queue.last_seq - que
 export const peopleAhead = (ticket, queue) =>
   queue ? Math.max(0, ticket.daily_sequence - queue.last_called_seq - 1) : 0;
 
-// Until a measured service average exists (slice 3), the office default is used
-export const estimatedWaitMinutes = (people, office) => people * (office?.default_service_minutes ?? 0);
+// Average minutes per visit: measured from today's completed visits (the queue doc keeps their count and total
+// seconds), else the office default. Today only; the PRD says today and yesterday (a prototype simplification).
+export function averageServiceMinutes(office, queue) {
+  const done = queue?.completed_count ?? 0;
+  const seconds = queue?.service_seconds_total ?? 0;
+  if (done > 0 && seconds > 0) return seconds / done / 60;
+  return office?.default_service_minutes ?? 0;
+}
+
+export const estimatedWaitMinutes = (people, office, queue = null) =>
+  Math.round(people * averageServiceMinutes(office, queue));
+
+export const CutoffReason = Object.freeze({
+  PAST_CLOSING: 'PAST_CLOSING',
+  NO_CAPACITY: 'NO_CAPACITY',
+});
+
+// Capacity cutoff (R-17..R-19). A new join is refused when the minutes left before the office closes, divided by
+// the average visit, are fewer than the people waiting plus one. `cutoffAt` is the latest instant a join is still
+// accepted with today's waiting count (it moves as the line changes). Staff can override it for the day
+// (`queue.cutoff_overridden`). An office with no hours today has nothing to measure against, so no cutoff applies.
+// `closesAtMinute` is the closing time as minutes since campus midnight; `nextOpen` the next opening day.
+export function cutoffState({ office, queue, now = new Date() }) {
+  const hours = todayHours(office?.hours, now);
+  const avgMinutes = averageServiceMinutes(office, queue);
+  const waiting = waitingCount(queue);
+  const open = {
+    canJoin: true,
+    reason: null,
+    avgMinutes,
+    waiting,
+    closesAtMinute: hours?.close_min ?? null,
+    closesInMinutes: null,
+    cutoffAt: null,
+    nextOpen: nextOpening(office?.hours, now),
+  };
+  if (!hours) return open;
+
+  const nowMs = new Date(now).getTime();
+  const closeMs = campusDayStart(now).getTime() + hours.close_min * 60000;
+  const cutoffAt = new Date(closeMs - (waiting + 1) * avgMinutes * 60000);
+  const reason = closeMs <= nowMs ? CutoffReason.PAST_CLOSING : nowMs > cutoffAt.getTime() ? CutoffReason.NO_CAPACITY : null;
+  const overridden = queue?.cutoff_overridden === true;
+  return {
+    ...open,
+    canJoin: overridden || !reason,
+    reason: overridden ? null : reason,
+    closesInMinutes: (closeMs - nowMs) / 60000,
+    cutoffAt,
+  };
+}
 
 // "Now serving" short number, or null before anyone was called
 export const nowServing = (office, queue) =>

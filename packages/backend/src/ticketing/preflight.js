@@ -3,11 +3,13 @@
 
 import { QUEUE_STATUS, RULES, TICKET_STATUS } from '@qampus/core/domain';
 import { getRemainingSeconds } from '@qampus/core/ticket';
+import { cutoffState } from './derive.js';
 
 export const TicketingError = Object.freeze({
   PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
   OFFICE_INACTIVE: 'OFFICE_INACTIVE',
   QUEUE_CLOSED: 'QUEUE_CLOSED',
+  PAST_CUTOFF: 'PAST_CUTOFF',
   BANNED: 'BANNED',
   ALREADY_QUEUED: 'ALREADY_QUEUED',
   LIMIT_REACHED: 'LIMIT_REACHED',
@@ -44,6 +46,8 @@ export function checkJoin({ user, office, queue, activeCount = 0, activeOffices 
   if (activeOffices[office.id]) return TicketingError.ALREADY_QUEUED;
   if (activeCount >= RULES.MAX_ACTIVE_TICKETS) return TicketingError.LIMIT_REACHED;
   if (!queue || queue.status !== QUEUE_STATUS.OPEN) return TicketingError.QUEUE_CLOSED;
+  // The capacity cutoff (R-17) needs the office's hours; an office record without them has no cutoff
+  if (!cutoffState({ office, queue, now: new Date(now) }).canJoin) return TicketingError.PAST_CUTOFF;
   return null;
 }
 

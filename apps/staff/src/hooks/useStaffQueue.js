@@ -30,7 +30,8 @@ export function useStaffQueue() {
         : PanelState.EXPIRED;
 
   const isOpen = queue.status === QUEUE_STATUS.OPEN;
-  const minutesToCutoff = Math.ceil((new Date(queue.cutoff_at).getTime() - now) / 60000);
+  // No cutoff time (the office has no hours today): nothing counts down
+  const minutesToCutoff = queue.cutoff_at ? Math.ceil((new Date(queue.cutoff_at).getTime() - now) / 60000) : Infinity;
   const cutoffReached = isOpen && !queue.cutoff_overridden && minutesToCutoff <= 0;
 
   return {

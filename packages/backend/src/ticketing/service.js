@@ -132,6 +132,19 @@ export async function closeQueue(db, office, actor, now = new Date()) {
   }
 }
 
+// Staff: let students join past the capacity cutoff for the rest of the day (R-19). One write plus its log line.
+export async function overrideCutoff(db, office, actor, now = new Date()) {
+  const ref = doc(db, 'queues', queueIdFor(office.id, now));
+  try {
+    const batch = writeBatch(db);
+    batch.update(ref, { cutoff_overridden: true, updated_at: serverTimestamp() });
+    logQueue(db, batch, ref, office.id, actor, ACTIVITY_ACTION.CUTOFF_OVERRIDE);
+    await batch.commit();
+  } catch (error) {
+    throw asFailure(error);
+  }
+}
+
 // Student: take the next number in today's queue. The queue bump, the ticket and the student's counter are one
 // atomic write, and the ticket id includes the number, so two students can never end up with the same one.
 // `user` needs { id, name, institutional_id }; `office` needs { id, code, name, status }.
@@ -142,11 +155,13 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
     return await runTransaction(db, async (tx) => {
       const snap = await tx.get(queueRef);
       const userSnap = await tx.get(userRef);
+      // The stored office carries the hours and the default visit length the capacity cutoff needs
+      const officeSnap = await tx.get(doc(db, 'offices', office.id));
       const profile = userSnap.exists() ? userSnap.data() : {};
       const activeCount = profile.active_count ?? 0;
       const reason = checkJoin({
         user,
-        office,
+        office: officeSnap.exists() ? { ...office, ...officeSnap.data() } : office,
         queue: snap.exists() ? snap.data() : null,
         activeCount,
         activeOffices: profile.active_offices ?? {},

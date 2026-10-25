@@ -95,6 +95,16 @@ export function todayHours(hours, now = new Date()) {
   return hours?.[DAY_KEYS[campus.getUTCDay()]] ?? null;
 }
 
+// The next day after today on which the office is open: { day: 'MON', open_min, daysAhead }, or null
+export function nextOpening(hours, now = new Date()) {
+  const campus = new Date(now.getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);
+  for (let ahead = 1; ahead <= 7; ahead += 1) {
+    const day = DAY_KEYS[(campus.getUTCDay() + ahead) % 7];
+    if (hours?.[day]) return { day, open_min: hours[day].open_min, daysAhead: ahead };
+  }
+  return null;
+}
+
 // The instant the campus day starts (00:00 at UTC+8), `daysAgo` days before the day of `now`
 export function campusDayStart(now = new Date(), daysAgo = 0) {
   const campus = new Date(new Date(now).getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);

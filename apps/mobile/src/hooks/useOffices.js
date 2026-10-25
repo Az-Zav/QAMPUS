@@ -1,8 +1,8 @@
 import { RULES } from '@/constants';
-import { activeBanEnd, isActiveTicket, remainingSlots } from '@qampus/backend';
+import { activeBanEnd, cutoffState, isActiveTicket, remainingSlots } from '@qampus/backend';
 import { useMemo } from 'react';
 import { useQueueData } from '@/providers/QueueDataProvider';
-import { formatDateTime, toOfficeView } from '@/utils';
+import { cutoffMessage, formatDateTime, toOfficeView } from '@/utils';
 import { useNow } from './useNow';
 
 // All active offices as OfficeCard/InfoCard views, with today's queue state.
@@ -25,17 +25,24 @@ export function useOffices() {
       offices: board.offices
         .filter((office) => office.status !== 'INACTIVE')
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map((office) => ({
-          ...toOfficeView(office, board.queues[office.id]),
-          ...(banEnd
-            ? { joinDisabled: true, disabledReason: `You are banned from joining until ${formatDateTime(banEnd)}.` }
-            : queuedOfficeIds.has(office.id)
-              ? { joinDisabled: true, disabledReason: 'You already have an active ticket here.' }
-              : atLimit
-                ? { joinDisabled: true, disabledReason: `You already hold ${RULES.MAX_ACTIVE_TICKETS} active tickets.` }
-                : {}),
-        })),
+        .map((office) => {
+          const queue = board.queues[office.id];
+          // The capacity cutoff only matters while the queue is open (a closed queue already says so)
+          const cutoff = cutoffState({ office, queue, now: new Date(now) });
+          return {
+            ...toOfficeView(office, queue),
+            ...(banEnd
+              ? { joinDisabled: true, disabledReason: `You are banned from joining until ${formatDateTime(banEnd)}.` }
+              : queuedOfficeIds.has(office.id)
+                ? { joinDisabled: true, disabledReason: 'You already have an active ticket here.' }
+                : atLimit
+                  ? { joinDisabled: true, disabledReason: `You already hold ${RULES.MAX_ACTIVE_TICKETS} active tickets.` }
+                  : queue?.status === 'OPEN' && !cutoff.canJoin
+                    ? { joinDisabled: true, disabledReason: cutoffMessage(cutoff) }
+                    : {}),
+          };
+        }),
     }),
-    [board, atLimit, queuedOfficeIds, banEnd],
+    [board, atLimit, queuedOfficeIds, banEnd, now],
   );
 }

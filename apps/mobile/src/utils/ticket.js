@@ -26,7 +26,7 @@ export function toTicketView(ticket, office, queue, now) {
     status,
     position: ahead + 1,
     peopleAhead: ahead,
-    estimatedWaitMinutes: estimatedWaitMinutes(ahead, office),
+    estimatedWaitMinutes: estimatedWaitMinutes(ahead, office, queue),
     remainingSeconds:
       status === TicketStatus.YOUR_TURN || status === TicketStatus.EXPIRED
         ? getRemainingSeconds(ticket.called_at, now)

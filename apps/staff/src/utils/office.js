@@ -7,6 +7,7 @@ export function toOfficeView(office) {
   const today = todayHours(office.hours);
   return {
     ...office,
+    hoursByDay: office.hours, // the stored per-day map; `hours` below is its text for today
     opens: today ? formatMinutes(today.open_min) : '—',
     closes: today ? formatMinutes(today.close_min) : '—',
     hours: today ? `${formatMinutes(today.open_min)}–${formatMinutes(today.close_min)}` : 'closed today',

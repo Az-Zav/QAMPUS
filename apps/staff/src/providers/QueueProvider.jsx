@@ -18,7 +18,9 @@ import {
   closeQueue as closeQueueDoc,
   completeTicket,
   markTicketNoShow,
+  cutoffState,
   openQueue as openQueueDoc,
+  overrideCutoff as overrideCutoffDoc,
   revokeOffense as revokeOffenseDoc,
   TicketingError,
   verifyByHolderId,
@@ -32,7 +34,7 @@ import { useSession } from './SessionProvider';
 //
 // The ticket flow (queue, tickets), the offenses and the activity log read and write Firestore through
 // @qampus/backend. Every staff action passes `actor` ({ uid, name }) so the activity log names who did it.
-// Still mock: the cutoff override and the notifications.
+// Still mock: the staff notifications.
 // =====================================================
 
 const QueueContext = createContext(null);
@@ -103,14 +105,16 @@ export function QueueProvider({ children }) {
       ticket.id === todayQueue?.current_ticket_id &&
       (ticket.status === TICKET_STATUS.CALLED || ticket.status === TICKET_STATUS.IN_SERVICE),
   );
+  // Capacity cutoff (R-17..R-19): the latest instant a join is still accepted; null when the office has no hours today
+  // (`office` is the display view: its `hours` is text, so the stored per-day map is passed instead)
+  const cutoff = cutoffState({ office: office && { ...office, hours: office.hoursByDay }, queue: todayQueue });
   const queue = {
     status: todayQueue?.status === QUEUE_STATUS.OPEN ? QUEUE_STATUS.OPEN : QUEUE_STATUS.CLOSED,
     current: currentTicket ? toStaffTicket(currentTicket) : null,
     waiting: waitingTickets(officeTickets).map(toStaffTicket),
-    average_service_minutes: office?.default_service_minutes ?? 0,
-    // The capacity cutoff arrives with the limits slice; until then joining stays open while the queue is open
-    cutoff_at: null,
-    cutoff_overridden: true,
+    average_service_minutes: Math.round(cutoff.avgMinutes),
+    cutoff_at: cutoff.cutoffAt,
+    cutoff_overridden: todayQueue?.cutoff_overridden === true,
   };
 
   // =================================================
@@ -202,8 +206,12 @@ export function QueueProvider({ children }) {
     }
   };
 
-  // The cutoff is not real yet (capacity slice); nothing to change until then
-  const overrideCutoff = () => {};
+  // WM07: let students join past the cutoff for the rest of the day (logged)
+  const overrideCutoff = () => {
+    if (office) {
+      overrideCutoffDoc(db, office, actor).catch((error) => console.warn('Could not override the cutoff', error));
+    }
+  };
 
   // =================================================
   // WM08: REVOKE OFFENSE
