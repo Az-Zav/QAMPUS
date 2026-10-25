@@ -8,8 +8,8 @@ import { useBottomNavClearance } from '@/components/shell/BottomNav';
 import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 
-import { EDIT_PROFILE_COPY, GUEST_TYPE_LABEL, IconSet, InputType, PROGRAM_OPTIONS, SPACING, TYPOGRAPHY, USER_ROLE } from '@/constants';
-import { useSession, useTheme, useThemedStyles } from '@/hooks';
+import { EDIT_PROFILE_COPY, GUEST_TYPE_LABEL, IconSet, InputType, SPACING, TYPOGRAPHY, USER_ROLE } from '@/constants';
+import { usePrograms, useSession, useTheme, useThemedStyles } from '@/hooks';
 
 // S14 Edit Profile (UIUX §4.12). Students edit program only — student ID changes go
 // through the Super Admin (PRD R-01). Guests edit name, email, guest type; Guest ID is read-only (R-02).
@@ -76,6 +76,7 @@ export default function EditProfileScreen() {
   const navClearance = useBottomNavClearance();
   const router = useRouter();
   const { user, updateProfile } = useSession();
+  const { programs } = usePrograms();
   const [form, setForm] = useState(() => (user ? initialForm(user) : null));
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
@@ -180,7 +181,7 @@ export default function EditProfileScreen() {
                 <Picker
                   value={form.program}
                   onSelect={(v) => setField('program', v)}
-                  options={PROGRAM_OPTIONS}
+                  options={programs}
                   placeholder={COPY.programPlaceholder}
                   searchable
                   style={errors.program && styles.pickerError}

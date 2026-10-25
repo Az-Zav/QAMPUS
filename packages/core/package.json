@@ -9,7 +9,7 @@
     "./format": "./src/format.js",
     "./legal": "./src/legal.js",
     "./ticket": "./src/ticket.js",
-    "./mock": "./src/mock.js"
+    "./programs": "./src/programs.js"
   },
   "scripts": {
     "lint": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-legal.mjs",
