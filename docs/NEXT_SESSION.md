@@ -10,7 +10,7 @@ open queue, join, call, verify arrival (office code or staff ID), complete, no-s
 three-ticket limit (R-07), one active ticket per office, offenses, strikes, 24-hour ban, revoke (R-11 to R-16), and since 2026-10-25:
 the activity log (`events`, 50 per page, real staff names), in-app notifications (`users/{uid}/notifications`, read by viewing, a banner
 from the top while the app is open) and the capacity cutoff with measured wait times (client side, staff override logged).
-Still mock: staff notifications (one maintenance text), guests, programs list, public display (`MOCK_OFFICES`). Push is not built.
+Nothing is mock data any more (the mock file is deleted). Staff announcements do not exist yet (no `announcements` collection).
 `npm test` in `packages/backend` runs 65 passing unit tests. Both apps lint clean and build.
 
 ## 2. How we work (agreed with the developer)
@@ -40,8 +40,8 @@ Still mock: staff notifications (one maintenance text), guests, programs list, p
   null, not an empty string) and clear `active_offices`.
 
 ## 4. Code map
-- `packages/core`: `domain.js` (enums, `RULES`), `format.js` (campus day UTC+8: `campusDate`, `todayHours`), `ticket.js`, `mock.js`
-  (left: `MOCK_NOTIFICATIONS`, `MOCK_OFFICES`, `MOCK_PROGRAMS`, `MOCK_STAFF_ACTIVITY`, `MOCK_STAFF_NOTIFICATIONS`, `MOCK_USER_GUEST`).
+- `packages/core`: `domain.js` (enums, `RULES`), `format.js` (campus day UTC+8: `campusDate`, `todayHours`), `ticket.js`, `legal.js` (shared Terms and Privacy text), `programs.js` (the 26 programs by college; `usePrograms` and the
+  pickers read it).
 - `packages/backend` (`@qampus/backend`, shared by both apps, one copy): `ticketing/` and `penalties/`, each with pure files
   (`ids`, `derive`, `preflight`, `progress`, `offense`: no Firebase, unit tested in `test/`) and `data.js` (listeners) / `service.js`
   (transactions). Every service function takes `db` first. `plain.js` turns snapshots into plain objects (timestamps as ISO strings).

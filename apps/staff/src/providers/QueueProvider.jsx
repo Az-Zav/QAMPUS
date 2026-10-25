@@ -1,6 +1,4 @@
 
-import { MOCK_STAFF_NOTIFICATIONS } from '@qampus/core/mock';
-
 import { QUEUE_STATUS, TICKET_STATUS } from '@qampus/core/domain';
 
 import { toShortTicketNumber } from '@qampus/core/ticket';
@@ -36,10 +34,12 @@ import { useSession } from './SessionProvider';
 //
 // The ticket flow (queue, tickets), the offenses and the activity log read and write Firestore through
 // @qampus/backend. Every staff action passes `actor` ({ uid, name }) so the activity log names who did it.
-// Still mock: the staff notifications.
+// Staff announcements are not built yet (they need an `announcements` collection): the bell shows only the cutoff warning.
 // =====================================================
 
 const QueueContext = createContext(null);
+
+const NO_ANNOUNCEMENTS = Object.freeze([]);
 
 // =====================================================
 // ACTION RESULTS
@@ -243,7 +243,7 @@ export function QueueProvider({ children }) {
   const value = {
     queue,
     offenses,
-    notifications: MOCK_STAFF_NOTIFICATIONS,
+    notifications: NO_ANNOUNCEMENTS,
     notice,
     dismissNotice: () => setNotice(null),
 

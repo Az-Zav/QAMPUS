@@ -1,17 +1,40 @@
 // Theme: which color scheme the app renders in (shared by mobile and staff web). Follows the device until the user
-// picks Light or Dark in Settings. In-memory for now, like onboarding in SessionProvider.
+// picks Light or Dark in Settings. Pass `storage` ({ get(): Promise<string | null>, set(value) }) to remember the
+// choice across restarts; the mobile app does, the staff web (no theme picker) does not.
 
 import { ColorScheme, createThemes, ThemePreference } from './tokens';
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
 const ThemeContext = createContext(null);
 const BASE_THEMES = createThemes();
 
 // `themes`: { light, dark } from createThemes(extend) when the app layers its own keys on top of the base theme.
-export function ThemeProvider({ children, themes = BASE_THEMES }) {
+export function ThemeProvider({ children, themes = BASE_THEMES, storage = null }) {
   const [preference, setPreferenceState] = useState(ThemePreference.SYSTEM);
   const deviceScheme = useColorScheme();
+
+  // Native UI (keyboard, alerts, date pickers) follows the override too;
+  // 'unspecified' hands control back to the device.
+  const apply = useCallback((next) => {
+    Appearance.setColorScheme(next === ThemePreference.SYSTEM ? 'unspecified' : next);
+    setPreferenceState(next);
+  }, []);
+
+  // A saved choice replaces "follow the device" as soon as it has been read
+  useEffect(() => {
+    if (!storage) return undefined;
+    let cancelled = false;
+    storage
+      .get()
+      .then((saved) => {
+        if (!cancelled && (saved === ColorScheme.LIGHT || saved === ColorScheme.DARK)) apply(saved);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [storage, apply]);
 
   const scheme =
     preference === ThemePreference.SYSTEM
@@ -25,13 +48,11 @@ export function ThemeProvider({ children, themes = BASE_THEMES }) {
       ...themes[scheme],
       preference,
       setPreference: (next) => {
-        // Native UI (keyboard, alerts, date pickers) follows the override too;
-        // 'unspecified' hands control back to the device.
-        Appearance.setColorScheme(next === ThemePreference.SYSTEM ? 'unspecified' : next);
-        setPreferenceState(next);
+        apply(next);
+        storage?.set(next);
       },
     }),
-    [themes, scheme, preference],
+    [themes, scheme, preference, apply, storage],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

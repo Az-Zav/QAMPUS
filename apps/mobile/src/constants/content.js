@@ -187,13 +187,6 @@ export const PROFILE_MENU = Object.freeze([
   { id: 'help', title: 'Help & Support', icon: 'help-circle-outline', href: '/help' },
 ]);
 
-// Placeholder until the program list source is decided (PRD open question, UI Build Guide §4.2)
-export const PROGRAM_OPTIONS = Object.freeze([
-  'Computer Science',
-  'Information Technology',
-  'Data Science and Analytics',
-]);
-
 export const EDIT_PROFILE_COPY = Object.freeze({
   title: 'Edit Profile',
   accountLabel: 'ACCOUNT',
