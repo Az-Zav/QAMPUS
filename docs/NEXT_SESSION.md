@@ -195,8 +195,8 @@ Why a relay: the staff web page cannot call Expo's push API (its CORS preflight 
 | 3 | Agent (BUILT 2026-10-25) | Student app: permission, channel, push token saved, the Settings switch saves `push_enabled`, sign-out clears the token |
 | 4 | Agent (BUILT, `relay/`, 7 unit tests) | Write the relay in `relay/` and test it locally |
 | 5 | Agent (BUILT, `apps/staff/src/lib/push.js`) | Staff console calls the relay after a call commits |
-| 6 | Developer (NEXT) | Put the relay online on Cloudflare |
-| 7 | Both | Test (the local run passed on 2026-10-25; repeat against the deployed relay) |
+| 6 | Developer (DONE 2026-10-25) | Put the relay online on Cloudflare: https://qampus-push.qampus-push.workers.dev |
+| 7 | Both | Test (passed on 2026-10-25, locally and against the deployed relay) |
 
 **Step 1 (developer, DONE).** Firebase console, project `qampus-d0718`: Project settings -> Service accounts -> Generate new private key
 (JSON, never committed). Upload to Expo: expo.dev -> the project -> Project settings -> Credentials -> Android (`com.qampus.app`) ->

@@ -24,24 +24,18 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Activity log (`events`) tested**: every staff action and the student join/cancel/check-in writes one `events` line inside its transaction; the staff Activity Log reads them 50 per page (arrows) with action and date filters. Needs the rules and `firestore.indexes.json` deployed.
 - **In-app notifications tested**: `users/{uid}/notifications` is written with each cause (your turn, approaching turn at place 3, no-show, queue cancelled per ticket, offense revoked, queue confirmed, warning on a called cancel). The mobile list and bell are live; viewing the screen marks them read (only while focused); a banner slides in from the top for a new one while the app is open. Push is not built.
 - **Capacity cutoff and measured wait times tested**: `cutoffState` refuses a join when the minutes left before closing, divided by the average visit, are fewer than the waiting plus one (client side only); the Join button reason and the staff banner/strip use it; staff Override cutoff writes `cutoff_overridden` plus a `CUTOFF_OVERRIDE` event. Wait estimates use today's measured average. A day with no hours has no cutoff.
-- **Guests (6.6, built, awaiting test)**: "Continue as guest" signs in anonymously (device bound), the guest form issues a unique `G` + six digits reserved in `institutionalIds`; student IDs are reserved the same way (a taken ID is refused). Guests use the app like students; guest Sign out warns that the ID and tickets are lost.
-- **Public display (6.4, built, awaiting test)**: staff Queue has a "Launch public display" button that opens `/display/{office code}` in a new tab. It shows Now Serving, the next three numbers, the `check_in_code` QR and manual code, and a closed state, from the live office and queue (no names). A tab opened from the console reuses the staff session; a bare screen signs in anonymously. `MOCK_OFFICES` is deleted.
-<<<<<<< HEAD
+- **Guests (6.6, tested)**: "Continue as guest" signs in anonymously (device bound), the guest form issues a unique `G` + six digits reserved in `institutionalIds`; student IDs are reserved the same way (a taken ID is refused). Guests use the app like students; guest Sign out warns that the ID and tickets are lost.
+- **Public display (6.4, tested)**: staff Queue has a "Launch public display" button that opens `/display/{office code}` in a new tab. It shows Now Serving, the next three numbers, the `check_in_code` QR and manual code, and a closed state, from the live office and queue (no names). A tab opened from the console reuses the staff session; a bare screen signs in anonymously. `MOCK_OFFICES` is deleted.
 - **Terms of Service and Privacy Policy (built, awaiting device test)**: one reader screen (`/legal/terms`, `/legal/privacy`) opened from the Login footer links and a new LEGAL section in Settings; text in `constants/legal.js`, a draft for the school's DPO to review.
-=======
 - **QR scan and biometric unlock (tested)**: the Scan tab shows the live camera in the corner frame and reads the display QR (`parseCheckInPayload`, shared with the display via `checkInPayload`); a QR of another office gets its own message; the typed field stays as the fallback. Settings > Biometric unlock asks for a fingerprint, face or device PIN when the app opens or returns after more than a minute away (students and guests, per-device, default off).
-<<<<<<< HEAD
->>>>>>> d4b9a20d2b6a74b080ae8fc1e16346e049277a81
-=======
-- **Push notifications (tested locally)**: a phone registers its Expo token (`users.push_token`), the Settings switch saves `push_enabled`, sign-out clears the token; after a staff call the console asks the relay (`relay/`, a Cloudflare Worker, run locally at localhost:8787), which checks the caller is staff and sends the fixed "It's your turn" push. The relay is not deployed yet.
->>>>>>> 31736025154bf9fc0bcbb9ad378d45cb4de15f05
+- **Push notifications (tested, relay deployed)**: a phone registers its Expo token (`users.push_token`), the Settings switch saves `push_enabled`, sign-out clears the token; after a staff call the console asks the relay (`relay/`, a Cloudflare Worker at https://qampus-push.qampus-push.workers.dev), which checks the caller is staff and sends the fixed "It's your turn" push. The relay only accepts the staff origin(s) in `ALLOWED_ORIGINS` (today `http://localhost:8081`).
 - **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff, guests and the display are real. Still mock: staff notifications (maintenance text only) and the programs list.
 
 ## In progress
-Push notifications work locally (token saved, the Google credential verified, staff call -> relay on the PC -> the push arrived). Remaining: deploy the relay to Cloudflare and point the staff `.env` at it.
+Nothing active. Push notifications are deployed and tested: the relay runs on Cloudflare at https://qampus-push.qampus-push.workers.dev and the staff `.env` points at it.
 
 ## Next
-1. Deploy the push relay to Cloudflare (plan in `NEXT_SESSION.md` 6.5-C, step 6). 2. UI polish (spacing, responsiveness, remove dev previews). 3. Preview deployment for end-to-end testing. Small items: the cutoff tweak (measured average after 3+ visits), backfill of old student IDs, the root `eas.json`.
+1. UI polish (spacing, responsiveness, remove dev previews). 2. Preview deployment for end-to-end testing (also add the hosted staff address to `ALLOWED_ORIGINS` in `relay/wrangler.jsonc` and redeploy the relay). Small items: the cutoff tweak (measured average after 3+ visits), backfill of old student IDs, the root `eas.json`.
 
 ## Known issues
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).
