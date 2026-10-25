@@ -3,6 +3,13 @@ import StaffModal, {
   ModalField,
 } from '@/components/modals/StaffModal';
 
+import {
+  createEmptyReasonSelection,
+  isReasonComplete,
+  REASON_ACTION,
+  reasonToText,
+} from '@/constants/reasons';
+
 import SearchField from '@/components/primitives/SearchField';
 import { OffenseRow } from '@/components/records/RecordRow';
 
@@ -36,7 +43,7 @@ export default function Offenses() {
 
   const [search, setSearch] = useState('');
   const [revoking, setRevoking] = useState(null);
-  const [reason, setReason] = useState('');
+  const [reasons, setReasons] = useState(createEmptyReasonSelection);
 
   const {
     offenses,
@@ -50,19 +57,19 @@ export default function Offenses() {
   const startRevoke = (offense) => {
     if (offense.revoked_at) return;
 
-    setReason('');
+    setReasons(createEmptyReasonSelection());
     setRevoking(offense);
   };
 
   const closeRevoke = () => {
     setRevoking(null);
-    setReason('');
+    setReasons(createEmptyReasonSelection());
   };
 
   const handleRevoke = () => {
     if (!revoking?.id) return;
 
-    revokeOffense(revoking.id, reason.trim());
+    revokeOffense(revoking.id, reasonToText(REASON_ACTION.OFFENSE_REVOCATION, reasons));
     closeRevoke();
   };
 
@@ -152,9 +159,11 @@ export default function Offenses() {
       <StaffModal
         visible={!!revoking}
         {...copy}
-        field={ModalField.REASON}
-        value={reason}
-        onChangeText={setReason}
+        field={ModalField.REASONS}
+        reasonAction={REASON_ACTION.OFFENSE_REVOCATION}
+        reasonValue={reasons}
+        onReasonChange={setReasons}
+        confirmDisabled={!isReasonComplete(REASON_ACTION.OFFENSE_REVOCATION, reasons)}
         cancelLabel={copy.cancel}
         confirmLabel={copy.confirm}
         destructive

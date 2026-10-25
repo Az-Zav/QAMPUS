@@ -334,3 +334,28 @@ export function formatReasonForLog(action, selection) {
 
   return details.reasonLabels.join('; ');
 }
+
+// =====================================================
+// ONE STRING FOR THE REAL ACTIONS
+// =====================================================
+
+// The longest reason the rules accept on an `events` line (firestore.rules)
+export const REASON_STORED_LIMIT = 500;
+
+// The chosen reasons as the single string the queue actions store ("A; B. Notes: ..."), cut to what the rules accept.
+// Empty when the selection is not valid.
+export function reasonToText(action, selection) {
+  const details = buildReasonDetails(action, selection);
+
+  if (!details) {
+    return '';
+  }
+
+  const notes = details.additionalNotes ? `. Notes: ${details.additionalNotes}` : '';
+
+  return `${details.reasonLabels.join('; ')}${notes}`.slice(0, REASON_STORED_LIMIT);
+}
+
+// Whether a selection is complete for the action (what enables the modal's confirm button)
+export const isReasonComplete = (action, selection) =>
+  validateReasonSelection(action, selection) === ReasonValidationResult.OK;

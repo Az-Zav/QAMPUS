@@ -1,10 +1,13 @@
 import ActionButton from '@/components/primitives/ActionButton';
 import { ButtonType, InputType, PAGE_GUTTER, STAFF_FONT, TYPOGRAPHY } from '@/constants';
+import ReasonMultiSelect from '@/components/primitives/ReasonMultiSelect';
 import { useThemedStyles } from '@/hooks';
 import { Input } from '@qampus/ui';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-export const ModalField = Object.freeze({ NONE: 'none', ID: 'id', REASON: 'reason' });
+// REASON is one free-text box; REASONS is the approved multi-select list (`reasonAction`, `reasonValue`,
+// `onReasonChange`), whose selection the screen turns into text with `reasonToText`.
+export const ModalField = Object.freeze({ NONE: 'none', ID: 'id', REASON: 'reason', REASONS: 'reasons' });
 
 // Figma Staff/Modal + Staff/ModalCard: Ink 70% scrim, 620px Paper card. The safe choice sits in the
 // Gold primary slot; the consequential one is secondary, labelled by its effect, red when destructive.
@@ -16,6 +19,9 @@ export default function StaffModal({
   body,
   field = ModalField.NONE,
   placeholder,
+  reasonAction,
+  reasonValue,
+  onReasonChange,
   value,
   onChangeText,
   error,
@@ -28,6 +34,7 @@ export default function StaffModal({
 }) {
   const styles = useThemedStyles(makeStyles);
   const isReason = field === ModalField.REASON;
+  const isReasons = field === ModalField.REASONS;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
@@ -37,7 +44,17 @@ export default function StaffModal({
             {title}
           </Text>
           <Text style={styles.body}>{body}</Text>
-          {field !== ModalField.NONE && (
+          {isReasons && (
+            <ScrollView style={styles.reasons} contentContainerStyle={styles.fieldGroup} keyboardShouldPersistTaps="handled">
+              <ReasonMultiSelect action={reasonAction} value={reasonValue} onChange={onReasonChange} />
+              {!!error && (
+                <Text style={styles.error} accessibilityLiveRegion="polite">
+                  {error}
+                </Text>
+              )}
+            </ScrollView>
+          )}
+          {field !== ModalField.NONE && !isReasons && (
             <View style={styles.fieldGroup}>
               <Input
                 value={value}
@@ -90,6 +107,7 @@ const makeStyles = (c) =>
     card: {
       width: '100%',
       maxWidth: 620,
+      maxHeight: '92%',
       backgroundColor: c.paper,
       borderRadius: 16,
       padding: 38,
@@ -98,6 +116,8 @@ const makeStyles = (c) =>
     title: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: 25, color: c.ink },
     body: { fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: 17, lineHeight: 25, color: c.slate },
     fieldGroup: { gap: 8 },
+    // The approved-reasons list scrolls inside the card on short windows
+    reasons: { flexShrink: 1 },
     // The Input's own Gold (focus) / Danger (error) border is the focus ring
     input: { paddingHorizontal: 14, outlineStyle: 'none' },
     reason: { height: 96, paddingTop: 14, textAlignVertical: 'top' },

@@ -3,6 +3,13 @@ import StaffModal, {
   ModalField,
 } from '@/components/modals/StaffModal';
 
+import {
+  createEmptyReasonSelection,
+  isReasonComplete,
+  REASON_ACTION,
+  reasonToText,
+} from '@/constants/reasons';
+
 import CurrentTicketPanel from '@/components/queue/CurrentTicketPanel';
 import HeaderStrip from '@/components/queue/HeaderStrip';
 import WaitingTable from '@/components/queue/WaitingTable';
@@ -57,11 +64,13 @@ export default function Queue() {
 
   const [modal, setModal] = useState(null);
   const [input, setInput] = useState('');
+  const [reasons, setReasons] = useState(createEmptyReasonSelection);
   const [error, setError] = useState(null);
 
   // Open a modal and clear previous input/error.
   const open = (type, ticket = null) => {
     setInput('');
+    setReasons(createEmptyReasonSelection());
     setError(null);
     setModal({ type, ticket });
   };
@@ -70,6 +79,7 @@ export default function Queue() {
   const close = () => {
     setModal(null);
     setInput('');
+    setReasons(createEmptyReasonSelection());
     setError(null);
   };
 
@@ -92,8 +102,14 @@ export default function Queue() {
           ...MODAL_COPY.override(
             modal.ticket.short_ticket_number,
           ),
+          field: ModalField.REASONS,
+          reasonAction: REASON_ACTION.FIFO_OVERRIDE,
+          confirmDisabled: !isReasonComplete(REASON_ACTION.FIFO_OVERRIDE, reasons),
           onConfirm: run(() =>
-            queue.overrideCall(modal.ticket.id),
+            queue.overrideCall(
+              modal.ticket.id,
+              reasonToText(REASON_ACTION.FIFO_OVERRIDE, reasons),
+            ),
           ),
         };
 
@@ -149,15 +165,20 @@ export default function Queue() {
           // Require a reason for IN_SERVICE -> NO_SHOW.
           ...(reversingVerification
             ? {
-                field: ModalField.REASON,
-                confirmDisabled: !input.trim(),
+                field: ModalField.REASONS,
+                reasonAction: REASON_ACTION.VERIFIED_NO_SHOW,
+                confirmDisabled: !isReasonComplete(REASON_ACTION.VERIFIED_NO_SHOW, reasons),
               }
             : {}),
 
           destructive: true,
 
           onConfirm: async () => {
-            const result = await queue.markNoShow(input);
+            const result = await queue.markNoShow(
+              reversingVerification
+                ? reasonToText(REASON_ACTION.VERIFIED_NO_SHOW, reasons)
+                : '',
+            );
 
             if (result === NoShowResult.OK) {
               close();
@@ -207,12 +228,15 @@ export default function Queue() {
       case QueueModal.CANCEL:
         return {
           ...MODAL_COPY.cancelQueue(),
-          field: ModalField.REASON,
+          field: ModalField.REASONS,
+          reasonAction: REASON_ACTION.QUEUE_CANCELLATION,
           destructive: true,
-          confirmDisabled: !input.trim(),
+          confirmDisabled: !isReasonComplete(REASON_ACTION.QUEUE_CANCELLATION, reasons),
 
           onConfirm: run(() =>
-            queue.cancelQueue(input.trim()),
+            queue.cancelQueue(
+              reasonToText(REASON_ACTION.QUEUE_CANCELLATION, reasons),
+            ),
           ),
         };
 
@@ -328,6 +352,11 @@ export default function Queue() {
       <StaffModal
         visible={!!modalProps}
         {...modalProps}
+        reasonValue={reasons}
+        onReasonChange={(selection) => {
+          setReasons(selection);
+          setError(null);
+        }}
         value={input}
         onChangeText={(text) => {
           setInput(text);

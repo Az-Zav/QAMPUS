@@ -1,5 +1,6 @@
 import { IconSet, RADII, SPACING, TOUCH, TYPOGRAPHY } from '@/constants';
-import { useTheme, useThemedStyles } from '@/hooks';
+import { useSession, useTheme, useThemedStyles } from '@/hooks';
+import { Image as AvatarImage } from 'expo-image';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +8,7 @@ export default function Header({ title, hasNotification, inverted = false, onBel
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
+  const { user } = useSession();
   const logoSource = inverted
     ? require('../../../assets/images/Qampus-Logo-Inverted.png')
     : require('../../../assets/images/Qampus-Logo.png');
@@ -24,7 +26,11 @@ export default function Header({ title, hasNotification, inverted = false, onBel
         </Pressable>
         <Pressable onPress={onAvatarPress} style={styles.avatarButton} accessibilityRole="button" accessibilityLabel="Profile">
           <View style={styles.avatar}>
-            <IconSet name="person" color={colors.onInverse} size={22} />
+            {user?.avatar_url ? (
+              <AvatarImage source={{ uri: user.avatar_url }} style={styles.avatarImage} contentFit="cover" />
+            ) : (
+              <IconSet name="person" color={colors.onInverse} size={22} />
+            )}
           </View>
         </Pressable>
       </View>
@@ -89,7 +95,9 @@ const makeStyles = (c) => StyleSheet.create({
     backgroundColor: c.inverse,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
+  avatarImage: { width: '100%', height: '100%' },
   logoImage: {
     width: 40,
     height: 40,

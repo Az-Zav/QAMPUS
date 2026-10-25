@@ -6,10 +6,12 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 
 // Returns the signed-in student's profile, creating an empty one on first sign-in (R-01).
+// `avatar_url` is the Google account's photo, read from the sign-in each time and never stored in Firestore.
 export async function loadOrCreateStudent(firebaseUser) {
   const ref = doc(db, 'users', firebaseUser.uid);
   const snap = await getDoc(ref);
-  if (snap.exists()) return { id: snap.id, ...snap.data() };
+  const avatar_url = firebaseUser.photoURL ?? null;
+  if (snap.exists()) return { id: snap.id, ...snap.data(), avatar_url };
 
   const profile = {
     role: USER_ROLE.STUDENT,
@@ -25,7 +27,7 @@ export async function loadOrCreateStudent(firebaseUser) {
     active_offices: {},
   };
   await setDoc(ref, { ...profile, created_at: serverTimestamp() });
-  return { id: ref.id, ...profile };
+  return { id: ref.id, ...profile, avatar_url };
 }
 
 // A guest's profile (R-02): created empty on the first anonymous sign-in; the form and the unique Guest ID come later

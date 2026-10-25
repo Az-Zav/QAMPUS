@@ -25,9 +25,10 @@ export default function OnboardingSlide({ slide, width }) {
 const makeStyles = (c) => StyleSheet.create({
   slide: {
     flex: 1,
-    justifyContent: 'flex-end', // text sits just above the dots
+    justifyContent: 'center', // picture and text sit in the middle of the free height
     alignItems: 'center',
     paddingHorizontal: SPACING.xxl,
+    paddingTop: SPACING.xxl, // nudges the group below the middle of the free height
     gap: SPACING.sm,
   },
   illustration: {

@@ -54,8 +54,6 @@ export default function OnboardingScreen() {
 
       <PageDots count={ONBOARDING_SLIDES.length} index={index} style={styles.dots} />
 
-      <View style={styles.spacer} />
-
       <View style={styles.footer}>
         <Button label={isLast ? ONBOARDING_COPY.getStarted : ONBOARDING_COPY.next} onPress={next} />
       </View>
@@ -78,11 +76,10 @@ const makeStyles = (c) => StyleSheet.create({
   dots: {
     marginTop: SPACING.lg,
   },
-  spacer: {
-    flex: 0.6, // gap between dots and button, as a share of the free height
-  },
+  // The button sits well above the bottom edge, within easy thumb reach and clear of the system buttons
   footer: {
     paddingHorizontal: SPACING.xxl,
-    paddingBottom: SPACING.xxl,
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.xxl + SPACING.xl,
   },
 });
