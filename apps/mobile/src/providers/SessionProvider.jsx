@@ -3,6 +3,7 @@
 
 import { USER_ROLE } from '@/constants';
 import { auth, db, SCHOOL_EMAIL_DOMAIN } from '@/lib/firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { clearPushToken } from '@/lib/push';
 import { loadOrCreateGuest, loadOrCreateStudent, saveGuestDetails, saveStudentProgram } from '@/lib/users';
 import { buildGuestProfile, claimStudentProfile, issueGuestProfile } from '@qampus/backend';
@@ -18,6 +19,9 @@ import {
 
 const SessionContext = createContext(null);
 
+// Set once the student has seen onboarding, so it does not show again after a restart (per phone, not per account)
+const ONBOARDED_KEY = 'qampus.onboarded';
+
 // The profile of whoever Firebase says is signed in: an anonymous account is a guest, anything else a student
 const loadProfile = (firebaseUser) => (firebaseUser.isAnonymous ? loadOrCreateGuest(firebaseUser) : loadOrCreateStudent(firebaseUser));
 
@@ -29,11 +33,13 @@ function profileIncomplete(user) {
 
 export function SessionProvider({ children }) {
   const [user, setUser] = useState(null);
-  // In-memory: onboarding shows again after an app restart until storage is added
   const [hasOnboarded, setHasOnboarded] = useState(false);
 
-    // False until Firebase has read the persisted session, so the app doesn't flash Login
-  const [authReady, setAuthReady] = useState(false);
+  // False until Firebase has read the persisted session and the saved onboarding flag has been read, so the app
+  // doesn't flash Login or Onboarding
+  const [authChecked, setAuthChecked] = useState(false);
+  const [onboardedLoaded, setOnboardedLoaded] = useState(false);
+  const authReady = authChecked && onboardedLoaded;
 
   // Set while signInAsStudent or completeGuestProfile runs, so the listener doesn't load the same profile twice
   const signingIn = useRef(false);
@@ -49,8 +55,15 @@ export function SessionProvider({ children }) {
           setUser(null);
         }
       }
-      setAuthReady(true);
+      setAuthChecked(true);
     });
+  }, []);
+
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDED_KEY)
+      .then((saved) => setHasOnboarded(saved === '1'))
+      .catch(() => {})
+      .finally(() => setOnboardedLoaded(true));
   }, []);
 
 
@@ -61,7 +74,10 @@ export function SessionProvider({ children }) {
       needsProfile: profileIncomplete(user),
       authReady,
       hasOnboarded,
-      completeOnboarding: () => setHasOnboarded(true),
+      completeOnboarding: () => {
+        setHasOnboarded(true);
+        AsyncStorage.setItem(ONBOARDED_KEY, '1').catch(() => {});
+      },
       
       signInAsStudent: async () => {
         await GoogleSignin.hasPlayServices();

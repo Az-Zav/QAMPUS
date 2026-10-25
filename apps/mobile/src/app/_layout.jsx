@@ -1,6 +1,7 @@
 import { THEMES } from '@/constants';
 import { useTheme } from '@/hooks';
 import { configurePushHandler } from '@/lib/push';
+import { themeStorage } from '@/lib/theme-storage';
 import { BiometricProvider } from '@/providers/BiometricProvider';
 import { QueueDataProvider } from '@/providers/QueueDataProvider';
 import { SessionProvider } from '@/providers/SessionProvider';
@@ -40,7 +41,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
-      <ThemeProvider themes={THEMES}>
+      <ThemeProvider themes={THEMES} storage={themeStorage}>
         <SessionProvider>
           <BiometricProvider>
             <QueueDataProvider>
