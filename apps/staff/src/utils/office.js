@@ -14,7 +14,5 @@ export function toOfficeView(office) {
   };
 }
 
-// Payload encoded in the office QR on the public display; the mobile scanner resolves it server-side
-export function checkInPayload(office) {
-  return `qampus://check-in/${office.code}/${office.check_in_code}`;
-}
+// Payload encoded in the office QR on the public display; the student app reads it back with the same module
+export { checkInPayload } from '@qampus/backend';

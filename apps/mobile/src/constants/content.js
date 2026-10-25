@@ -233,16 +233,49 @@ export const OFFENSE_LABEL = Object.freeze({
   CANCELLED_AFTER_CALL: 'Cancelled after being called',
 });
 
+// Scan tab (S11): the camera, its permission states and the manual fallback
+export const SCAN_COPY = Object.freeze({
+  title: 'Scan to Check In',
+  instruction: 'Align the QR code within the frame',
+  instructionNoCamera: 'Or enter the code posted at the counter',
+  manualPlaceholder: 'Enter code manually',
+  checking: 'Checking the camera…',
+  cameraOffLabel: 'Camera is off',
+  cameraOffHint: 'Tap to turn it on',
+  permission: {
+    icon: 'camera-outline',
+    title: 'Allow camera access?',
+    body: 'Qampus uses the camera only to scan the office QR code and check you in. You can type the code instead.',
+    blockedBody: 'Camera access is blocked for Qampus. Turn it on in your phone settings to scan the QR code, or type the code instead.',
+    allow: 'Allow camera',
+    openSettings: 'Open settings',
+    typeInstead: 'Type the code instead',
+  },
+});
+
+// Biometric unlock (S16 setting and the lock screen)
+export const LOCK_COPY = Object.freeze({
+  title: 'Qampus is locked',
+  body: 'Unlock with your fingerprint, face or device PIN.',
+  unlock: 'Unlock',
+  prompt: 'Unlock Qampus',
+  confirmPrompt: 'Confirm to turn on biometric unlock',
+});
+
 export const SETTINGS_COPY = Object.freeze({
   generalLabel: 'GENERAL',
   appearanceLabel: 'APPEARANCE',
   push: { title: 'Push notifications', subtitle: 'In-app notifications always persist. Push is used for your turn.' },
-  biometric: { title: 'Biometric login', subtitle: 'Not available in this version.' },
   legalLabel: 'LEGAL',
   legal: [
     { id: 'terms', title: 'Terms of Service', icon: 'document-text-outline', href: '/legal/terms' },
     { id: 'privacy', title: 'Privacy Policy', icon: 'shield-checkmark-outline', href: '/legal/privacy' },
   ],
+  biometric: {
+    title: 'Biometric unlock',
+    subtitle: 'Ask for your fingerprint, face or device PIN when you open the app.',
+    unavailable: 'This phone has no fingerprint or face unlock set up. Add one in the phone settings first.',
+  },
 });
 
 export const HELP_COPY = Object.freeze({
@@ -348,6 +381,7 @@ export const MODAL_COPY = Object.freeze({
         NOT_CALLED: "You don't have a ticket being called right now.",
         GRACE_EXPIRED: 'Your time to check in has passed. Staff will update your ticket.',
         INVALID_CODE: "That code doesn't match your office. Check the code posted at the counter.",
+        WRONG_OFFICE: 'This QR is for a different office. Scan the one at the counter that called you.',
         DENIED: "Check-in wasn't accepted. Your time may have just run out.",
       })[reason] ?? 'Something went wrong. Try again in a moment.',
     failedButton: 'OK',

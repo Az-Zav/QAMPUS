@@ -72,7 +72,10 @@ Still mock: staff notifications (one maintenance text), guests, programs list, p
    Anything that needs the real hours (the cutoff) must use that. The mobile `board.offices` are raw records.
 8. A screen can stay mounted behind another one in the stack: effects with side effects (marking read) must run on focus
    (`useFocusEffect`), not on mount. In transactions, all reads come before any write (an event or notification `set` goes last).
-9. The mobile dev client shows the dev-only warning "Can't perform a React state update on a component that hasn't mounted yet"
+9. The mobile app runs the React Compiler (`experiments.reactCompiler`): it may read a property a callback uses (`permission.canAskAgain`)
+   while rendering to cache the callback, so a value that is null until a hook answers (`useCameraPermissions`) must be read with `?.`
+   everywhere, even inside event handlers.
+10. The mobile dev client shows the dev-only warning "Can't perform a React state update on a component that hasn't mounted yet"
    (expo-router `ContextNavigator`). Not traced; to bisect, remove `QueueDataProvider` from `apps/mobile/src/app/_layout.jsx` and reload.
 
 ## 6. The plan, in order
@@ -138,7 +141,7 @@ covers the camera, biometric and the future push JS. After the packages are inst
 (missing native module), so test only on the new APK, and never `eas update` to the `development` channel before it is installed.
 Build the QR scan and biometric now; push JS follows later as an over-the-air update once its blockers are cleared.
 
-**A. QR scan on the Scan tab (`expo-camera`; R-20, R-21, R-31). Decisions: a QR of another office gets its own message; an invalid
+**A. QR scan on the Scan tab (`expo-camera`; R-20, R-21, R-31). DONE 2026-10-25, tested and pushed (the Scan tab is a full-screen camera with a veil around the scan window and a light bottom sheet behind the nav bar). Decisions: a QR of another office gets its own message; an invalid
 scan does NOT log an `INVALID_SCAN` event (skipped).**
 - The display QR encodes `qampus://check-in/{officeCode}/{check_in_code}`. A shared pure pair in `@qampus/backend` (new
   `ticketing/checkin.js`): `checkInPayload(office)` (moved from the staff utils, which then imports it) and
@@ -155,7 +158,7 @@ scan does NOT log an `INVALID_SCAN` event (skipped).**
   called"; another office's QR or a random QR = the right message; camera denied still allows typing and Open settings works; leaving and
   returning to the tab restarts the camera; a scan after the 60 s grace says expired.
 
-**B. Biometric unlock (`expo-local-authentication`). Decisions: it only UNLOCKS an already signed-in session (it never replaces
+**B. Biometric unlock (`expo-local-authentication`). DONE 2026-10-25, tested and pushed (`BiometricProvider`, `LockScreen`, `lib/biometric.js`, the Settings row). Decisions: it only UNLOCKS an already signed-in session (it never replaces
 sign-in); it applies to students and guests; the switch is the existing "Biometric login" row in Settings (today a disabled, always-on
 placeholder reading "Not available in this version"; PRD V1 scope lists Biometric Login).**
 - Setting: a per-device preference in AsyncStorage keyed by uid (`qampus.biometric.{uid}`), default OFF; it is not stored in Firestore.

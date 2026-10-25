@@ -6,13 +6,14 @@ import { getRemainingSeconds } from '@qampus/core';
 import { useCallback, useState } from 'react';
 
 // Checks the student in for the ticket being called, with the office code.
-// checkIn(code) resolves to null on success, or a TicketingError code the screen maps to copy.
+// checkIn(code, { officeCode }) resolves to null on success, or a TicketingError code the screen maps to copy.
+// `officeCode` comes from a scanned QR: a QR of another office than the called ticket's is told apart from a wrong code.
 export function useCheckIn() {
   const { board, tickets } = useQueueData();
   const [checkingIn, setCheckingIn] = useState(false);
 
   const checkIn = useCallback(
-    async (code) => {
+    async (code, { officeCode = null } = {}) => {
       const now = Date.now();
       // Prefer a ticket whose grace period is still running; an expired one still explains itself
       const called = tickets.filter((ticket) => ticket.status === TICKET_STATUS.CALLED);
@@ -20,6 +21,9 @@ export function useCheckIn() {
       if (!ticket) return TicketingError.NOT_CALLED;
 
       const office = board.offices.find((o) => o.id === ticket.office_id);
+      if (officeCode && office?.code && officeCode.toUpperCase() !== String(office.code).toUpperCase()) {
+        return TicketingError.WRONG_OFFICE;
+      }
       setCheckingIn(true);
       try {
         await checkInByCode(db, { ticket, office, code });
