@@ -103,7 +103,7 @@ Each slice: build, run the checks, deploy rules (developer), test list, commit. 
 4. **Slices that need a new native package, batched into ONE dev build** (so only one rebuild): QR scan with `expo-camera`,
    biometric unlock with `expo-local-authentication`, and `expo-notifications` for push (its JS waits for the relay). Plan LOCKED in 6.5.
 5. **UI polish**: improve spacing of components on the screens, responsiveness (phone sizes and the staff web at different widths),
-   and remove the dev preview states (`// DEV-PREVIEW` markers, `usePreview`, `src/dev/previews.jsx`, `playground.jsx`).
+   (the dev preview states, `usePreview`, `src/dev/previews.jsx` and `playground.jsx` were REMOVED 2026-10-25; `EmptyStateType.OFFLINE` stays as an unused design variant until offline handling exists).
 6. **Deploy as a preview for end-to-end testing** (EAS preview build/update for the apps, and a hosted preview of the staff web;
    decide the hosting when reached). Also decide then whether to use a separate dev Firebase project.
 

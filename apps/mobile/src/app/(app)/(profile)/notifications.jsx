@@ -11,7 +11,6 @@ import SubHeader from '@/components/shell/SubHeader';
 import CalledModal from '@/components/modals/CalledModal';
 
 import { EmptyStateType, ListRowType, NOTIFICATION_STYLE, NOTIFICATION_TYPE, NOTIFICATIONS_COPY, SPACING, TicketStatus } from '@/constants';
-import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
 import { useMyTickets, useNotifications, useNow, useThemedStyles } from '@/hooks';
 import { daysBetween, formatRelative } from '@/utils';
 
@@ -23,12 +22,10 @@ const OPENS_BANS = new Set([NOTIFICATION_TYPE.WARNING, NOTIFICATION_TYPE.NO_SHOW
 export default function NotificationsScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
-  const { notifications: liveNotifications, markRead } = useNotifications();
+  const { notifications: items, markRead } = useNotifications();
   const { active } = useMyTickets();
   const now = useNow(60000);
 
-  const preview = usePreview('notifications'); // DEV-PREVIEW
-  const items = preview.data?.notifications ?? liveNotifications; // DEV-PREVIEW
   const [calledTicketId, setCalledTicketId] = useState(null);
 
   // Looking at the screen is reading: while it is focused, whatever is unread (now or arriving meanwhile) is
@@ -36,13 +33,13 @@ export default function NotificationsScreen() {
   const requested = useRef(new Set());
   useFocusEffect(
     useCallback(() => {
-      liveNotifications
+      items
         .filter((n) => !n.is_read && !requested.current.has(n.id))
         .forEach((n) => {
           requested.current.add(n.id);
           markRead(n.id);
         });
-    }, [liveNotifications, markRead]),
+    }, [items, markRead]),
   );
 
   const unread = items.filter((n) => !n.is_read).length;
@@ -88,7 +85,6 @@ export default function NotificationsScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={(
           <View style={styles.header}>
-            {preview.bar /* DEV-PREVIEW */}
             {unread > 0 && <CountBadge label={NOTIFICATIONS_COPY.newCount(unread)} />}
           </View>
         )}

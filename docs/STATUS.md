@@ -35,7 +35,7 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 Nothing active. Push notifications are deployed and tested: the relay runs on Cloudflare at https://qampus-push.qampus-push.workers.dev and the staff `.env` points at it.
 
 ## Next
-1. UI polish (spacing, responsiveness, remove dev previews). 2. Preview deployment for end-to-end testing (also add the hosted staff address to `ALLOWED_ORIGINS` in `relay/wrangler.jsonc` and redeploy the relay). Small items: the cutoff tweak (measured average after 3+ visits), backfill of old student IDs, the root `eas.json`.
+1. UI polish (thumb-friendly sizes and spacing, bottom nav above the system buttons, headers and subheaders; the dev previews are already removed). 2. Preview deployment for end-to-end testing (also add the hosted staff address to `ALLOWED_ORIGINS` in `relay/wrangler.jsonc` and redeploy the relay). Small items: the cutoff tweak (measured average after 3+ visits), backfill of old student IDs, the root `eas.json`.
 
 ## Known issues
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).

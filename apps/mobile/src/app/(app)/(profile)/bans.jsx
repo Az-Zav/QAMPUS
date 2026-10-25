@@ -9,7 +9,6 @@ import SectionLabel from '@/components/shell/SectionLabel';
 import SubHeader from '@/components/shell/SubHeader';
 
 import { BANS_COPY, EmptyStateType, IconSet, InfoCardType, ListRowType, OFFENSE_LABEL, OffenseState, RULES, SPACING, TYPOGRAPHY } from '@/constants';
-import { usePreview } from '@/dev/previews'; // DEV-PREVIEW
 import { useNow, usePenaltyRecord, useTheme, useThemedStyles } from '@/hooks';
 import { formatDate, formatTime } from '@/utils';
 
@@ -26,9 +25,7 @@ export default function BansScreen() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const now = useNow(60000);
-  const liveRecord = usePenaltyRecord();
-  const preview = usePreview('bans'); // DEV-PREVIEW
-  const { strikeCount, bannedUntil, offenses } = preview.data ?? liveRecord; // DEV-PREVIEW
+  const { strikeCount, bannedUntil, offenses } = usePenaltyRecord();
 
   const banned = !!bannedUntil && new Date(bannedUntil).getTime() > now;
   // The ban's causes are the latest unrevoked offenses that filled the meter, listed oldest first
@@ -41,8 +38,6 @@ export default function BansScreen() {
       <SubHeader title="Bans & Warnings" onBack={goBack} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {preview.bar /* DEV-PREVIEW */}
-
         {banned ? (
           <InfoCard
             type={InfoCardType.BAN_BANNER}
