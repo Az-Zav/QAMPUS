@@ -20,7 +20,7 @@ export default function BottomNav({ active, onNavigate }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, SPACING.sm) + SPACING.sm }]}>
-      <View style={styles.bar}>
+      <View style={[styles.bar, active === AppTab.SCAN && styles.barOverCamera]}>
         <NavItem tab={AppTab.HOME} label="Home" active={active === AppTab.HOME} onPress={() => onNavigate(AppTab.HOME)} />
         <Pressable
           style={styles.centerSpacer}
@@ -81,6 +81,11 @@ const makeStyles = (c) => StyleSheet.create({
     paddingVertical: SPACING.sm,
     width: '100%',
     ...ELEVATION.sm,
+  },
+  // On the Scan tab the bar floats over the dark camera veil, so it gets a light edge to stay distinct
+  barOverCamera: {
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.18)',
   },
   navItem: {
     alignItems: 'center',

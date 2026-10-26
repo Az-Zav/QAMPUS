@@ -40,6 +40,9 @@ The single-reason dialogs and the avatar/onboarding tweaks wait for the develope
 ## Next
 1. UI polish, second pass: responsiveness on other phone sizes and the staff web at different widths, and a visual review with the developer (the thumb-friendly pass and the dev preview removal are done). 2. Preview deployment for end-to-end testing (also add the hosted staff address to `ALLOWED_ORIGINS` in `relay/wrangler.jsonc` and redeploy the relay). Small item left: the backfill of old student IDs.
 
+## Responsiveness
+- Scan screen layout fix (awaiting device test): the window, instruction and code field are laid out from the screen height, insets and font size (capped at 1.3x) so they cannot overlap on short or zoomed phones; the cream sheet behind the nav bar is gone and the bar gets a light edge on Scan. Responsiveness audit left to do: Login/onboarding scroll, staff top bar and Activity Log filters on narrow widths, a font-scale cap in shared components.
+
 ## Known issues
 - `.env` files and `apps/mobile/google-services.json` are committed (public client config only).
 - Any Google account that signs in on the staff app leaves an empty Firebase Auth user (no Firestore access). Accepted.

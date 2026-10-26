@@ -16,8 +16,13 @@ const CheckInModal = Object.freeze({ SUCCESS: 'success', FAILED: 'failed' });
 
 // The scan window: the camera shows through it, everything else on the screen is darkened
 const WINDOW = 230;
-// The light sheet behind the floating nav bar: about the bar's height, a little of it showing above the bar
-const SHEET_HEIGHT = 88;
+// The smallest the window shrinks to on a short screen
+const WINDOW_MIN = 150;
+// Fonts on this screen grow with the phone's text size only this far, so the fixed slots below still hold them
+const MAX_FONT_SCALE = 1.3;
+const INPUT_HEIGHT = 64;
+// Below the status bar: the title's slot (24 pt text plus its gap)
+const TITLE_SLOT = 64;
 // Fixed colours: this screen is always a camera view with a dark veil, whatever the app theme is
 const VEIL = 'rgba(0, 0, 0, 0.62)';
 const BACKDROP = '#121110';
@@ -30,7 +35,7 @@ export default function Scan() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const isFocused = useIsFocused();
-  const { width, height } = useWindowDimensions();
+  const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const navClearance = useBottomNavClearance();
   const { checkIn, checkingIn } = useCheckIn();
@@ -51,9 +56,21 @@ export default function Scan() {
   const canAsk = permission?.canAskAgain ?? true;
   const permissionOpen = isFocused && needsPermission && !permissionDismissed && modal === null;
 
-  // The scan window sits near the top, centred across; the four veil pieces around it leave it clear
-  const windowTop = Math.max(150, Math.round(height * 0.25));
-  const windowLeft = Math.round((width - WINDOW) / 2);
+  // Top to bottom: title, scan window, instruction, code field, nav bar. The window sits about a quarter of the way
+  // down on a tall phone; on a short phone (or large text) it moves up and shrinks so the instruction never reaches
+  // the code field, which is pinned above the nav bar.
+  const textScale = Math.min(fontScale || 1, MAX_FONT_SCALE);
+  const titleBottom = insets.top + TITLE_SLOT;
+  const inputTop = height - navClearance - SPACING.lg - INPUT_HEIGHT;
+  const instructionSlot = Math.ceil(TYPOGRAPHY.size.sm * 1.5 * textScale) * 2;
+  const room = inputTop - titleBottom - SPACING.lg * 3 - instructionSlot;
+  const windowSize = Math.max(WINDOW_MIN, Math.min(WINDOW, Math.round(room)));
+  const wantedTop = Math.max(150, Math.round(height * 0.25));
+  const windowTop = Math.max(
+    titleBottom + SPACING.lg,
+    Math.min(wantedTop, inputTop - SPACING.lg * 2 - instructionSlot - windowSize),
+  );
+  const windowLeft = Math.round((width - windowSize) / 2);
 
   useEffect(() => {
     if (isFocused) scanLocked.current = false;
@@ -114,17 +131,14 @@ export default function Scan() {
 
       {/* The veil: four pieces around the scan window, so the window itself stays clear */}
       <View pointerEvents="none" style={[styles.veil, { top: 0, left: 0, right: 0, height: windowTop }]} />
-      <View pointerEvents="none" style={[styles.veil, { top: windowTop + WINDOW, left: 0, right: 0, bottom: 0 }]} />
-      <View pointerEvents="none" style={[styles.veil, { top: windowTop, left: 0, width: windowLeft, height: WINDOW }]} />
-      <View pointerEvents="none" style={[styles.veil, { top: windowTop, left: windowLeft + WINDOW, right: 0, height: WINDOW }]} />
+      <View pointerEvents="none" style={[styles.veil, { top: windowTop + windowSize, left: 0, right: 0, bottom: 0 }]} />
+      <View pointerEvents="none" style={[styles.veil, { top: windowTop, left: 0, width: windowLeft, height: windowSize }]} />
+      <View pointerEvents="none" style={[styles.veil, { top: windowTop, left: windowLeft + windowSize, right: 0, height: windowSize }]} />
 
-      {/* The light sheet the floating nav bar sits on, its top corners rounded over the camera */}
-      <View pointerEvents="none" style={[styles.sheet, { height: SHEET_HEIGHT + insets.bottom }]} />
+      <Text style={[styles.title, { top: insets.top + SPACING.md }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>{SCAN_COPY.title}</Text>
 
-      <Text style={styles.title}>{SCAN_COPY.title}</Text>
-
-      <View style={[styles.window, { top: windowTop, left: windowLeft }]}>
-        {!permission && <Text style={styles.cameraOffHint}>{SCAN_COPY.checking}</Text>}
+      <View style={[styles.window, { top: windowTop, left: windowLeft, width: windowSize, height: windowSize }]}>
+        {!permission && <Text style={styles.cameraOffHint} maxFontSizeMultiplier={MAX_FONT_SCALE}>{SCAN_COPY.checking}</Text>}
         {needsPermission && (
           <Pressable
             style={styles.cameraOff}
@@ -132,9 +146,13 @@ export default function Scan() {
             accessibilityRole="button"
             accessibilityLabel={`${SCAN_COPY.cameraOffLabel}. ${SCAN_COPY.cameraOffHint}`}
           >
-            <IconSet name="camera-outline" size={32} color={ON_VEIL_SOFT} />
-            <Text style={styles.cameraOffLabel}>{SCAN_COPY.cameraOffLabel}</Text>
-            <Text style={styles.cameraOffHint}>{SCAN_COPY.cameraOffHint}</Text>
+            {windowSize >= 190 && <IconSet name="camera-outline" size={32} color={ON_VEIL_SOFT} />}
+            <Text style={styles.cameraOffLabel} numberOfLines={1} adjustsFontSizeToFit maxFontSizeMultiplier={MAX_FONT_SCALE}>
+              {SCAN_COPY.cameraOffLabel}
+            </Text>
+            <Text style={styles.cameraOffHint} numberOfLines={2} adjustsFontSizeToFit maxFontSizeMultiplier={MAX_FONT_SCALE}>
+              {SCAN_COPY.cameraOffHint}
+            </Text>
           </Pressable>
         )}
         <View pointerEvents="none" style={[styles.corner, styles.topLeft]} />
@@ -143,12 +161,17 @@ export default function Scan() {
         <View pointerEvents="none" style={[styles.corner, styles.bottomRight]} />
       </View>
 
-      <Text style={[styles.instruction, { top: windowTop + WINDOW + SPACING.lg }]}>
+      <Text
+        style={[styles.instruction, { top: windowTop + windowSize + SPACING.lg }]}
+        numberOfLines={2}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
+      >
         {permission?.granted ? SCAN_COPY.instruction : SCAN_COPY.instructionNoCamera}
       </Text>
 
       <TextInput
         style={[styles.codeInput, { bottom: navClearance + SPACING.lg }]}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         placeholder={SCAN_COPY.manualPlaceholder}
         placeholderTextColor={ON_VEIL_SOFT}
         keyboardType="number-pad"
@@ -216,18 +239,8 @@ const makeStyles = (c) => StyleSheet.create({
     position: 'absolute',
     backgroundColor: VEIL,
   },
-  sheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: c.paper,
-    borderTopLeftRadius: RADII.xl,
-    borderTopRightRadius: RADII.xl,
-  },
   title: {
     position: 'absolute',
-    top: 64,
     left: 0,
     right: 0,
     textAlign: 'center',
@@ -237,8 +250,6 @@ const makeStyles = (c) => StyleSheet.create({
   },
   window: {
     position: 'absolute',
-    width: WINDOW,
-    height: WINDOW,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -307,7 +318,7 @@ const makeStyles = (c) => StyleSheet.create({
     position: 'absolute',
     left: '6%',
     right: '6%',
-    height: 64,
+    height: INPUT_HEIGHT,
     paddingHorizontal: 24,
     borderWidth: 1.5,
     borderColor: ON_VEIL,
