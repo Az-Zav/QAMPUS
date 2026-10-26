@@ -35,8 +35,12 @@ export default function Scan() {
   const styles = useThemedStyles(makeStyles);
   const router = useRouter();
   const isFocused = useIsFocused();
-  const { width, height, fontScale } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  // The screen's own size, once laid out: it can differ from the window's (system bars, the tab area)
+  const [box, setBox] = useState(null);
+  const width = box?.width ?? windowWidth;
+  const height = box?.height ?? windowHeight;
   const navClearance = useBottomNavClearance();
   const { checkIn, checkingIn } = useCheckIn();
   const [permission, requestPermission] = useCameraPermissions();
@@ -114,7 +118,7 @@ export default function Scan() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={(e) => setBox(e.nativeEvent.layout)}>
       {/* White status bar icons over the camera and the veil */}
       {isFocused && <StatusBar style="light" />}
 

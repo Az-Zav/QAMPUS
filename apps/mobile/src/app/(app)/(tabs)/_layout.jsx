@@ -2,6 +2,10 @@ import { useTheme, useThemedStyles } from '@/hooks';
 import { Tabs } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
+// Room kept under each tab for the floating bar. It is the scene's own padding (not the wrapper's) so a screen can
+// opt out: Scan draws its camera all the way under the bar.
+const SCENE_BOTTOM_PADDING = 90;
+
 // Home | Scan | Queue in bar order, so switching slides left or right by position.
 // The bar itself is the shared BottomNav in (app)/_layout.
 export default function TabsLayout() {
@@ -32,11 +36,11 @@ export default function TabsLayout() {
           animation: 'shift',
           sceneStyleInterpolator: slide,
           transitionSpec: { animation: 'timing', config: { duration: 250 } },
-          sceneStyle: { backgroundColor: colors.paper },
+          sceneStyle: { backgroundColor: colors.paper, paddingBottom: SCENE_BOTTOM_PADDING },
         }}
       >
         <Tabs.Screen name="home" />
-        <Tabs.Screen name="scan" />
+        <Tabs.Screen name="scan" options={{ sceneStyle: { backgroundColor: colors.paper, paddingBottom: 0 } }} />
         <Tabs.Screen name="queue" />
       </Tabs>
     </View>
@@ -46,7 +50,6 @@ export default function TabsLayout() {
 const makeStyles = (c) => StyleSheet.create({
   content: {
     flex: 1,
-    paddingBottom: 90,
     backgroundColor: c.paper,
   },
 });
