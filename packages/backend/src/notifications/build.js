@@ -1,6 +1,6 @@
 // In-app notification text (no Firebase here, so it runs under plain Node and is unit tested). A notification is
 // one more write inside the transaction of the change that causes it; the stored doc is
-// users/{uid}/notifications/{id}. See docs/SCHEMA.md.
+// users/{uid}/notifications/{id}. See docs/ARCHITECTURE.md.
 
 import { NOTIFICATION_TYPE, RULES } from '@qampus/core/domain';
 import { toShortTicketNumber } from '@qampus/core/ticket';

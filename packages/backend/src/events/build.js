@@ -1,5 +1,5 @@
 // The activity log line (no Firebase here, so it runs under plain Node and is unit tested). One line per
-// action, written in the same transaction as the change it describes. See docs/SCHEMA.md (`events`).
+// action, written in the same transaction as the change it describes. See docs/ARCHITECTURE.md (`events`).
 
 import { ACTIVITY_ACTION } from '@qampus/core/domain';
 

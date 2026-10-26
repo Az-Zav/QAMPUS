@@ -383,7 +383,7 @@ service cloud.firestore {
     // An activity log line: fixed fields, written by the person who did the action, stamped with server time.
     // No lookups (each one counts against the limit of the write it rides on). It is an audit aid, not a gate:
     // nothing requires a line alongside a ticket change, and a hand-made client could write a false line into
-    // an office's log (accepted for the prototype, see docs/DECISIONS.md).
+    // an office's log (accepted for the prototype, see docs/MAINTAINERS.md).
     function validEvent(e) {
       return e.keys().hasOnly(['entity_type', 'entity_id', 'action', 'from_status', 'to_status', 'actor_uid',
                                'actor_name', 'reason', 'office_id', 'ticket_number', 'created_at'])

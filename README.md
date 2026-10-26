@@ -10,10 +10,10 @@ public display shows who is being served. Backend: Firebase (Auth and Firestore 
 | `apps/mobile` | Student and guest app (Expo, React Native, Expo Router). Needs a development build, not Expo Go. |
 | `apps/staff` | Staff web console (Expo web). |
 | `packages/backend` | `@qampus/backend`: the shared Firestore layer (ticketing, penalties, events, notifications). Unit tested. |
-| `packages/core` | `@qampus/core`: shared enums, formats and mock data. |
+| `packages/core` | `@qampus/core`: shared enums, limits, formats, program catalogue and legal text. |
 | `packages/ui` | `@qampus/ui`: shared components and theme tokens. |
 | `firestore.rules`, `firestore.indexes.json` | Security Rules and indexes: the source of truth for the database. |
-| `docs/` | Project state: `STATUS.md`, `NEXT_SESSION.md`, `DECISIONS.md`, `SCHEMA.md`. The product spec is `KnowledgeBase/QAMPUS_PRD.md`. |
+| `docs/` | `ARCHITECTURE.md` (how it is built and why) and `MAINTAINERS.md` (working agreements, status, decisions). The product spec is `KnowledgeBase/QAMPUS_PRD.md`. |
 
 ## Run it
 

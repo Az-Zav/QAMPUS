@@ -1,4 +1,4 @@
-// Values the schema does not store: they are derived from the queue doc (docs/SCHEMA.md, reading notes).
+// Values the schema does not store: they are derived from the queue doc (docs/ARCHITECTURE.md, reading notes).
 // Pure: no Firebase.
 
 import { QUEUE_STATUS, RULES, TICKET_STATUS } from '@qampus/core/domain';

@@ -42,11 +42,11 @@ Docs: https://docs.expo.dev/eas/index.md
 
 ## Working agreement
 
-Project state lives in `docs/`, not in chat history. Current status:
+Project state lives in `docs/`, not in chat history. The maintainers' guide (working agreements, environment, status, known issues, binding decisions):
 
-@docs/STATUS.md
+@docs/MAINTAINERS.md
 
-- At the start of a session, read the status above; read `docs/DECISIONS.md` when you touch an area it covers.
-- Before finishing a session, update `docs/STATUS.md` (overwrite: built / in progress / next / known issues) and append any new decision to `docs/DECISIONS.md` with the reason.
+- At the start of a session, read the guide above; read `docs/ARCHITECTURE.md` when you touch the data model, the rules or a flow it describes.
+- Before finishing a session, update the status sections of `docs/MAINTAINERS.md` (built / awaiting test / next / known issues), add a row to its decisions table for any new decision with the reason, and update `docs/ARCHITECTURE.md` if the design changed.
 - Commit doc updates together with the code they describe. Never put secrets in `docs/`.
 - Product spec is `KnowledgeBase/QAMPUS_PRD.md`; the backend is Firebase on the Spark plan (see decisions), so the TDD's Express/Postgres design is superseded.

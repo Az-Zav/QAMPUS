@@ -1,6 +1,6 @@
 # Plan: responsiveness fixes
 
-Status of each item is kept here until it ships; then move the result to `STATUS.md` and delete the item.
+Status of each item is kept here until it ships; then move the result to `MAINTAINERS.md` and delete the item.
 Written 2026-10-26 from reading the code (not from running every screen).
 
 ## Done
@@ -25,7 +25,7 @@ Steps:
 2. Record rows: let the action drop below the details when narrow (`flexWrap`, `minWidth: 0` on text columns); Revoke gets a minimum width, not a fixed one.
 3. Filters stretch to full width under about 420 px; check the pager row wraps.
 4. Verify in the browser at 360, 600, 768, 1024, 1280 and 1600 px: Queue (with and without a current ticket), Offenses (with data), Activity Log, every modal, Sign-in and Display.
-5. Lint, a staff web export, update STATUS/DECISIONS, commit locally; push after the developer tests.
+5. Lint, a staff web export, update MAINTAINERS, commit locally; push after the developer tests.
 
 Open decisions for the developer:
 - Minimum supported width: desktop and tablet only (about 768 px), or a phone-width browser (360 px)? Recommended: 360 px for the top bar, accept cramped Queue panels there.
