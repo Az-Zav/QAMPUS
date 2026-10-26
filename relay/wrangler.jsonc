@@ -6,6 +6,6 @@
   "vars": {
     "FIREBASE_PROJECT_ID": "qampus-d0718",
     // The staff console's address(es), comma separated. Add the deployed address when the staff web is hosted.
-    "ALLOWED_ORIGINS": "http://localhost:8081"
+    "ALLOWED_ORIGINS": "http://localhost:8081,https://qampus-staff.web.app,https://qampus-staff.firebaseapp.com"
   }
 }

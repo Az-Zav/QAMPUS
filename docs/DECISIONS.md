@@ -215,3 +215,6 @@ The Scan screen placed everything at fixed offsets (window 230 dp at a quarter o
 
 ## 2026-10-26 - Staff web narrow widths: two-row top bar, 360 px minimum
 The console now works down to 360 px. The top bar has three layouts chosen from the window width (`TOP_BAR_*` in `constants/layout.js`): the original below 1100 px it drops the brand name and tightens the gaps, below 700 px it is two rows (identity and account, then the tabs) at 116 px high. A collapsing menu was not chosen because it hides the tabs. Menu panels are at most the window width minus the gutters. Record rows wrap their action or status under the details, with the details given a 240 px basis so the wrap happens before the text is squeezed.
+
+## 2026-10-26 - Staff console hosted on Firebase Hosting site qampus-staff
+The staff web app is deployed to the Hosting site `qampus-staff` (https://qampus-staff.web.app; the default `qampus-d0718` site is left free). `firebase.json` names the site and rewrites every path to `/index.html` (single-page app, so /display and /legal links work). Deploy: build `apps/staff` with `npx expo export --platform web`, then `firebase deploy --only hosting --project qampus-d0718` from the repo root. The relay accepts that site's two addresses (web.app and firebaseapp.com) beside localhost; redeploy the relay after changing `ALLOWED_ORIGINS`.
