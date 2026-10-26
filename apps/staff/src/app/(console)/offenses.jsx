@@ -33,13 +33,17 @@ import {
 } from '@/hooks';
 
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 // W04: Office offenses and calculated mock penalties.
 export default function Offenses() {
   const styles = useThemedStyles(makeStyles);
 
   const { office } = useStaffOffice();
+
+  // Below this width the search field fills the row, without its right-hand margin
+  const { width } = useWindowDimensions();
+  const narrow = width < 520;
 
   const [search, setSearch] = useState('');
   const [revoking, setRevoking] = useState(null);
@@ -89,7 +93,7 @@ export default function Offenses() {
           value={search}
           onChangeText={setSearch}
           placeholder={OFFENSES_COPY.search}
-          style={styles.search}
+          style={[styles.search, narrow && styles.searchNarrow]}
         />
       </PageHeader>
 
@@ -180,6 +184,11 @@ const makeStyles = (c) =>
       width: 362,
       maxWidth: '100%',
       marginRight: 58,
+    },
+
+    searchNarrow: {
+      width: '100%',
+      marginRight: 0,
     },
 
     summary: {

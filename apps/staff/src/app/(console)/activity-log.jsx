@@ -16,13 +16,15 @@ import {
 import { useActivityLog, useStaffOffice, useTheme, useThemedStyles } from '@/hooks';
 import { ChevronLeft, ChevronRight } from '@/icons';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 const ACTION_OPTIONS = [
   { key: null, label: ACTIVITY_LOG_COPY.allActions },
   ...Object.values(ACTIVITY_ACTION).map((action) => ({ key: action, label: ACTIVITY_ACTION_LABEL[action] })),
 ];
 const RANGE_OPTIONS = ACTIVITY_LOG_COPY.dateRanges;
+// Below this width the two filters stack and fill the row
+const FILTERS_STACK_BREAKPOINT = 440;
 
 // W05 — Activity Log: every action affecting someone's place in line (R-28), with full ticket
 // numbers, actor and reason. Filters: action type and date.
@@ -30,6 +32,8 @@ export default function ActivityLog() {
   const styles = useThemedStyles(makeStyles);
   const { colors } = useTheme();
   const { office } = useStaffOffice();
+  const { width } = useWindowDimensions();
+  const narrow = width < FILTERS_STACK_BREAKPOINT;
   const [action, setAction] = useState(null);
   const [rangeKey, setRangeKey] = useState(RANGE_OPTIONS[0].key);
   const range = RANGE_OPTIONS.find((option) => option.key === rangeKey);
@@ -38,19 +42,19 @@ export default function ActivityLog() {
   return (
     <ConsolePage topSpacing={44} footer={{ center: FOOTER_COPY.logScope(office) }}>
       <PageHeader title={ACTIVITY_LOG_COPY.title} subtitle={ACTIVITY_LOG_COPY.subtitle(office)}>
-        <View style={styles.filters}>
+        <View style={[styles.filters, narrow && styles.filtersStacked]}>
           <FilterSelect
             options={ACTION_OPTIONS}
             value={action}
             onChange={setAction}
-            width={190}
+            width={narrow ? '100%' : 190}
             accessibilityLabel="Filter by action"
           />
           <FilterSelect
             options={RANGE_OPTIONS}
             value={rangeKey}
             onChange={setRangeKey}
-            width={150}
+            width={narrow ? '100%' : 150}
             accessibilityLabel="Filter by date"
           />
         </View>
@@ -97,8 +101,9 @@ export default function ActivityLog() {
 const makeStyles = (c) =>
   StyleSheet.create({
     filters: { flexDirection: 'row', gap: 12 },
+    filtersStacked: { flexDirection: 'column', width: '100%' },
     count: { fontFamily: STAFF_FONT.semibold, fontSize: TYPOGRAPHY.size.md, color: c.slate },
-    pager: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+    pager: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
     pagerButtons: { flexDirection: 'row', gap: 8 },
     arrow: { padding: 8, borderRadius: RADII.full, borderWidth: 1, borderColor: c.slate },
     arrowDisabled: { opacity: 0.35 },

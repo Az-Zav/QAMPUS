@@ -3,6 +3,12 @@
 export const CONTENT_MAX_WIDTH = 1520;
 export const PAGE_GUTTER = 24; // minimum side margin; wide windows centre the 1520px column
 export const TOP_BAR_HEIGHT = 72;
+// Top bar: below the medium width the gaps shrink and the brand name goes; below the narrow width the bar has two
+// rows (identity and account, then the tabs)
+export const TOP_BAR_MEDIUM_BREAKPOINT = 1100;
+export const TOP_BAR_NARROW_BREAKPOINT = 700;
+export const TOP_BAR_HEIGHT_NARROW = 116;
+export const TOP_BAR_MENU_WIDTH = 320;
 
 // W03: CurrentTicketPanel | WaitingTable side by side from this width, stacked below it
 export const QUEUE_COLUMNS_BREAKPOINT = 1100;

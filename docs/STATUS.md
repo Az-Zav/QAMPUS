@@ -41,6 +41,7 @@ The single-reason dialogs and the avatar/onboarding tweaks wait for the develope
 1. UI polish, second pass: responsiveness on other phone sizes and the staff web at different widths, and a visual review with the developer (the thumb-friendly pass and the dev preview removal are done). 2. Preview deployment for end-to-end testing (also add the hosted staff address to `ALLOWED_ORIGINS` in `relay/wrangler.jsonc` and redeploy the relay). Small item left: the backfill of old student IDs.
 
 ## Responsiveness
+See `PLAN_RESPONSIVENESS.md`. Staff web narrow-width pass built (top bar layouts, wrapping rows, stacked filters), awaiting a browser test.
 - Scan screen layout fix (awaiting device test): the window, instruction and code field are laid out from the screen height, insets and font size (capped at 1.3x) so they cannot overlap on short or zoomed phones; the cream sheet behind the nav bar is gone and the bar gets a light edge on Scan. Responsiveness audit left to do: Login/onboarding scroll, staff top bar and Activity Log filters on narrow widths, a font-scale cap in shared components.
 
 ## Known issues

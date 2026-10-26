@@ -289,6 +289,8 @@ const makeStyles = (c) =>
     row: {
       minHeight: 84,
       flexDirection: 'row',
+      // On a narrow screen the trailing action or status drops under the details
+      flexWrap: 'wrap',
       alignItems: 'center',
       justifyContent: 'space-between',
       gap: 16,
@@ -301,7 +303,10 @@ const makeStyles = (c) =>
     },
 
     main: {
-      flex: 1,
+      flexGrow: 1,
+      flexShrink: 1,
+      flexBasis: 240,
+      minWidth: 0,
       gap: 7,
     },
 
@@ -343,7 +348,7 @@ const makeStyles = (c) =>
     },
 
     revoke: {
-      width: 130,
+      minWidth: 130,
     },
 
     revoked: {
