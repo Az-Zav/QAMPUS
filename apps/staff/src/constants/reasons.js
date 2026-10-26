@@ -1,20 +1,20 @@
 
 /**
  * QAMPUS Staff Web App
- * Approved Reason Selection Configuration
+ * Single-Select Radio Reason Configuration
  *
- * Frontend-only implementation.
+ * Used by:
+ * 1. Queue Cancellation
+ * 2. Offense Revocation
  *
- * Supports:
- * - Four staff actions
- * - Multiple predefined reasons
- * - An "Other" option
- * - Required explanation when Other is selected
- * - Optional additional notes
- * - Maximum 200 characters per text field
+ * Rules:
+ * - Exactly one reason per action
+ * - Other requires a written explanation
+ * - No additional notes
+ * - Maximum 200 characters for Other
+ * - Log Other using the written explanation
  *
- * Keep reason IDs stable because they may eventually
- * be stored in Firebase and referenced by activity logs.
+ * Keep reason IDs stable for backend integration.
  */
 
 // =====================================================
@@ -22,9 +22,7 @@
 // =====================================================
 
 export const REASON_ACTION = Object.freeze({
-  FIFO_OVERRIDE: 'fifoOverride',
   QUEUE_CANCELLATION: 'queueCancellation',
-  VERIFIED_NO_SHOW: 'verifiedNoShow',
   OFFENSE_REVOCATION: 'offenseRevocation',
 });
 
@@ -32,42 +30,20 @@ export const OTHER_REASON_ID = 'other';
 
 export const REASON_TEXT_LIMIT = 200;
 
+// Maximum reason length supported by existing
+// event storage rules.
+export const REASON_STORED_LIMIT = 500;
+
+// Reversing a verified ticket to a no-show needs a reason
+// (rules and backend); staff are not asked, so this is stored.
+export const VERIFIED_NO_SHOW_REASON =
+  'Verification reversed by staff';
+
 // =====================================================
 // APPROVED REASON LISTS
 // =====================================================
 
 export const STAFF_REASONS = Object.freeze({
-  [REASON_ACTION.FIFO_OVERRIDE]: Object.freeze([
-    {
-      id: 'pwd_priority',
-      label: 'Person with Disability (PWD) priority',
-    },
-    {
-      id: 'senior_citizen_priority',
-      label: 'Senior citizen priority',
-    },
-    {
-      id: 'pregnancy_priority',
-      label: 'Pregnant student or visitor priority',
-    },
-    {
-      id: 'urgent_deadline',
-      label: 'Urgent academic or administrative deadline',
-    },
-    {
-      id: 'scheduled_appointment',
-      label: 'Scheduled appointment or office instruction',
-    },
-    {
-      id: 'special_assistance',
-      label: 'Assistance required for a special circumstance',
-    },
-    {
-      id: OTHER_REASON_ID,
-      label: 'Other',
-    },
-  ]),
-
   [REASON_ACTION.QUEUE_CANCELLATION]: Object.freeze([
     {
       id: 'unexpected_closure',
@@ -92,33 +68,6 @@ export const STAFF_REASONS = Object.freeze({
     {
       id: 'institutional_activity',
       label: 'Scheduled institutional activity',
-    },
-    {
-      id: OTHER_REASON_ID,
-      label: 'Other',
-    },
-  ]),
-
-  [REASON_ACTION.VERIFIED_NO_SHOW]: Object.freeze([
-    {
-      id: 'verified_holder_absent',
-      label: 'Ticket verified but holder did not appear',
-    },
-    {
-      id: 'remote_qr_scan',
-      label: 'QR code presented or scanned remotely',
-    },
-    {
-      id: 'wrong_person',
-      label: 'Wrong person presented the ticket',
-    },
-    {
-      id: 'left_before_window',
-      label: 'Holder left before reaching the service window',
-    },
-    {
-      id: 'presence_unconfirmed',
-      label: 'Unable to confirm physical presence',
     },
     {
       id: OTHER_REASON_ID,
@@ -159,19 +108,18 @@ export const STAFF_REASONS = Object.freeze({
 });
 
 // =====================================================
-// CREATE EMPTY SELECTION
+// DEFAULT SINGLE-SELECT STATE
 // =====================================================
 
 export function createEmptyReasonSelection() {
   return {
-    selectedReasons: [],
+    selectedReason: '',
     otherReason: '',
-    additionalNotes: '',
   };
 }
 
 // =====================================================
-// GET REASONS FOR A STAFF ACTION
+// AVAILABLE OPTIONS
 // =====================================================
 
 export function getReasonsForAction(action) {
@@ -179,7 +127,7 @@ export function getReasonsForAction(action) {
 }
 
 // =====================================================
-// VALIDATE REASON SELECTION
+// VALIDATION RESULTS
 // =====================================================
 
 export const ReasonValidationResult = Object.freeze({
@@ -188,174 +136,166 @@ export const ReasonValidationResult = Object.freeze({
   INVALID_REASON: 'invalidReason',
   OTHER_REQUIRED: 'otherRequired',
   OTHER_TOO_LONG: 'otherTooLong',
-  NOTES_TOO_LONG: 'notesTooLong',
 });
 
-export function validateReasonSelection(action, selection) {
-  const availableReasons = getReasonsForAction(action);
+// =====================================================
+// VALIDATE ONE SELECTED REASON
+// =====================================================
 
-  if (availableReasons.length === 0) {
+export function validateReasonSelection(action, selection) {
+  const available = getReasonsForAction(action);
+
+  if (available.length === 0) {
     return ReasonValidationResult.INVALID_REASON;
   }
 
-  const selected = selection?.selectedReasons;
+  const reasonId = selection?.selectedReason;
 
-  if (!Array.isArray(selected) || selected.length === 0) {
+  if (
+    typeof reasonId !== 'string' ||
+    reasonId.trim() === ''
+  ) {
     return ReasonValidationResult.REASON_REQUIRED;
   }
 
-  const validIds = new Set(
-    availableReasons.map((reason) => reason.id),
+  const chosen = available.find(
+    (reason) => reason.id === reasonId,
   );
 
-  const uniqueIds = new Set(selected);
-
-  // Reject unknown or duplicated selections.
-  if (
-    uniqueIds.size !== selected.length ||
-    selected.some((id) => !validIds.has(id))
-  ) {
+  if (!chosen) {
     return ReasonValidationResult.INVALID_REASON;
   }
 
-  const otherText = String(
-    selection?.otherReason ?? '',
-  ).trim();
+  if (reasonId === OTHER_REASON_ID) {
+    const rawOther = selection?.otherReason;
 
-  const notes = String(
-    selection?.additionalNotes ?? '',
-  ).trim();
+    if (typeof rawOther !== 'string') {
+      return ReasonValidationResult.OTHER_REQUIRED;
+    }
 
-  if (otherText.length > REASON_TEXT_LIMIT) {
-    return ReasonValidationResult.OTHER_TOO_LONG;
-  }
+    const otherText = rawOther.trim();
 
-  if (notes.length > REASON_TEXT_LIMIT) {
-    return ReasonValidationResult.NOTES_TOO_LONG;
-  }
+    if (!otherText) {
+      return ReasonValidationResult.OTHER_REQUIRED;
+    }
 
-  // Other can be selected alongside predefined reasons.
-  if (
-    uniqueIds.has(OTHER_REASON_ID) &&
-    !otherText
-  ) {
-    return ReasonValidationResult.OTHER_REQUIRED;
+    if (rawOther.length > REASON_TEXT_LIMIT) {
+      return ReasonValidationResult.OTHER_TOO_LONG;
+    }
   }
 
   return ReasonValidationResult.OK;
 }
 
 // =====================================================
-// USER-FRIENDLY ERROR MESSAGES
+// USER-FRIENDLY VALIDATION MESSAGES
 // =====================================================
 
 export const REASON_ERROR_MESSAGES = Object.freeze({
   [ReasonValidationResult.REASON_REQUIRED]:
-    'Please select at least one reason.',
+    'Please select one reason.',
 
   [ReasonValidationResult.INVALID_REASON]:
-    'One or more selected reasons are invalid.',
+    'The selected reason is not approved for this action.',
 
   [ReasonValidationResult.OTHER_REQUIRED]:
-    'Please specify your reason under Other.',
+    'Please type your reason under Other.',
 
   [ReasonValidationResult.OTHER_TOO_LONG]:
     'Other reason must not exceed 200 characters.',
-
-  [ReasonValidationResult.NOTES_TOO_LONG]:
-    'Additional notes must not exceed 200 characters.',
 });
 
 // =====================================================
-// RESOLVE SELECTED REASONS TO LABELS
+// RESOLVE REASON LABEL
 // =====================================================
 
+export function getSelectedReasonLabel(action, selection) {
+  if (
+    validateReasonSelection(action, selection) !==
+    ReasonValidationResult.OK
+  ) {
+    return '';
+  }
+
+  if (selection.selectedReason === OTHER_REASON_ID) {
+    // Option B: Store the typed explanation directly.
+    return selection.otherReason.trim();
+  }
+
+  const option = getReasonsForAction(action).find(
+    (reason) => reason.id === selection.selectedReason,
+  );
+
+  return option?.label ?? '';
+}
+
+// Compatibility helper for callers that expect
+// an array of labels.
 export function getSelectedReasonLabels(action, selection) {
-  const options = getReasonsForAction(action);
+  const label = getSelectedReasonLabel(action, selection);
 
-  const selectedIds = selection?.selectedReasons ?? [];
-
-  return selectedIds.map((id) => {
-    if (id === OTHER_REASON_ID) {
-      const explanation = String(
-        selection?.otherReason ?? '',
-      ).trim();
-
-      return `Other: ${explanation}`;
-    }
-
-    return options.find((option) => option.id === id)?.label ?? id;
-  });
+  return label ? [label] : [];
 }
 
 // =====================================================
-// STRUCTURED ACTIVITY LOG DATA
+// STRUCTURED ACTIVITY LOG DETAILS
 // =====================================================
 
 export function buildReasonDetails(action, selection) {
-  const result = validateReasonSelection(action, selection);
-
-  if (result !== ReasonValidationResult.OK) {
+  if (
+    validateReasonSelection(action, selection) !==
+    ReasonValidationResult.OK
+  ) {
     return null;
   }
+
+  const selectedReason = selection.selectedReason;
+  const label = getSelectedReasonLabel(action, selection);
 
   return {
     reasonAction: action,
 
-    reasonIds: [...selection.selectedReasons],
+    // Single selected reason ID.
+    reasonId: selectedReason,
 
-    reasonLabels: getSelectedReasonLabels(
-      action,
-      selection,
-    ),
+    // Single human-readable reason.
+    reasonLabel: label,
 
-    otherReason: selection.selectedReasons.includes(
-      OTHER_REASON_ID,
-    )
-      ? String(selection.otherReason ?? '').trim()
-      : '',
+    // Keep the existing array-shaped fields as
+    // compatibility metadata for log consumers.
+    reasonIds: [selectedReason],
+    reasonLabels: [label],
 
-    additionalNotes: String(
-      selection.additionalNotes ?? '',
-    ).trim(),
+    otherReason:
+      selectedReason === OTHER_REASON_ID
+        ? selection.otherReason.trim()
+        : '',
   };
 }
 
 // =====================================================
-// FORMAT FOR EXISTING ACTIVITY LOGS
+// ACTIVITY LOG FORMATTING
 // =====================================================
 
 export function formatReasonForLog(action, selection) {
-  const details = buildReasonDetails(action, selection);
-
-  if (!details) {
-    return null;
-  }
-
-  return details.reasonLabels.join('; ');
+  return getSelectedReasonLabel(action, selection) || null;
 }
 
 // =====================================================
-// ONE STRING FOR THE REAL ACTIONS
+// REASON STRING FOR BACKEND EVENTS
 // =====================================================
 
-// The longest reason the rules accept on an `events` line (firestore.rules)
-export const REASON_STORED_LIMIT = 500;
-
-// The chosen reasons as the single string the queue actions store ("A; B. Notes: ..."), cut to what the rules accept.
-// Empty when the selection is not valid.
 export function reasonToText(action, selection) {
-  const details = buildReasonDetails(action, selection);
-
-  if (!details) {
-    return '';
-  }
-
-  const notes = details.additionalNotes ? `. Notes: ${details.additionalNotes}` : '';
-
-  return `${details.reasonLabels.join('; ')}${notes}`.slice(0, REASON_STORED_LIMIT);
+  return getSelectedReasonLabel(action, selection).slice(
+    0,
+    REASON_STORED_LIMIT,
+  );
 }
 
-// Whether a selection is complete for the action (what enables the modal's confirm button)
+// =====================================================
+// CONFIRM BUTTON VALIDATION
+// =====================================================
+
 export const isReasonComplete = (action, selection) =>
-  validateReasonSelection(action, selection) === ReasonValidationResult.OK;
+  validateReasonSelection(action, selection) ===
+  ReasonValidationResult.OK;

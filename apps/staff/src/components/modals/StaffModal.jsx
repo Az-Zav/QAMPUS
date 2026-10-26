@@ -1,6 +1,6 @@
 
 import ActionButton from '@/components/primitives/ActionButton';
-import ReasonMultiSelect from '@/components/primitives/ReasonMultiSelect';
+import ReasonRadioList from '@/components/primitives/ReasonRadioList';
 
 import {
   ButtonType,
@@ -31,26 +31,29 @@ import {
 // =====================================================
 // QAMPUS STAFF MODAL
 //
-// Fix #8: Responsive layout and accessibility.
+// Radio Reason Dialog — File #3
 //
 // Supports:
-// - Standard confirmations
+// - Standard confirmation dialogs
 // - Verify by ID
-// - Legacy reason input
-// - Structured multi-select reasons
-// - Existing action validation and error feedback
+// - Legacy text reason input
+// - Single-select radio reasons
+// - Inline Other explanation
+// - Responsive modal layout
 //
-// Business logic is managed by the parent.
+// The parent controls the action and its state.
 // =====================================================
 
 export const ModalField = Object.freeze({
   NONE: 'none',
   ID: 'id',
   REASON: 'reason',
+
+  // Keep the existing identifier for compatibility
+  // with queue.jsx and offenses.jsx.
   REASON_SELECT: 'reasonSelect',
 });
 
-// Responsive breakpoints.
 const COMPACT_BREAKPOINT = 600;
 const SMALL_HEIGHT_BREAKPOINT = 600;
 
@@ -59,13 +62,13 @@ export default function StaffModal({
   title,
   body,
 
-  // Existing input behavior.
+  // Existing text input.
   field = ModalField.NONE,
   placeholder,
   value = '',
   onChangeText,
 
-  // Structured multi-select reason system.
+  // New single-select radio reasons.
   reasonAction,
   reasonSelection,
   onReasonSelectionChange,
@@ -85,14 +88,8 @@ export default function StaffModal({
 
   const { width, height } = useWindowDimensions();
 
-  // =================================================
-  // RESPONSIVE LAYOUT
-  // =================================================
-
   const compact = width < COMPACT_BREAKPOINT;
-
-  const smallHeight =
-    height < SMALL_HEIGHT_BREAKPOINT;
+  const smallHeight = height < SMALL_HEIGHT_BREAKPOINT;
 
   // =================================================
   // FIELD STATE
@@ -109,9 +106,7 @@ export default function StaffModal({
     !isReasonSelect;
 
   // =================================================
-  // STRUCTURED REASON VALIDATION
-  //
-  // Existing behavior is preserved.
+  // SINGLE-REASON VALIDATION
   // =================================================
 
   const reasonValidation = isReasonSelect
@@ -122,15 +117,12 @@ export default function StaffModal({
     : ReasonValidationResult.OK;
 
   const reasonIsValid =
-    reasonValidation ===
-    ReasonValidationResult.OK;
+    reasonValidation === ReasonValidationResult.OK;
 
   const isConfirmDisabled =
     confirmDisabled ||
     (isReasonSelect && !reasonIsValid);
 
-  // Empty reason selections disable confirmation.
-  // Other validation issues can show inline errors.
   const validationMessage =
     isReasonSelect &&
     reasonValidation !== ReasonValidationResult.OK &&
@@ -218,16 +210,14 @@ export default function StaffModal({
 
           <ScrollView
             style={styles.content}
-            contentContainerStyle={
-              styles.contentInner
-            }
+            contentContainerStyle={styles.contentInner}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="none"
             nestedScrollEnabled
             showsVerticalScrollIndicator
           >
             {/* =================================
-                VERIFY ID / LEGACY REASON FIELD
+                VERIFY ID / LEGACY TEXT INPUT
             ================================= */}
 
             {hasTextField && (
@@ -256,8 +246,7 @@ export default function StaffModal({
                   autoCorrect={isReason}
                   multiline={isReason}
                   onSubmitEditing={
-                    isReason ||
-                    isConfirmDisabled
+                    isReason || isConfirmDisabled
                       ? undefined
                       : handleConfirm
                   }
@@ -270,17 +259,11 @@ export default function StaffModal({
             )}
 
             {/* =================================
-                STRUCTURED MULTI-SELECT REASONS
-
-                Preserves:
-                - Multiple selections
-                - Required Other explanation
-                - Optional additional notes
-                - Existing reason validation
+                SINGLE-SELECT RADIO REASONS
             ================================= */}
 
             {isReasonSelect && (
-              <ReasonMultiSelect
+              <ReasonRadioList
                 action={reasonAction}
                 value={reasonSelection}
                 onChange={onReasonSelectionChange}
@@ -288,7 +271,7 @@ export default function StaffModal({
             )}
 
             {/* =================================
-                ACTION ERROR
+                ACTION ERRORS
             ================================= */}
 
             {!!error && (
@@ -301,7 +284,7 @@ export default function StaffModal({
             )}
 
             {/* =================================
-                REASON VALIDATION ERROR
+                RADIO REASON VALIDATION
             ================================= */}
 
             {!!validationMessage && (
@@ -371,10 +354,8 @@ const makeStyles = (c) =>
     scrim: {
       flex: 1,
       backgroundColor: c.scrim,
-
       justifyContent: 'center',
       alignItems: 'center',
-
       padding: PAGE_GUTTER,
     },
 
@@ -390,10 +371,8 @@ const makeStyles = (c) =>
       width: '100%',
       maxWidth: 620,
       maxHeight: '90%',
-
       backgroundColor: c.paper,
       borderRadius: 16,
-
       padding: 38,
       gap: 22,
     },
@@ -415,8 +394,7 @@ const makeStyles = (c) =>
     // ===============================================
 
     title: {
-      fontFamily:
-        TYPOGRAPHY.fontFamily.bold,
+      fontFamily: TYPOGRAPHY.fontFamily.bold,
       fontSize: 25,
       lineHeight: 32,
       color: c.ink,
@@ -429,8 +407,7 @@ const makeStyles = (c) =>
     },
 
     body: {
-      fontFamily:
-        TYPOGRAPHY.fontFamily.regular,
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
       fontSize: 17,
       lineHeight: 25,
       color: c.slate,
@@ -476,7 +453,7 @@ const makeStyles = (c) =>
     },
 
     // ===============================================
-    // VALIDATION MESSAGES
+    // ERROR MESSAGES
     // ===============================================
 
     error: {

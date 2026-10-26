@@ -8,6 +8,7 @@ import {
   isReasonComplete,
   REASON_ACTION,
   reasonToText,
+  VERIFIED_NO_SHOW_REASON,
 } from '@/constants/reasons';
 
 import CurrentTicketPanel from '@/components/queue/CurrentTicketPanel';
@@ -102,15 +103,7 @@ export default function Queue() {
           ...MODAL_COPY.override(
             modal.ticket.short_ticket_number,
           ),
-          field: ModalField.REASON_SELECT,
-          reasonAction: REASON_ACTION.FIFO_OVERRIDE,
-          confirmDisabled: !isReasonComplete(REASON_ACTION.FIFO_OVERRIDE, reasons),
-          onConfirm: run(() =>
-            queue.overrideCall(
-              modal.ticket.id,
-              reasonToText(REASON_ACTION.FIFO_OVERRIDE, reasons),
-            ),
-          ),
+          onConfirm: run(() => queue.overrideCall(modal.ticket.id)),
         };
 
       // WM02: Verify ticket by student/guest ID.
@@ -143,11 +136,8 @@ export default function Queue() {
       // FIX #1: NO-SHOW MODAL
       // ==================================================
       //
-      // Expired CALLED:
-      // Confirmation without a required reason.
-      //
-      // IN_SERVICE:
-      // Staff must explain why verification is reversed.
+      // Plain confirmation. Reversing a verified (IN_SERVICE)
+      // ticket stores a fixed reason, as the rules require one.
       //
       // Modal closes only when the operation succeeds.
       // ==================================================
@@ -162,22 +152,11 @@ export default function Queue() {
         return {
           ...copy,
 
-          // Require a reason for IN_SERVICE -> NO_SHOW.
-          ...(reversingVerification
-            ? {
-                field: ModalField.REASON_SELECT,
-                reasonAction: REASON_ACTION.VERIFIED_NO_SHOW,
-                confirmDisabled: !isReasonComplete(REASON_ACTION.VERIFIED_NO_SHOW, reasons),
-              }
-            : {}),
-
           destructive: true,
 
           onConfirm: async () => {
             const result = await queue.markNoShow(
-              reversingVerification
-                ? reasonToText(REASON_ACTION.VERIFIED_NO_SHOW, reasons)
-                : '',
+              reversingVerification ? VERIFIED_NO_SHOW_REASON : '',
             );
 
             if (result === NoShowResult.OK) {
