@@ -4,7 +4,7 @@ Living snapshot. Overwrite sections as things change; keep it under ~60 lines.
 Decisions and their reasons live in `DECISIONS.md`. Product spec: `KnowledgeBase/QAMPUS_PRD.md`.
 **Next session: read `NEXT_SESSION.md`** (working agreements, environment, code map, lessons, and the ordered plan).
 
-_Last updated: 2026-10-25_
+_Last updated: 2026-10-29_
 _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tickets, offenses locked)._
 
 ## Built
@@ -31,6 +31,7 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 - **Push notifications (tested, relay deployed)**: a phone registers its Expo token (`users.push_token`), the Settings switch saves `push_enabled`, sign-out clears the token; after a staff call the console asks the relay (`relay/`, a Cloudflare Worker at https://qampus-push.qampus-push.workers.dev), which checks the caller is staff and sends the fixed "It's your turn" push. The relay only accepts the staff origin(s) in `ALLOWED_ORIGINS` (today `http://localhost:8081`).
 - **Thumb-friendly pass (tested on device)**: every tap target at least 48 dp (`TOUCH.MIN_TARGET`), 8 dp apart; the bottom nav floats above the system navigation buttons or gesture bar (`useBottomNavClearance`); bigger Home/Queue header and 48 dp subheader back button, both with more space under the status bar; Profile buttons lower and 48 dp, menu rows 56 dp; Login lower with 56 dp buttons; the Home empty state lower; small (32 dp) buttons keep their look but are tappable at 48 dp.
 - **Staff sign-in branding (checked in the browser)**: the hero shows `Qampus-Logo.png` (the old SVG "Q" mark is deleted); below the split breakpoint the logo sits above the title. "Continue with Google" is now the white secondary button with the gold Ionicons `logo-google` (`IconSet` in `@/icons`; `@expo/vector-icons` added to staff), matching mobile.
+- **Logo unified on the staff web (built, lint and web build pass, awaiting browser check)**: `BrandLockup` (staff legal pages, public display, Not Assigned/Outage) now draws `Qampus-Logo.png` plus the wordmark. The old ticket SVGs, the typed Inter "Q" (`STAFF_FONT.logo`, `@expo-google-fonts/inter`) and the unused staff `Qampus-Logo-Inverted.png` are deleted. Needs a Hosting redeploy to go live.
 - **Single-reason dialogs (built, awaiting browser test)**: only Cancel entire queue and Revoke offense ask for a reason, as ONE radio choice plus a typed "Other" (`ReasonRadioList`, `constants/reasons.js`, `reasonToText` cuts to the rules' 500 characters). FIFO Override and No-show are plain confirmations; a verified (IN_SERVICE) no-show stores the fixed `VERIFIED_NO_SHOW_REASON` because the rules and `checkNoShow` require one. The collaborator's responsive staff screens stay adopted on the real data.
 - **UI**: all screens exist. The ticket flow, activity log, notifications, cutoff, guests and the display are real. Nothing in the apps is mock data any more: the program list is the school's catalogue (26 programs in 5 colleges, `packages/core/src/programs.js`, used by sign-up and Edit Profile).
 

@@ -218,3 +218,6 @@ The console now works down to 360 px. The top bar has three layouts chosen from 
 
 ## 2026-10-26 - Staff console hosted on Firebase Hosting site qampus-staff
 The staff web app is deployed to the Hosting site `qampus-staff` (https://qampus-staff.web.app; the default `qampus-d0718` site is left free). `firebase.json` names the site and rewrites every path to `/index.html` (single-page app, so /display and /legal links work). Deploy: build `apps/staff` with `npx expo export --platform web`, then `firebase deploy --only hosting --project qampus-d0718` from the repo root. The relay accepts that site's two addresses (web.app and firebaseapp.com) beside localhost; redeploy the relay after changing `ALLOWED_ORIGINS`.
+
+## 2026-10-29 - One logo everywhere on the staff web
+`BrandLockup` renders the app logo PNG (`Qampus-Logo.png`) with the wordmark and tagline instead of a ticket SVG with a typed "Q". Reason: the legal pages, public display and message screens still showed the retired mark while sign-in, the top bar and the phone app used the new one; a font was loaded only to draw that "Q". The SVGs, `STAFF_FONT.logo`, the Inter font package and the unused staff inverted PNG are removed.

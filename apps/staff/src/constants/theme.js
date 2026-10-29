@@ -14,7 +14,6 @@ export const STAFF_FONT = Object.freeze({
   button: 'SpaceGrotesk_700Bold', // Button labels + brand wordmark
   mono: 'JetBrainsMono_500Medium', // ticket numbers in rows, IDs
   monoBold: 'JetBrainsMono_700Bold', // large ticket numbers, manual code, countdown
-  logo: 'Inter_700Bold', // the "Q" on the ticket mark
 });
 
 // ---------------------------------------------------------------------------

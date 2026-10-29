@@ -11,7 +11,6 @@ import {
   DMSans_700Bold,
   useFonts,
 } from '@expo-google-fonts/dm-sans';
-import { Inter_700Bold } from '@expo-google-fonts/inter';
 import { JetBrainsMono_500Medium, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
 import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { ThemeProvider, useTheme } from '@qampus/ui';
@@ -28,7 +27,6 @@ export default function RootLayout() {
     SpaceGrotesk_700Bold,
     JetBrainsMono_500Medium,
     JetBrainsMono_700Bold,
-    Inter_700Bold,
   });
 
   if (!fontsLoaded && !fontError) return null;
