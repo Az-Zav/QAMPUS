@@ -10,7 +10,7 @@ import SubHeader from '@/components/shell/SubHeader';
 
 import { BANS_COPY, EmptyStateType, IconSet, InfoCardType, ListRowType, OFFENSE_LABEL, OffenseState, RULES, SPACING, TYPOGRAPHY } from '@/constants';
 import { useNow, usePenaltyRecord, useTheme, useThemedStyles } from '@/hooks';
-import { formatDate, formatTime } from '@/utils';
+import { formatDate, formatDateTime } from '@/utils';
 
 // S15 Bans & Warnings — read from offense records (UIUX §4.13, §5.8).
 
@@ -42,7 +42,7 @@ export default function BansScreen() {
         {banned ? (
           <InfoCard
             type={InfoCardType.BAN_BANNER}
-            title={BANS_COPY.bannedUntil(formatTime(bannedUntil))}
+            title={BANS_COPY.bannedUntil(formatDateTime(bannedUntil))}
             items={banCauses.map((o) => ({ label: OFFENSE_LABEL[o.type], ticket: o.ticket_number }))}
           />
         ) : (

@@ -65,9 +65,15 @@ export function cutoffState({ office, queue, now = new Date() }) {
   };
 }
 
-// "Now serving" short number, or null before anyone was called
-export const nowServing = (office, queue) =>
-  queue && queue.last_called_seq > 0 ? shortTicketNumber(office.code, queue.last_called_seq) : null;
+// Number of the ticket at the window (the last segment of the queue's current ticket id), or 0 when the window is free
+const currentSeq = (queue) => Number(String(queue?.current_ticket_id ?? '').split('_').pop()) || 0;
+
+// "Now serving" short number: the ticket at the window, or null when the window is free (before the first call, and
+// after a complete or no-show until staff call again). Not the last called number, which stays after the ticket ends.
+export const nowServing = (office, queue) => {
+  const seq = currentSeq(queue);
+  return seq > 0 ? shortTicketNumber(office.code, seq) : null;
+};
 
 // What the public display shows (D01): only ticket numbers, never names. `nowServing` is the ticket at the window
 // (the queue's current ticket, its number is the id's last segment), or null; `next` is the following numbers still to
@@ -75,13 +81,11 @@ export const nowServing = (office, queue) =>
 // accepted imprecision as the waiting count (the queue doc does not store who is waiting).
 export function displayState({ office, queue, nextCount = 3 }) {
   const isOpen = queue?.status === QUEUE_STATUS.OPEN;
-  const currentSeq = Number(String(queue?.current_ticket_id ?? '').split('_').pop()) || 0;
-  const nowServing = currentSeq > 0 ? shortTicketNumber(office.code, currentSeq) : null;
-  const first = Math.max(queue?.last_called_seq ?? 0, currentSeq) + 1;
+  const first = Math.max(queue?.last_called_seq ?? 0, currentSeq(queue)) + 1;
   const last = Math.min(queue?.last_seq ?? 0, first + nextCount - 1);
   const next = [];
   for (let seq = first; seq <= last; seq += 1) next.push(shortTicketNumber(office.code, seq));
-  return { isOpen, nowServing, next: isOpen ? next : [] };
+  return { isOpen, nowServing: nowServing(office, queue), next: isOpen ? next : [] };
 }
 
 // Waiting tickets in FIFO order (lowest number first)

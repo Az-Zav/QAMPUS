@@ -221,3 +221,9 @@ The staff web app is deployed to the Hosting site `qampus-staff` (https://qampus
 
 ## 2026-10-29 - One logo everywhere on the staff web
 `BrandLockup` renders the app logo PNG (`Qampus-Logo.png`) with the wordmark and tagline instead of a ticket SVG with a typed "Q". Reason: the legal pages, public display and message screens still showed the retired mark while sign-in, the top bar and the phone app used the new one; a font was loaded only to draw that "Q". The SVGs, `STAFF_FONT.logo`, the Inter font package and the unused staff inverted PNG are removed.
+
+## 2026-11-06 - "Now serving" is the ticket at the window, not the last called number
+Testing the APK on 2026-11-05 showed Home saying "NOW R-020" after R-020 was a no-show and the window was free. `nowServing` read `last_called_seq`, which never moves back and stays after the ticket ends; the public display already used `current_ticket_id`. Now both use the queue's current ticket (the last segment of `current_ticket_id`), so "Now serving" is "—" whenever the window is free, including right after a complete or no-show and after an override. No schema or rules change; `last_called_seq` still drives the waiting count and the display's Next list.
+
+## 2026-11-06 - Staff account menu on narrow widths
+At 375 px the account button measured 0 px wide, so staff on a phone could not reach sign-out or the legal pages. Cause: the narrow layout gave the right-hand group `flex: 0`, which React Native Web turns into a 0% basis that never grows. The group now keeps its own width (`flexGrow 0, flexShrink 0, flexBasis auto`), and below `TOP_BAR_NARROW_BREAKPOINT` a person icon (Lucide `CircleUserRound`, already installed) replaces the name so the office name keeps its room; the menu itself still shows the full name.

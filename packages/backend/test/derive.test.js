@@ -23,8 +23,12 @@ test('estimated wait multiplies people by the office default', () => {
   assert.equal(estimatedWaitMinutes(4, null), 0);
 });
 
-test('now serving is the last called number, or null before any call', () => {
-  assert.equal(nowServing(office, { last_seq: 3, last_called_seq: 2 }), 'R-002');
-  assert.equal(nowServing(office, { last_seq: 3, last_called_seq: 0 }), null);
+test('now serving is the ticket at the window, or null when the window is free', () => {
+  assert.equal(nowServing(office, { last_seq: 3, last_called_seq: 2, current_ticket_id: 'off_reg_001_20261105_2' }), 'R-002');
+  // An override leaves last_called_seq above the ticket at the window
+  assert.equal(nowServing(office, { last_seq: 5, last_called_seq: 5, current_ticket_id: 'off_reg_001_20261105_3' }), 'R-003');
+  // After a complete or no-show the window is free: the last called number is not shown
+  assert.equal(nowServing(office, { last_seq: 3, last_called_seq: 2, current_ticket_id: null }), null);
+  assert.equal(nowServing(office, { last_seq: 3, last_called_seq: 0, current_ticket_id: null }), null);
   assert.equal(nowServing(office, null), null);
 });

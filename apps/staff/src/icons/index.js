@@ -10,6 +10,7 @@ export {
   ChevronLeft,
   ChevronRight,
   CircleCheck,
+  CircleUserRound,
   CircleX,
   Copy,
   Megaphone,

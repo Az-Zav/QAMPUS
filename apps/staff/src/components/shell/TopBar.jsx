@@ -18,7 +18,7 @@ import {
   TYPOGRAPHY,
 } from '@/constants';
 import { useSession, useStaffOffice, useStaffQueue, useTheme, useThemedStyles } from '@/hooks';
-import { BellRing, ChevronDown, CircleCheck, CircleX } from '@/icons';
+import { BellRing, ChevronDown, CircleCheck, CircleUserRound, CircleX } from '@/icons';
 import { Image } from 'expo-image';
 import { Link, usePathname } from 'expo-router';
 import { useState } from 'react';
@@ -107,11 +107,16 @@ export default function TopBar() {
         accessibilityRole="button"
         accessibilityLabel={TOP_BAR_COPY.accountMenu}
         accessibilityState={{ expanded: menu === Menu.ACCOUNT }}
-        style={styles.account}
+        style={[styles.account, narrow && styles.accountNarrow]}
       >
-        <Text style={[styles.accountName, narrow && styles.accountNameNarrow]} numberOfLines={1}>
-              {user?.name}
-            </Text>
+        {/* On a phone the name would squeeze the office name out, so an icon stands in; the menu shows the name */}
+        {narrow ? (
+          <CircleUserRound size={24} color={colors.onInverse} />
+        ) : (
+          <Text style={styles.accountName} numberOfLines={1}>
+            {user?.name}
+          </Text>
+        )}
         <ChevronDown size={18} color={colors.slate} />
       </Pressable>
 
@@ -221,10 +226,11 @@ const makeStyles = (c) =>
     tab: { fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.size.md, color: c.slate },
     tabActive: { fontFamily: STAFF_FONT.semibold, color: c.gold },
     right: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 18 },
-    rightNarrow: { flex: 0 },
+    // Its own width, never squeezed: `flex: 0` becomes a 0% basis on web and collapsed the account button to 0 px
+    rightNarrow: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
     account: { flexDirection: 'row', alignItems: 'center', gap: 18, flexShrink: 1, minWidth: 0 },
+    accountNarrow: { flexShrink: 0, gap: 4, minHeight: 44, minWidth: 44, justifyContent: 'center' },
     accountName: { flexShrink: 1, fontFamily: TYPOGRAPHY.fontFamily.regular, fontSize: TYPOGRAPHY.size.md, color: c.onInverse },
-    accountNameNarrow: { maxWidth: 120 },
     menu: { position: 'absolute', right: 0 },
     menuHead: { gap: 3, paddingTop: 6, paddingBottom: 12, paddingHorizontal: 14 },
     menuName: { fontFamily: TYPOGRAPHY.fontFamily.bold, fontSize: 16, color: c.ink },
