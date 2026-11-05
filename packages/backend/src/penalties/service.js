@@ -24,7 +24,8 @@ export async function revokeOffense(db, { offense, reason, staffEmail }) {
       }
 
       const effect = revokeEffect(userSnap.exists() ? userSnap.data() : null, offenseSnap.data());
-      if (effect) tx.update(userRef, effect);
+      // The rules let staff change a student's strikes or ban only together with the offense they revoke, named here
+      if (effect) tx.update(userRef, { ...effect, last_revoked_offense: offenseRef.id });
       tx.update(offenseRef, {
         revoked_at: serverTimestamp(),
         revoked_by: staffEmail,

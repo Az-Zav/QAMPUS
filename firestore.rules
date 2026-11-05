@@ -43,6 +43,11 @@ service cloud.firestore {
         && request.resource.data.waiting_seqs == resource.data.waiting_seqs.removeAll([seq]);
     }
 
+    // The caller's own ticket at `path`, cancelled in this write (a waiting number leaves the list only with its ticket)
+    function ownCancelledTicket(path) {
+      return get(path).data.user_id == request.auth.uid && getAfter(path).data.status == 'CANCELLED';
+    }
+
     function claimDoc(id) { return /databases/$(db)/documents/institutionalIds/$(id); }
 
     // An offense has the same id as its ticket, so a ticket can produce one offense and rules can find it.
@@ -71,6 +76,21 @@ service cloud.firestore {
     function revokeMoveOk(before, after) {
       return after.strike_count >= 0 && after.strike_count <= 1
         && (after.get('banned_until', null) == null || after.banned_until == before.get('banned_until', null));
+    }
+
+    // The offense named by users.last_revoked_offense is this student's, from the staff member's office, and is being
+    // revoked in this same write: staff change a student's strikes or ban only by revoking one of their office's offenses.
+    function revokingOwnOfficeOffense(offenseId, uid) {
+      let before = get(offenseDoc(offenseId)).data;
+      return before.user_id == uid
+        && before.office_id == staffOfficeId()
+        && before.get('revoked_at', null) == null
+        && getAfter(offenseDoc(offenseId)).data.revoked_at != null;
+    }
+
+    // Saving an ID on a profile (at create or later) needs the reservation of that ID for this user in the same write.
+    function idClaimedBy(id, uid) {
+      return existsAfter(claimDoc(id)) && getAfter(claimDoc(id)).data.uid == uid;
     }
 
     // Staff calling a WAITING ticket of their office: the ticket becomes CALLED and, in the same write,
@@ -248,16 +268,18 @@ service cloud.firestore {
         && request.resource.data.strike_count == 0 && request.resource.data.banned_until == null
         && request.resource.data.active_count == 0
         && ((isAnon() && request.resource.data.role == 'GUEST')
-         || (schoolEmail() && request.resource.data.role == 'STUDENT'));
+         || (schoolEmail() && request.resource.data.role == 'STUDENT'))
+        // A profile created with an ID reserves it in the same write, like a later save (no one else's ID)
+        && (request.resource.data.get('institutional_id', null) == null
+            || idClaimedBy(request.resource.data.institutional_id, uid));
       allow update: if (signedIn() && request.auth.uid == uid
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'strike_count', 'banned_until', 'active_count', 'active_offices'])
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'strike_count', 'banned_until', 'active_count', 'active_offices', 'last_revoked_offense'])
             && (resource.data.get('institutional_id', null) == null
             || request.resource.data.get('institutional_id', null) == resource.data.get('institutional_id', null))
             // Saving a student or guest ID reserves it in the same write (institutionalIds below), so no two accounts
             // can hold the same one.
             && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['institutional_id'])
-                || (existsAfter(claimDoc(request.resource.data.institutional_id))
-                    && getAfter(claimDoc(request.resource.data.institutional_id)).data.uid == uid)))
+                || idClaimedBy(request.resource.data.institutional_id, uid)))
         // The three-ticket limit (R-07) is this counter, and `active_offices` (office id -> true) holds the offices
         // where the student has an active ticket, so they cannot join the same office twice. A student moves the
         // counter by one, within 0..3: a join must raise it and add its office in the same write (see the ticket
@@ -271,15 +293,20 @@ service cloud.firestore {
                 || request.resource.data.active_count == resource.data.get('active_count', 0) - 1)
             && penaltyMoveOk(resource.data, request.resource.data))
         // Staff give a slot back when they finish a ticket (complete, no-show, office cancel); a no-show also
-        // moves the student's strikes.
+        // moves the student's strikes. Only for a student with an active ticket at the staff member's own office, and
+        // that office leaves the student's active offices in the same write.
         || (isStaff()
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active_count', 'active_offices', 'strike_count', 'banned_until'])
             && request.resource.data.active_count >= 0
             && request.resource.data.active_count == resource.data.get('active_count', 0) - 1
+            && staffOfficeId() in resource.data.get('active_offices', {})
+            && !(staffOfficeId() in request.resource.data.get('active_offices', {}))
             && penaltyMoveOk(resource.data, request.resource.data))
-        // Staff revoke an offense: strikes down and the ban lifted (R-15).
+        // Staff revoke an offense of their office: strikes down and the ban lifted (R-15). The write names the
+        // offense it revokes (last_revoked_offense), which must be revoked in the same write.
         || (isStaff()
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['strike_count', 'banned_until'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['strike_count', 'banned_until', 'last_revoked_offense'])
+            && revokingOwnOfficeOffense(request.resource.data.get('last_revoked_offense', ''), uid)
             && revokeMoveOk(resource.data, request.resource.data));
     }
 
@@ -378,14 +405,16 @@ service cloud.firestore {
             && request.resource.data.updated_at == request.time
             && get(ticketDoc(resource.data.current_ticket_id)).data.user_id == request.auth.uid
             && getAfter(ticketDoc(resource.data.current_ticket_id)).data.status == 'CANCELLED')
-        // A student cancels a waiting ticket: the list of waiting numbers loses exactly one of its numbers (which one
-        // is checked on the ticket, by waitingCancelSeqsOk). Nothing else on the queue changes.
+        // A student cancels a waiting ticket: the list of waiting numbers loses exactly one of its numbers, and that
+        // number is the caller's own ticket, cancelled in the same write (waitingCancelSeqsOk also checks it from the
+        // ticket's side). Nothing else on the queue changes.
         || (signedIn()
             && 'waiting_seqs' in resource.data
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['waiting_seqs', 'updated_at'])
             && request.resource.data.waiting_seqs.size() == resource.data.waiting_seqs.size() - 1
             && resource.data.waiting_seqs.hasAll(request.resource.data.waiting_seqs)
-            && request.resource.data.updated_at == request.time)
+            && request.resource.data.updated_at == request.time
+            && ownCancelledTicket(ticketPath(queueId, resource.data.waiting_seqs.removeAll(request.resource.data.waiting_seqs)[0])))
         // Staff cancel the whole queue: it closes and the window clears (the current ticket is cancelled too), and the
         // list of waiting numbers empties (every waiting ticket is cancelled after it).
         || (isStaff()
@@ -446,6 +475,29 @@ service cloud.firestore {
         && (e.reason == null || (e.reason is string && e.reason.size() <= 500));
     }
 
+    // Who may write a log line (a line cannot be forged in another person's name):
+    // - the ticket's holder, about their own ticket changing state in the same write (join, cancel, check-in), named
+    //   as on the ticket;
+    // - staff, into their own office's log, under the name on their staff doc (when it has one).
+    // The ticket is already part of the write it rides on, so reading it adds no new document.
+    function eventByHolder(e) {
+      return e.entity_type == 'TICKET'
+        && e.action in ['JOINED', 'CANCELLED', 'SERVICE_STARTED']
+        && existsAfter(ticketDoc(e.entity_id))
+        && holderOfChangingTicket(e, ticketDoc(e.entity_id), getAfter(ticketDoc(e.entity_id)).data);
+    }
+    function holderOfChangingTicket(e, path, t) {
+      return t.user_id == request.auth.uid
+        && t.office_id == e.office_id
+        && t.holder_name == e.actor_name
+        && (!exists(path) || get(path).data.status != t.status);
+    }
+    function eventByStaff(e) {
+      return isStaff()
+        && e.office_id == staffOfficeId()
+        && e.actor_name == get(staffPath()).data.get('name', e.actor_name);
+    }
+
     // A notification in a student's mailbox: fixed fields, unread, stamped with server time. Shape checks only
     // (no lookups). Staff write them for any student in the transaction of the change that causes them (call,
     // no-show, office cancel, revoke); the student writes their own QUEUE_CONFIRMED (join) and WARNING (cancelling
@@ -467,7 +519,10 @@ service cloud.firestore {
       allow read: if signedIn() && request.auth.uid == uid;
       allow create: if signedIn() && validNotification(request.resource.data)
         && ((request.auth.uid == uid && request.resource.data.type in ['QUEUE_CONFIRMED', 'WARNING'])
-            || (request.auth.uid != uid && isStaff()));
+            // Staff write only the ticket messages of their own office (no free-text announcements)
+            || (request.auth.uid != uid && isStaff()
+                && request.resource.data.type in ['YOUR_TURN', 'APPROACHING_TURN', 'NO_SHOW', 'QUEUE_CANCELLED', 'OFFENSE_REVOKED']
+                && request.resource.data.office_id == staffOfficeId()));
       allow update: if signedIn() && request.auth.uid == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['is_read', 'read_at'])
         && request.resource.data.is_read == true
@@ -489,7 +544,8 @@ service cloud.firestore {
     // events/{id}: create-only; staff read their own office's log.
     match /events/{eventId} {
       allow read: if isStaff() && resource.data.office_id == staffOfficeId();
-      allow create: if signedIn() && validEvent(request.resource.data);
+      allow create: if signedIn() && validEvent(request.resource.data)
+        && (eventByHolder(request.resource.data) || eventByStaff(request.resource.data));
     }
   }
 }

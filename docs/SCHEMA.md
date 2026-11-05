@@ -36,6 +36,7 @@ erDiagram
     timestamp banned_until
     int active_count "open tickets, max 3"
     map active_offices "office id to true, one entry per office with an active ticket"
+    string last_revoked_offense "offense id named by the staff revoke that last changed strikes or ban"
     timestamp created_at
     timestamp updated_at
   }
