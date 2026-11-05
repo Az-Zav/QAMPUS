@@ -558,8 +558,11 @@ const makeStyles = (c) =>
       minWidth: 0,
     },
 
+    // Own height when stacked: `flex: 0` is a 0% basis on web and squeezed the buttons to the minHeight
     actionCompact: {
-      flex: 0,
+      flexGrow: 0,
+      flexShrink: 0,
+      flexBasis: 'auto',
       width: '100%',
       minHeight: 44,
     },

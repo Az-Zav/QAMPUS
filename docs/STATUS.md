@@ -37,6 +37,7 @@ _Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tick
 
 ## In progress
 Three fixes from the 2026-11-05 test of the APK and the hosted console (built; lint and 85 tests pass; not yet on a device): Home and the ticket modal show "Now serving" from the queue's current ticket, so a finished ticket no longer shows once the window is free; Bans & Warnings shows the ban's end with its date; the staff account menu stays visible below 700 px (an icon stands in for the name). The two mobile fixes need an `eas update` on the APK's channel, the staff one a Hosting redeploy.
+Staff dialogs on phones (built, checked in the browser at 375 px and 1280 px, not yet on an iPhone): the stacked buttons had collapsed to 0 px and drew over each other as one line (seen on iPhone Safari in "Close the queue?"); they now keep their 54 px height. Same fix for the stacked buttons in the Now Serving panel. Needs a Hosting redeploy.
 The single-reason dialogs and the avatar/onboarding tweaks wait for the developer's test, then commit and push to `main` (the only branch now). Push notifications are deployed and tested: the relay runs on Cloudflare at https://qampus-push.qampus-push.workers.dev and the staff `.env` points at it.
 
 ## Next

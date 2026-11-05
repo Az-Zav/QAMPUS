@@ -227,3 +227,6 @@ Testing the APK on 2026-11-05 showed Home saying "NOW R-020" after R-020 was a n
 
 ## 2026-11-06 - Staff account menu on narrow widths
 At 375 px the account button measured 0 px wide, so staff on a phone could not reach sign-out or the legal pages. Cause: the narrow layout gave the right-hand group `flex: 0`, which React Native Web turns into a 0% basis that never grows. The group now keeps its own width (`flexGrow 0, flexShrink 0, flexBasis auto`), and below `TOP_BAR_NARROW_BREAKPOINT` a person icon (Lucide `CircleUserRound`, already installed) replaces the name so the office name keeps its room; the menu itself still shows the full name.
+
+## 2026-11-06 - No `flex: 0` on staff web layouts
+On an iPhone the "Close the queue?" dialog showed both buttons collapsed into one line. React Native Web turns `flex: 0` into `flex: 0 1 0%`; in a column the 0% basis overrides the button's 54 px height, and views have a minimum height of 0, so the stacked buttons measured 0 px (reproduced in the browser by applying that style). `StaffModal` and `CurrentTicketPanel` now use `flexGrow: 0, flexShrink: 0, flexBasis: 'auto'` for stacked buttons, as the top bar already does. Rule for the staff web: say `flexGrow`/`flexShrink`/`flexBasis` explicitly instead of `flex: 0`. Native (the mobile app) is not affected: Yoga sizes a `flex: 0` view by its content.

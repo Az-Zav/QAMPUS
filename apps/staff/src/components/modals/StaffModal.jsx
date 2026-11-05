@@ -482,8 +482,12 @@ const makeStyles = (c) =>
       flex: 1,
     },
 
+    // Stacked buttons keep their own 54px height. `flex: 0` becomes a 0% basis on web, which in a column
+    // overrides the height and collapsed both buttons to 0px on phones (they drew over each other as a line).
     actionCompact: {
-      flex: 0,
+      flexGrow: 0,
+      flexShrink: 0,
+      flexBasis: 'auto',
       width: '100%',
     },
   });
