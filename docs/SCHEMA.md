@@ -70,6 +70,7 @@ erDiagram
     int last_seq "last ticket number issued today"
     int last_called_seq "last ticket number called"
     string current_ticket_id FK "null when the window is free"
+    array waiting_seqs "ticket numbers still waiting, numbers only"
     boolean cutoff_overridden
     int completed_count "for the service-time average"
     int service_seconds_total "for the service-time average"
@@ -165,7 +166,7 @@ erDiagram
 
 ## Reading notes
 - **Ticket state ↔ timestamp** is one to one: `WAITING→joined_at`, `CALLED→called_at`, `IN_SERVICE→service_started_at`, `COMPLETED→completed_at`, `CANCELLED→cancelled_at`, `NO_SHOW→no_show_at`. "Expired" is derived (`called_at + 60 s`), not stored.
-- **Queue position** is derived on the client: `daily_sequence - last_called_seq`. Waiting ≈ `last_seq - last_called_seq`.
+- **Waiting and position** come from `queues.waiting_seqs` (added 2026-11-06, see DECISIONS): waiting = its length, people ahead = its numbers lower than the ticket's, the display's Next = its lowest three. A join adds its number, a call or a waiting cancel removes it, an office cancel empties it. Queue docs created before the field fall back to `last_seq - last_called_seq`.
 - **Not stored:** position, people ahead, estimated wait, short ticket number (`CODE-SEQ`).
 - **Office timezone** is one campus constant (UTC+8) in the rules and the app, not a field.
 

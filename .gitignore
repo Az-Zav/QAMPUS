@@ -43,6 +43,7 @@ example
 /android
 
 firebase-debug.log
+firestore-debug.log
 
 # Firebase CLI deploy cache
 .firebase/

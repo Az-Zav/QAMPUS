@@ -5,12 +5,28 @@ import { QUEUE_STATUS, RULES, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDayStart, nextOpening, todayHours } from '@qampus/core/format';
 import { shortTicketNumber } from './ids.js';
 
-// Waiting is approximated as last_seq - last_called_seq (a cancelled ticket still counts until called past)
-export const waitingCount = (queue) => (queue ? Math.max(0, queue.last_seq - queue.last_called_seq) : 0);
+// The numbers still waiting today, lowest first, or null when the queue doc has no list. Students cannot read
+// other people's tickets, so the queue doc keeps `waiting_seqs` (numbers only): a join adds its number, a call or a
+// waiting cancel removes it, an office cancel empties it. Queue docs created before the list existed fall back to
+// the old estimate from `last_seq - last_called_seq`, which is wrong after an override or a cancel.
+export function waitingSeqs(queue) {
+  if (!Array.isArray(queue?.waiting_seqs)) return null;
+  return [...queue.waiting_seqs].sort((a, b) => a - b);
+}
 
-// People ahead of a WAITING ticket
-export const peopleAhead = (ticket, queue) =>
-  queue ? Math.max(0, ticket.daily_sequence - queue.last_called_seq - 1) : 0;
+// People waiting in the queue
+export function waitingCount(queue) {
+  const seqs = waitingSeqs(queue);
+  if (seqs) return seqs.length;
+  return queue ? Math.max(0, queue.last_seq - queue.last_called_seq) : 0;
+}
+
+// People ahead of a WAITING ticket: the waiting numbers lower than its own
+export function peopleAhead(ticket, queue) {
+  const seqs = waitingSeqs(queue);
+  if (seqs) return seqs.filter((seq) => seq < ticket.daily_sequence).length;
+  return queue ? Math.max(0, ticket.daily_sequence - queue.last_called_seq - 1) : 0;
+}
 
 // Average minutes per visit: measured from today's completed visits (the queue doc keeps their count and total
 // seconds) once there are at least RULES.MIN_MEASURED_VISITS of them, and never below RULES.MIN_VISIT_MINUTES; until
@@ -75,16 +91,22 @@ export const nowServing = (office, queue) => {
   return seq > 0 ? shortTicketNumber(office.code, seq) : null;
 };
 
-// What the public display shows (D01): only ticket numbers, never names. `nowServing` is the ticket at the window
-// (the queue's current ticket, its number is the id's last segment), or null; `next` is the following numbers still to
-// be called, up to `nextCount`. Cancelled numbers can appear and a ticket called out of order is skipped past, the same
-// accepted imprecision as the waiting count (the queue doc does not store who is waiting).
+// What the public display shows (D01): only ticket numbers, never names. `nowServing` is the ticket at the window, or
+// null; `next` is the lowest waiting numbers, up to `nextCount`, from `waiting_seqs`. A queue doc without the list
+// falls back to the numbers after the last one called, where cancelled numbers can appear and an out-of-order call
+// skips past people still waiting.
 export function displayState({ office, queue, nextCount = 3 }) {
   const isOpen = queue?.status === QUEUE_STATUS.OPEN;
-  const first = Math.max(queue?.last_called_seq ?? 0, currentSeq(queue)) + 1;
-  const last = Math.min(queue?.last_seq ?? 0, first + nextCount - 1);
-  const next = [];
-  for (let seq = first; seq <= last; seq += 1) next.push(shortTicketNumber(office.code, seq));
+  const seqs = waitingSeqs(queue);
+  let nextSeqs = [];
+  if (seqs) {
+    nextSeqs = seqs.slice(0, nextCount);
+  } else {
+    const first = Math.max(queue?.last_called_seq ?? 0, currentSeq(queue)) + 1;
+    const last = Math.min(queue?.last_seq ?? 0, first + nextCount - 1);
+    for (let seq = first; seq <= last; seq += 1) nextSeqs.push(seq);
+  }
+  const next = nextSeqs.map((seq) => shortTicketNumber(office.code, seq));
   return { isOpen, nowServing: nowServing(office, queue), next: isOpen ? next : [] };
 }
 

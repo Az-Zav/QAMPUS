@@ -11,7 +11,8 @@
     "staff": "npm run web --workspace @qampus/staff",
     "lint": "npm run lint --workspaces --if-present",
     "legal:check": "npm run legal:check --workspace @qampus/core",
-    "legal:accept": "npm run legal:accept --workspace @qampus/core"
+    "legal:accept": "npm run legal:accept --workspace @qampus/core",
+    "test:rules": "firebase emulators:exec --only firestore,auth --project demo-qampus \"node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON packages/backend/rules-test/waiting.rules.mjs\""
   },
   "dependencies": {
     "expo": "~57.0.31",

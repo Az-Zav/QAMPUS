@@ -6,10 +6,17 @@
 // active states (complete, no-show, cancel, office cancel) lowers it by one in the same transaction.
 // `active_offices` (office id -> true) holds the offices where the student has an active ticket, so a student
 // cannot join the same office twice; it is set by a join and cleared by the same writes that lower the counter.
+//
+// `waiting_seqs` on the queue doc lists the numbers still waiting (numbers only), so the student app and the public
+// display can count the line without reading other people's tickets. Every write that changes who is waiting keeps
+// it in the same transaction: a join adds its number, a call or a waiting cancel removes it, an office cancel empties
+// it. A queue doc created before the list existed has no list, and these writes then leave it alone.
 
 import { ACTIVITY_ACTION, CANCELLED_BY, NOTIFICATION_TYPE, QUEUE_STATUS, RULES, TICKET_STATUS } from '@qampus/core/domain';
 import { campusDate } from '@qampus/core/format';
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   deleteField,
   doc,
@@ -40,6 +47,9 @@ import {
   TicketingError,
   TicketingFailure,
 } from './preflight.js';
+
+// Whether a queue doc keeps the list of waiting numbers (docs from before the list have none)
+const hasWaitingList = (queue) => Array.isArray(queue?.waiting_seqs);
 
 // Firestore refusals become a TicketingFailure with a code the UI can map to copy
 function asFailure(error) {
@@ -104,6 +114,7 @@ export async function openQueue(db, office, actor, now = new Date()) {
           last_seq: 0,
           last_called_seq: 0,
           current_ticket_id: null,
+          waiting_seqs: [],
           cutoff_overridden: false,
           completed_count: 0,
           service_seconds_total: 0,
@@ -174,7 +185,11 @@ export async function joinQueue(db, { user, office, now = new Date() }) {
       const ticketRef = doc(db, 'tickets', ticketIdFor(queueRef.id, seq));
       const ticketNumber = ticketNumberFor(office.code, now, seq);
 
-      tx.update(queueRef, { last_seq: seq, updated_at: serverTimestamp() });
+      tx.update(queueRef, {
+        last_seq: seq,
+        ...(hasWaitingList(snap.data()) ? { waiting_seqs: arrayUnion(seq) } : {}),
+        updated_at: serverTimestamp(),
+      });
       // An exact number, not increment(1): the ticket rule reads the counter as it will be after this write
       // (getAfter) and compares it with the old value plus one
       tx.update(userRef, { active_count: activeCount + 1, [`active_offices.${office.id}`]: true });
@@ -231,6 +246,7 @@ export async function callTicket(
       tx.update(queueRef, {
         last_called_seq: Math.max(queue.last_called_seq, ticket.daily_sequence),
         current_ticket_id: ticketRef.id,
+        ...(hasWaitingList(queue) ? { waiting_seqs: arrayRemove(ticket.daily_sequence) } : {}),
         updated_at: serverTimestamp(),
       });
       tx.update(ticketRef, { status: TICKET_STATUS.CALLED, called_at: serverTimestamp() });
@@ -385,11 +401,13 @@ export async function cancelOwnTicket(db, { ticket, now = new Date() }) {
       const stillFailure = checkCancel({ ticket: current });
       if (stillFailure) throw new TicketingFailure(stillFailure);
 
+      const queueRef = doc(db, 'queues', `${current.office_id}_${current.queue_date}`);
+      const queueSnap = await tx.get(queueRef);
+      const queue = queueSnap.exists() ? queueSnap.data() : null;
+
       if (current.status === TICKET_STATUS.CALLED) {
-        const queueRef = doc(db, 'queues', `${current.office_id}_${current.queue_date}`);
-        const queueSnap = await tx.get(queueRef);
         const userSnap = await tx.get(userRef);
-        if (!queueSnap.exists() || queueSnap.data().current_ticket_id !== current.id) {
+        if (queue?.current_ticket_id !== current.id) {
           throw new TicketingFailure(TicketingError.TICKET_UNAVAILABLE);
         }
         const penalty = nextPenalty(userSnap.exists() ? userSnap.data() : null, now);
@@ -401,6 +419,11 @@ export async function cancelOwnTicket(db, { ticket, now = new Date() }) {
           resultedInBan: penalty.resulted_in_ban,
         });
       } else {
+        // A waiting ticket leaves the list of waiting numbers. Only when it is on it: a ticket joined by an app
+        // from before the list is not, and the rules accept only a list that loses exactly one number.
+        if (hasWaitingList(queue) && queue.waiting_seqs.includes(current.daily_sequence)) {
+          tx.update(queueRef, { waiting_seqs: arrayRemove(current.daily_sequence), updated_at: serverTimestamp() });
+        }
         releaseHolder(db, tx, current);
       }
       tx.update(ticketRef, cancelled);
@@ -448,7 +471,13 @@ export async function cancelOfficeQueue(db, { office, reason, actor, now = new D
       }
       // One log line for the whole cancellation, not one per ticket (after the reads: a transaction reads first)
       logQueue(db, tx, queueRef, office.id, actor, ACTIVITY_ACTION.QUEUE_CANCELLED, trimmed);
-      tx.update(queueRef, { status: QUEUE_STATUS.CLOSED, current_ticket_id: null, updated_at: serverTimestamp() });
+      // Every waiting ticket is cancelled below, so the list of waiting numbers empties here, with the close
+      tx.update(queueRef, {
+        status: QUEUE_STATUS.CLOSED,
+        current_ticket_id: null,
+        ...(hasWaitingList(queue) ? { waiting_seqs: [] } : {}),
+        updated_at: serverTimestamp(),
+      });
       if (current) {
         releaseHolder(db, tx, current);
         tx.update(doc(db, 'tickets', current.id), cancelled());
