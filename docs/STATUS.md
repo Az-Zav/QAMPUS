@@ -5,7 +5,7 @@ Decisions and their reasons live in `DECISIONS.md`. Product spec: `KnowledgeBase
 **Next session: read `NEXT_SESSION.md`** (working agreements, environment, code map, lessons, and the ordered plan).
 
 _Last updated: 2026-11-06 (demo walkthrough `demo/QAMPUS-demo.mp4` with a real-phone QR scan, 3D promo `demo/QAMPUS-promo.mp4`; not committed)_
-_Schema: `docs/SCHEMA.md` (users, institutionalIds, offices, staff, queues, tickets, offenses locked)._
+_Schema: `docs/SCHEMA.md` (all collections locked; value lists, ID formats, absent-until-set fields and example documents added 2026-11-06, checked against the live console). Diagrams: `docs/erd/` (`python3 docs/erd/generate.py`)._
 
 ## Built
 - **Mobile Google sign-in** (native `@react-native-google-signin`, school domain only), then Firebase `signInWithCredential`. Student profile in `users/{uid}` (`apps/mobile/src/lib/users.js`).
@@ -63,6 +63,7 @@ See `PLAN_RESPONSIVENESS.md`. Staff web narrow-width pass built (top bar layouts
 - Minor bugs (retest 2026-11-06 on the Android emulator and the hosted console): "0 mins"/"1 mins" plural on the ticket; the camera prompt returns every time the scanner opens from the called dialog, and the first tap on "Type the code instead" is ignored; tapping an office card on Home does nothing, with no message, when the queue is closed or the student is banned; the primary button in phone dialogs (Done, OK, Allow camera) shows a grey square behind its rounded shape; "Contact Support" opens the mail app with no recipient (`help.jsx` `mailto:?subject=...`, address still an open question); no SERVICE_COMPLETED notification after a visit (not built); joins are accepted before opening time (documented simplification).
 - Seen while recording the demo (2026-11-06, emulator + hosted console): the called dialog's countdown shows a wrong value (3:36, 2:56) for its first frame before snapping to 0:58; the join dialog says "about 0 min". Staff Revoke now works live (the live rules already match the repo; a rules deploy was a no-op), so that earlier known issue is closed. The call reached the phone at once, so BUG-019 did not reproduce in the foreground.
 - The repository is PUBLIC. It holds public client config only (Firebase web and Android API keys, OAuth client ids); the 2026-10-25 review found no private keys, service accounts or tokens in the tree or the full history. Because anonymous sign-in is on, anyone with the public key can create guest accounts: see "Security review" in DECISIONS (App Check and API key restrictions are console steps for the developer).
+- The staff Revoke dialog says the revoke "is recorded in the activity log with your name", but `revokeOffense` writes no `events` line (the rules accept only TICKET and QUEUE entities); the offense document and the student's notification are the record. Change the dialog text or log it. `OFFENSE_RECORDED`, `INVALID_SCAN`, `SERVICE_COMPLETED` and `GLOBAL_ANNOUNCEMENT` are defined but never written.
 - Students who saved a student ID before 6.6 have no `institutionalIds` claim; their ID is not reserved until they are given a claim (a second student could still take it). Accepted for the prototype.
 
 ## Open questions

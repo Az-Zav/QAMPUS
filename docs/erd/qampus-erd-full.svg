@@ -1,0 +1,221 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1222" height="872" viewBox="0 0 1222 872" font-family="Inter, Liberation Sans, Arial, Helvetica, sans-serif"><rect width="1222" height="872" fill="#fff"/><path d="M146.0,118.0 L146.0,180.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="138.0" y1="130.0" x2="154.0" y2="130.0" stroke="#222" stroke-width="1.7"/><circle cx="146.0" cy="145.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<line x1="154.0" y1="168.0" x2="138.0" y2="168.0" stroke="#222" stroke-width="1.7"/><line x1="154.0" y1="161.0" x2="138.0" y2="161.0" stroke="#222" stroke-width="1.7"/>
+<rect x="163.3" y="142.0" width="69.4" height="16" fill="#fff"/>
+<text x="198.0" y="154.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">claims ID</text>
+<path d="M146.0,552.0 L146.0,614.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="138.0" y1="564.0" x2="154.0" y2="564.0" stroke="#222" stroke-width="1.7"/><line x1="138.0" y1="571.0" x2="154.0" y2="571.0" stroke="#222" stroke-width="1.7"/>
+<line x1="146.0" y1="597.0" x2="137.0" y2="614.0" stroke="#222" stroke-width="1.7"/><line x1="146.0" y1="597.0" x2="146.0" y2="614.0" stroke="#222" stroke-width="1.7"/><line x1="146.0" y1="597.0" x2="155.0" y2="614.0" stroke="#222" stroke-width="1.7"/><circle cx="146.0" cy="589.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<rect x="157.9" y="576.0" width="56.2" height="16" fill="#fff"/>
+<text x="186.0" y="588.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">mailbox</text>
+<path d="M262.0,270.0 L340.0,270.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="274.0" y1="278.0" x2="274.0" y2="262.0" stroke="#222" stroke-width="1.7"/><line x1="281.0" y1="278.0" x2="281.0" y2="262.0" stroke="#222" stroke-width="1.7"/>
+<line x1="323.0" y1="270.0" x2="340.0" y2="279.0" stroke="#222" stroke-width="1.7"/><line x1="323.0" y1="270.0" x2="340.0" y2="270.0" stroke="#222" stroke-width="1.7"/><line x1="323.0" y1="270.0" x2="340.0" y2="261.0" stroke="#222" stroke-width="1.7"/><circle cx="315.0" cy="270.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<rect x="279.5" y="247.0" width="43.0" height="16" fill="#fff"/>
+<text x="301.0" y="259.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">holds</text>
+<path d="M262.0,492.0 L301.0,492.0 L301.0,570.0 L340.0,570.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="274.0" y1="500.0" x2="274.0" y2="484.0" stroke="#222" stroke-width="1.7"/><line x1="281.0" y1="500.0" x2="281.0" y2="484.0" stroke="#222" stroke-width="1.7"/>
+<line x1="323.0" y1="570.0" x2="340.0" y2="579.0" stroke="#222" stroke-width="1.7"/><line x1="323.0" y1="570.0" x2="340.0" y2="570.0" stroke="#222" stroke-width="1.7"/><line x1="323.0" y1="570.0" x2="340.0" y2="561.0" stroke="#222" stroke-width="1.7"/><circle cx="315.0" cy="570.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<rect x="269.6" y="520.0" width="62.8" height="16" fill="#fff"/>
+<text x="301.0" y="532.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">receives</text>
+<path d="M456.0,438.0 L456.0,500.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="448.0" y1="450.0" x2="464.0" y2="450.0" stroke="#222" stroke-width="1.7"/><line x1="448.0" y1="457.0" x2="464.0" y2="457.0" stroke="#222" stroke-width="1.7"/>
+<line x1="464.0" y1="488.0" x2="448.0" y2="488.0" stroke="#222" stroke-width="1.7"/><circle cx="456.0" cy="473.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<rect x="467.2" y="462.0" width="49.6" height="16" fill="#fff"/>
+<text x="492.0" y="474.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">causes</text>
+<path d="M572.0,390.0 L650.0,390.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="589.0" y1="390.0" x2="572.0" y2="381.0" stroke="#222" stroke-width="1.7"/><line x1="589.0" y1="390.0" x2="572.0" y2="390.0" stroke="#222" stroke-width="1.7"/><line x1="589.0" y1="390.0" x2="572.0" y2="399.0" stroke="#222" stroke-width="1.7"/><circle cx="597.0" cy="390.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<line x1="638.0" y1="382.0" x2="638.0" y2="398.0" stroke="#222" stroke-width="1.7"/><line x1="631.0" y1="382.0" x2="631.0" y2="398.0" stroke="#222" stroke-width="1.7"/>
+<rect x="586.2" y="367.0" width="49.6" height="16" fill="#fff"/>
+<text x="611.0" y="379.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">issues</text>
+<path d="M882.0,96.0 L960.0,96.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="894.0" y1="104.0" x2="894.0" y2="88.0" stroke="#222" stroke-width="1.7"/><line x1="901.0" y1="104.0" x2="901.0" y2="88.0" stroke="#222" stroke-width="1.7"/>
+<line x1="943.0" y1="96.0" x2="960.0" y2="105.0" stroke="#222" stroke-width="1.7"/><line x1="943.0" y1="96.0" x2="960.0" y2="96.0" stroke="#222" stroke-width="1.7"/><line x1="943.0" y1="96.0" x2="960.0" y2="87.0" stroke="#222" stroke-width="1.7"/><circle cx="935.0" cy="96.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<rect x="889.6" y="73.0" width="62.8" height="16" fill="#fff"/>
+<text x="921.0" y="85.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">assigned</text>
+<path d="M766.0,258.0 L766.0,320.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="758.0" y1="270.0" x2="774.0" y2="270.0" stroke="#222" stroke-width="1.7"/><line x1="758.0" y1="277.0" x2="774.0" y2="277.0" stroke="#222" stroke-width="1.7"/>
+<line x1="766.0" y1="303.0" x2="757.0" y2="320.0" stroke="#222" stroke-width="1.7"/><line x1="766.0" y1="303.0" x2="766.0" y2="320.0" stroke="#222" stroke-width="1.7"/><line x1="766.0" y1="303.0" x2="775.0" y2="320.0" stroke="#222" stroke-width="1.7"/><circle cx="766.0" cy="295.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<rect x="776.7" y="282.0" width="82.6" height="16" fill="#fff"/>
+<text x="818.0" y="294.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">one per day</text>
+<path d="M882.0,390.0 L960.0,390.0" fill="none" stroke="#222" stroke-width="1.7" stroke-linejoin="round"/>
+<line x1="894.0" y1="398.0" x2="894.0" y2="382.0" stroke="#222" stroke-width="1.7"/><line x1="901.0" y1="398.0" x2="901.0" y2="382.0" stroke="#222" stroke-width="1.7"/>
+<line x1="943.0" y1="390.0" x2="960.0" y2="399.0" stroke="#222" stroke-width="1.7"/><line x1="943.0" y1="390.0" x2="960.0" y2="390.0" stroke="#222" stroke-width="1.7"/><line x1="943.0" y1="390.0" x2="960.0" y2="381.0" stroke="#222" stroke-width="1.7"/><circle cx="935.0" cy="390.0" r="5.5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<rect x="896.2" y="367.0" width="49.6" height="16" fill="#fff"/>
+<text x="921.0" y="379.0" font-size="12.5" font-style="italic" text-anchor="middle" fill="#222">logged</text>
+<rect x="30" y="26" width="232" height="92" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M30,70 L30,31 Q30,26 35,26 L257,26 Q262,26 262,31 L262,70 Z" fill="#ececec"/>
+<line x1="30" y1="70" x2="262" y2="70" stroke="#222" stroke-width="1.2"/>
+<text x="44" y="46" font-size="16" font-weight="700" fill="#111">institutionalIds</text>
+<text x="44" y="62" font-size="11" fill="#555">doc id = student or guest ID</text>
+<text x="39" y="85" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="64" y="85" font-size="13.5" font-weight="700" fill="#111">id</text>
+<text x="39" y="105" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="64" y="105" font-size="13.5" font-weight="400" fill="#111">uid</text>
+<rect x="30" y="180" width="232" height="372" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M30,224 L30,185 Q30,180 35,180 L257,180 Q262,180 262,185 L262,224 Z" fill="#ececec"/>
+<line x1="30" y1="224" x2="262" y2="224" stroke="#222" stroke-width="1.2"/>
+<text x="44" y="200" font-size="16" font-weight="700" fill="#111">users</text>
+<text x="44" y="216" font-size="11" fill="#555">doc id = Firebase Auth uid</text>
+<text x="39" y="239" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="64" y="239" font-size="13.5" font-weight="700" fill="#111">uid</text>
+<text x="64" y="259" font-size="13.5" font-weight="400" fill="#111">role</text>
+<text x="64" y="279" font-size="13.5" font-weight="400" fill="#111">name</text>
+<text x="64" y="299" font-size="13.5" font-weight="400" fill="#111">email</text>
+<text x="39" y="319" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="64" y="319" font-size="13.5" font-weight="400" fill="#111">institutional_id</text>
+<text x="64" y="339" font-size="13.5" font-weight="400" fill="#111">program</text>
+<text x="64" y="359" font-size="13.5" font-weight="400" fill="#111">guest_type</text>
+<text x="64" y="379" font-size="13.5" font-weight="400" fill="#111">push_enabled</text>
+<text x="64" y="399" font-size="13.5" font-weight="400" fill="#111">push_token</text>
+<text x="64" y="419" font-size="13.5" font-weight="400" fill="#111">strike_count</text>
+<text x="64" y="439" font-size="13.5" font-weight="400" fill="#111">banned_until</text>
+<text x="64" y="459" font-size="13.5" font-weight="400" fill="#111">active_count</text>
+<text x="64" y="479" font-size="13.5" font-weight="400" fill="#111">active_offices</text>
+<text x="252" y="479" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">map</text>
+<text x="39" y="499" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="64" y="499" font-size="13.5" font-weight="400" fill="#111">last_revoked_offense</text>
+<text x="64" y="519" font-size="13.5" font-weight="400" fill="#111">created_at</text>
+<text x="64" y="539" font-size="13.5" font-weight="400" fill="#111">updated_at</text>
+<text x="252" y="539" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">optional</text>
+<rect x="30" y="614" width="232" height="232" rx="5" fill="#fff" stroke="#222" stroke-width="1.7" stroke-dasharray="7 4"/>
+<path d="M30,658 L30,619 Q30,614 35,614 L257,614 Q262,614 262,619 L262,658 Z" fill="#ececec"/>
+<line x1="30" y1="658" x2="262" y2="658" stroke="#222" stroke-width="1.2"/>
+<text x="44" y="634" font-size="16" font-weight="700" fill="#111">notifications</text>
+<text x="44" y="650" font-size="11" fill="#555">subcollection: users/{uid}/notifications</text>
+<text x="39" y="673" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="64" y="673" font-size="13.5" font-weight="700" fill="#111">id</text>
+<text x="64" y="693" font-size="13.5" font-weight="400" fill="#111">type</text>
+<text x="64" y="713" font-size="13.5" font-weight="400" fill="#111">title</text>
+<text x="64" y="733" font-size="13.5" font-weight="400" fill="#111">message</text>
+<text x="39" y="753" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="64" y="753" font-size="13.5" font-weight="400" fill="#111">ticket_id</text>
+<text x="39" y="773" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="64" y="773" font-size="13.5" font-weight="400" fill="#111">office_id</text>
+<text x="64" y="793" font-size="13.5" font-weight="400" fill="#111">is_read</text>
+<text x="64" y="813" font-size="13.5" font-weight="400" fill="#111">created_at</text>
+<text x="64" y="833" font-size="13.5" font-weight="400" fill="#111">read_at</text>
+<rect x="340" y="26" width="232" height="412" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M340,70 L340,31 Q340,26 345,26 L567,26 Q572,26 572,31 L572,70 Z" fill="#ececec"/>
+<line x1="340" y1="70" x2="572" y2="70" stroke="#222" stroke-width="1.2"/>
+<text x="354" y="46" font-size="16" font-weight="700" fill="#111">tickets</text>
+<text x="354" y="62" font-size="11" fill="#555">doc id = queueId_seq</text>
+<text x="349" y="85" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="374" y="85" font-size="13.5" font-weight="700" fill="#111">id</text>
+<text x="349" y="105" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="374" y="105" font-size="13.5" font-weight="400" fill="#111">office_id</text>
+<text x="374" y="125" font-size="13.5" font-weight="400" fill="#111">office_name</text>
+<text x="562" y="125" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="374" y="145" font-size="13.5" font-weight="400" fill="#111">queue_date</text>
+<text x="349" y="165" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="374" y="165" font-size="13.5" font-weight="400" fill="#111">user_id</text>
+<text x="374" y="185" font-size="13.5" font-weight="400" fill="#111">holder_name</text>
+<text x="562" y="185" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="374" y="205" font-size="13.5" font-weight="400" fill="#111">holder_institutional_id</text>
+<text x="562" y="205" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="374" y="225" font-size="13.5" font-weight="400" fill="#111">daily_sequence</text>
+<text x="374" y="245" font-size="13.5" font-weight="400" fill="#111">ticket_number</text>
+<text x="374" y="265" font-size="13.5" font-weight="400" fill="#111">status</text>
+<text x="374" y="285" font-size="13.5" font-weight="400" fill="#111">joined_at</text>
+<text x="374" y="305" font-size="13.5" font-weight="400" fill="#111">called_at</text>
+<text x="374" y="325" font-size="13.5" font-weight="400" fill="#111">service_started_at</text>
+<text x="374" y="345" font-size="13.5" font-weight="400" fill="#111">completed_at</text>
+<text x="374" y="365" font-size="13.5" font-weight="400" fill="#111">cancelled_at</text>
+<text x="374" y="385" font-size="13.5" font-weight="400" fill="#111">no_show_at</text>
+<text x="374" y="405" font-size="13.5" font-weight="400" fill="#111">cancelled_by</text>
+<text x="374" y="425" font-size="13.5" font-weight="400" fill="#111">reason</text>
+<rect x="340" y="500" width="232" height="332" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M340,544 L340,505 Q340,500 345,500 L567,500 Q572,500 572,505 L572,544 Z" fill="#ececec"/>
+<line x1="340" y1="544" x2="572" y2="544" stroke="#222" stroke-width="1.2"/>
+<text x="354" y="520" font-size="16" font-weight="700" fill="#111">offenses</text>
+<text x="354" y="536" font-size="11" fill="#555">doc id = ticket id</text>
+<text x="349" y="559" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="374" y="559" font-size="13.5" font-weight="700" fill="#111">id</text>
+<text x="349" y="579" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="374" y="579" font-size="13.5" font-weight="400" fill="#111">user_id</text>
+<text x="349" y="599" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="374" y="599" font-size="13.5" font-weight="400" fill="#111">ticket_id</text>
+<text x="349" y="619" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="374" y="619" font-size="13.5" font-weight="400" fill="#111">office_id</text>
+<text x="374" y="639" font-size="13.5" font-weight="400" fill="#111">office_name</text>
+<text x="562" y="639" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="374" y="659" font-size="13.5" font-weight="400" fill="#111">ticket_number</text>
+<text x="562" y="659" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="374" y="679" font-size="13.5" font-weight="400" fill="#111">holder_name</text>
+<text x="562" y="679" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="374" y="699" font-size="13.5" font-weight="400" fill="#111">holder_institutional_id</text>
+<text x="562" y="699" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="374" y="719" font-size="13.5" font-weight="400" fill="#111">type</text>
+<text x="374" y="739" font-size="13.5" font-weight="400" fill="#111">resulted_in_ban</text>
+<text x="374" y="759" font-size="13.5" font-weight="400" fill="#111">created_at</text>
+<text x="374" y="779" font-size="13.5" font-weight="400" fill="#111">revoked_at</text>
+<text x="349" y="799" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="374" y="799" font-size="13.5" font-weight="400" fill="#111">revoked_by</text>
+<text x="374" y="819" font-size="13.5" font-weight="400" fill="#111">revoke_reason</text>
+<rect x="650" y="26" width="232" height="232" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M650,70 L650,31 Q650,26 655,26 L877,26 Q882,26 882,31 L882,70 Z" fill="#ececec"/>
+<line x1="650" y1="70" x2="882" y2="70" stroke="#222" stroke-width="1.2"/>
+<text x="664" y="46" font-size="16" font-weight="700" fill="#111">offices</text>
+<text x="664" y="62" font-size="11" fill="#555">doc id = office id</text>
+<text x="659" y="85" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="684" y="85" font-size="13.5" font-weight="700" fill="#111">id</text>
+<text x="684" y="105" font-size="13.5" font-weight="400" fill="#111">code</text>
+<text x="684" y="125" font-size="13.5" font-weight="400" fill="#111">name</text>
+<text x="684" y="145" font-size="13.5" font-weight="400" fill="#111">short_name</text>
+<text x="684" y="165" font-size="13.5" font-weight="400" fill="#111">location</text>
+<text x="684" y="185" font-size="13.5" font-weight="400" fill="#111">status</text>
+<text x="684" y="205" font-size="13.5" font-weight="400" fill="#111">default_service_minutes</text>
+<text x="684" y="225" font-size="13.5" font-weight="400" fill="#111">hours</text>
+<text x="872" y="225" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">map</text>
+<text x="684" y="245" font-size="13.5" font-weight="400" fill="#111">check_in_code</text>
+<rect x="650" y="320" width="232" height="272" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M650,364 L650,325 Q650,320 655,320 L877,320 Q882,320 882,325 L882,364 Z" fill="#ececec"/>
+<line x1="650" y1="364" x2="882" y2="364" stroke="#222" stroke-width="1.2"/>
+<text x="664" y="340" font-size="16" font-weight="700" fill="#111">queues</text>
+<text x="664" y="356" font-size="11" fill="#555">doc id = officeId_yyyymmdd</text>
+<text x="659" y="379" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="684" y="379" font-size="13.5" font-weight="700" fill="#111">id</text>
+<text x="684" y="399" font-size="13.5" font-weight="400" fill="#111">status</text>
+<text x="684" y="419" font-size="13.5" font-weight="400" fill="#111">last_seq</text>
+<text x="684" y="439" font-size="13.5" font-weight="400" fill="#111">last_called_seq</text>
+<text x="659" y="459" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="684" y="459" font-size="13.5" font-weight="400" fill="#111">current_ticket_id</text>
+<text x="684" y="479" font-size="13.5" font-weight="400" fill="#111">waiting_seqs</text>
+<text x="872" y="479" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">array</text>
+<text x="684" y="499" font-size="13.5" font-weight="400" fill="#111">cutoff_overridden</text>
+<text x="684" y="519" font-size="13.5" font-weight="400" fill="#111">completed_count</text>
+<text x="684" y="539" font-size="13.5" font-weight="400" fill="#111">service_seconds_total</text>
+<text x="684" y="559" font-size="13.5" font-weight="400" fill="#111">created_at</text>
+<text x="684" y="579" font-size="13.5" font-weight="400" fill="#111">updated_at</text>
+<rect x="960" y="26" width="232" height="132" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M960,70 L960,31 Q960,26 965,26 L1187,26 Q1192,26 1192,31 L1192,70 Z" fill="#ececec"/>
+<line x1="960" y1="70" x2="1192" y2="70" stroke="#222" stroke-width="1.2"/>
+<text x="974" y="46" font-size="16" font-weight="700" fill="#111">staff</text>
+<text x="974" y="62" font-size="11" fill="#555">doc id = lowercase email</text>
+<text x="969" y="85" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="994" y="85" font-size="13.5" font-weight="700" fill="#111">email</text>
+<text x="994" y="105" font-size="13.5" font-weight="400" fill="#111">name</text>
+<text x="969" y="125" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="994" y="125" font-size="13.5" font-weight="400" fill="#111">office_id</text>
+<text x="994" y="145" font-size="13.5" font-weight="400" fill="#111">role</text>
+<rect x="960" y="320" width="232" height="292" rx="5" fill="#fff" stroke="#222" stroke-width="1.7"/>
+<path d="M960,364 L960,325 Q960,320 965,320 L1187,320 Q1192,320 1192,325 L1192,364 Z" fill="#ececec"/>
+<line x1="960" y1="364" x2="1192" y2="364" stroke="#222" stroke-width="1.2"/>
+<text x="974" y="340" font-size="16" font-weight="700" fill="#111">events</text>
+<text x="974" y="356" font-size="11" fill="#555">activity log, one line per action</text>
+<text x="969" y="379" font-size="10" font-weight="700" fill="#111">PK</text>
+<text x="994" y="379" font-size="13.5" font-weight="700" fill="#111">id</text>
+<text x="994" y="399" font-size="13.5" font-weight="400" fill="#111">entity_type</text>
+<text x="969" y="419" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="994" y="419" font-size="13.5" font-weight="400" fill="#111">entity_id</text>
+<text x="994" y="439" font-size="13.5" font-weight="400" fill="#111">action</text>
+<text x="994" y="459" font-size="13.5" font-weight="400" fill="#111">from_status</text>
+<text x="994" y="479" font-size="13.5" font-weight="400" fill="#111">to_status</text>
+<text x="994" y="499" font-size="13.5" font-weight="400" fill="#111">actor_uid</text>
+<text x="994" y="519" font-size="13.5" font-weight="400" fill="#111">actor_name</text>
+<text x="1182" y="519" font-size="11.5" font-style="italic" text-anchor="end" fill="#666">copy</text>
+<text x="994" y="539" font-size="13.5" font-weight="400" fill="#111">reason</text>
+<text x="969" y="559" font-size="10" font-weight="700" fill="#111">FK</text>
+<text x="994" y="559" font-size="13.5" font-weight="400" fill="#111">office_id</text>
+<text x="994" y="579" font-size="13.5" font-weight="400" fill="#111">ticket_number</text>
+<text x="994" y="599" font-size="13.5" font-weight="400" fill="#111">created_at</text></svg>
