@@ -45,11 +45,22 @@ const NO_ANNOUNCEMENTS = Object.freeze([]);
 // ACTION RESULTS
 // =====================================================
 
+// DENIED (the rules refused the write) and FAILED (anything else: offline, timeout) are told apart from a wrong ID
+// or a wrong ticket state, so a connection problem never reads as "the ID doesn't match" (BUG-008)
 export const VerifyResult = Object.freeze({
   OK: 'ok',
   NO_MATCH: 'noMatch',
   EXPIRED: 'expired',
+  NOT_CALLED: 'notCalled',
+  DENIED: 'denied',
+  FAILED: 'failed',
+  // Offline: Firestore keeps the write on this computer and sends it once the connection is back
+  PENDING: 'pending',
 });
+
+// How long Verify waits for the server before telling staff the write is not confirmed yet
+const VERIFY_CONFIRM_MS = 8000;
+const NOT_CONFIRMED = Symbol('notConfirmed');
 
 export const NoShowResult = Object.freeze({
   OK: 'ok',
@@ -57,6 +68,22 @@ export const NoShowResult = Object.freeze({
   TOO_EARLY: 'tooEarly',
   REASON_REQUIRED: 'reasonRequired',
   ALREADY_RECORDED: 'alreadyRecorded',
+  DENIED: 'denied',
+  FAILED: 'failed',
+});
+
+const VERIFY_RESULT_BY_ERROR = Object.freeze({
+  [TicketingError.ID_MISMATCH]: VerifyResult.NO_MATCH,
+  [TicketingError.GRACE_EXPIRED]: VerifyResult.EXPIRED,
+  [TicketingError.NOT_CALLED]: VerifyResult.NOT_CALLED,
+  [TicketingError.DENIED]: VerifyResult.DENIED,
+});
+
+const NO_SHOW_RESULT_BY_ERROR = Object.freeze({
+  [TicketingError.TICKET_UNAVAILABLE]: NoShowResult.INVALID_STATE,
+  [TicketingError.GRACE_NOT_EXPIRED]: NoShowResult.TOO_EARLY,
+  [TicketingError.REASON_REQUIRED]: NoShowResult.REASON_REQUIRED,
+  [TicketingError.DENIED]: NoShowResult.DENIED,
 });
 
 // =====================================================
@@ -159,14 +186,24 @@ export function QueueProvider({ children }) {
   // =================================================
 
   // Staff verify the called ticket by the holder's ID: CALLED -> IN_SERVICE inside the grace period.
-  // Resolves to a VerifyResult for the modal (a refused write also reads as no match).
+  // Resolves to a VerifyResult for the modal, one per reason (BUG-008).
   const verifyById = async (idNumber) => {
-    if (!currentTicket) return VerifyResult.NO_MATCH;
+    if (!currentTicket) return VerifyResult.NOT_CALLED;
+    let timer;
     try {
-      await verifyByHolderId(db, { ticket: currentTicket, idNumber, actor });
-      return VerifyResult.OK;
+      // A batch write offline never settles (it waits in the cache), so the dialog would hang without a limit
+      const outcome = await Promise.race([
+        verifyByHolderId(db, { ticket: currentTicket, idNumber, actor }),
+        new Promise((resolve) => {
+          timer = setTimeout(() => resolve(NOT_CONFIRMED), VERIFY_CONFIRM_MS);
+        }),
+      ]);
+      return outcome === NOT_CONFIRMED ? VerifyResult.PENDING : VerifyResult.OK;
     } catch (error) {
-      return error.code === TicketingError.GRACE_EXPIRED ? VerifyResult.EXPIRED : VerifyResult.NO_MATCH;
+      console.warn("Couldn't verify by ID", error);
+      return VERIFY_RESULT_BY_ERROR[error?.code] ?? VerifyResult.FAILED;
+    } finally {
+      clearTimeout(timer);
     }
   };
 
@@ -183,9 +220,8 @@ export function QueueProvider({ children }) {
       await markTicketNoShow(db, { office, ticket: currentTicket, actor, reason });
       return NoShowResult.OK;
     } catch (error) {
-      if (error.code === TicketingError.GRACE_NOT_EXPIRED) return NoShowResult.TOO_EARLY;
-      if (error.code === TicketingError.REASON_REQUIRED) return NoShowResult.REASON_REQUIRED;
-      return NoShowResult.INVALID_STATE;
+      console.warn("Couldn't mark the no-show", error);
+      return NO_SHOW_RESULT_BY_ERROR[error?.code] ?? NoShowResult.FAILED;
     }
   };
 

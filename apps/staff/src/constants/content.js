@@ -155,20 +155,22 @@ export const ACTIVITY_LOG_COPY = Object.freeze({
 // "Couldn't <what>. <why>", where the reason is keyed by
 // the backend's TicketingError code.
 
+const ACTION_ERROR_REASONS = Object.freeze({
+  QUEUE_CLOSED: 'The queue is closed.',
+  WINDOW_BUSY: 'A ticket is already at the window.',
+  TICKET_UNAVAILABLE:
+    'That ticket is no longer available. It may have been cancelled or called already.',
+  NOT_IN_SERVICE: 'No ticket is in service right now.',
+  REASON_REQUIRED: 'A reason is required.',
+  DENIED:
+    'The change was not accepted. Check your connection and try again.',
+  UNKNOWN: 'Something went wrong. Check your connection and try again in a moment.',
+});
+
 export const ACTION_ERROR_COPY = Object.freeze({
   prefix: (what) => `Couldn't ${what}.`,
   dismiss: 'Dismiss',
-  reasons: Object.freeze({
-    QUEUE_CLOSED: 'The queue is closed.',
-    WINDOW_BUSY: 'A ticket is already at the window.',
-    TICKET_UNAVAILABLE:
-      'That ticket is no longer available. It may have been cancelled or called already.',
-    NOT_IN_SERVICE: 'No ticket is in service right now.',
-    REASON_REQUIRED: 'A reason is required.',
-    DENIED:
-      'The change was not accepted. Check your connection and try again.',
-    UNKNOWN: 'Something went wrong. Try again in a moment.',
-  }),
+  reasons: ACTION_ERROR_REASONS,
 });
 
 // Staff/EmptyState contexts
@@ -213,6 +215,13 @@ export const MODAL_COPY = Object.freeze({
       "That ID doesn't match this ticket. Nothing has changed — check the ID and try again.",
     expired:
       'This ticket has expired and can no longer be verified. Mark it as a no-show instead.',
+    notCalled:
+      'This ticket is no longer waiting to be verified. The student may have checked in already, or it was cancelled.',
+    // A refused write or a lost connection (BUG-008): the same wording as the console's action banner
+    denied: ACTION_ERROR_REASONS.DENIED,
+    failed: ACTION_ERROR_REASONS.UNKNOWN,
+    pending:
+      'Not confirmed yet: this computer looks offline. The check-in goes through once the connection is back.',
   }),
 
   markNoShow: (number) => ({
@@ -220,6 +229,12 @@ export const MODAL_COPY = Object.freeze({
     body: 'This records an offense for the user. They will be notified. You will need to call the next ticket separately.',
     cancel: 'Cancel',
     confirm: 'Mark no-show',
+    invalidState: 'This ticket cannot be marked as a no-show. It is no longer at the window.',
+    tooEarly: 'The grace period has not expired yet.',
+    reasonRequired: 'Please enter a reason for reversing verification.',
+    alreadyRecorded: 'A no-show offense already exists for this ticket.',
+    denied: ACTION_ERROR_REASONS.DENIED,
+    failed: ACTION_ERROR_REASONS.UNKNOWN,
   }),
 
   completeService: (number) => ({

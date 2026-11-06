@@ -122,11 +122,8 @@ export default function Queue() {
             if (result === VerifyResult.OK) {
               close();
             } else {
-              setError(
-                result === VerifyResult.EXPIRED
-                  ? copy.expired
-                  : copy.noMatch,
-              );
+              // Each VerifyResult names its own message (BUG-008)
+              setError(copy[result] ?? copy.failed);
             }
           },
         };
@@ -164,24 +161,8 @@ export default function Queue() {
               return;
             }
 
-            const errors = {
-              [NoShowResult.INVALID_STATE]:
-                'This ticket cannot be marked as a no-show.',
-
-              [NoShowResult.TOO_EARLY]:
-                'The grace period has not expired yet.',
-
-              [NoShowResult.REASON_REQUIRED]:
-                'Please enter a reason for reversing verification.',
-
-              [NoShowResult.ALREADY_RECORDED]:
-                'A no-show offense already exists for this ticket.',
-            };
-
-            setError(
-              errors[result] ??
-                'Unable to mark this ticket as a no-show.',
-            );
+            // Each NoShowResult names its own message; a lost connection is not "invalid state" (BUG-008)
+            setError(copy[result] ?? copy.failed);
           },
         };
       }
