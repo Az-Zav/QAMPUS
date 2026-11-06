@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useBottomNavClearance } from '@/components/shell/BottomNav';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import SearchInput from '@/components/primitives/SearchInput';
@@ -27,6 +27,18 @@ export default function Queue() {
   const { join, joining } = useJoinQueue();
 
   const [view, setView] = useState(QueueView.JOIN);
+  // `/queue?view=history` (Profile › Queue History, BUG-016) opens History, even when the tab is already
+  // mounted. The param is cleared once read, so the same link works again after switching back to Join.
+  const { view: viewParam } = useLocalSearchParams();
+  const requested = typeof viewParam === 'string' ? viewParam : '';
+  const [handledParam, setHandledParam] = useState('');
+  if (requested !== handledParam) {
+    setHandledParam(requested);
+    if (requested === 'history') setView(QueueView.HISTORY);
+  }
+  useEffect(() => {
+    if (requested) router.setParams({ view: '' });
+  }, [requested, router]);
   const [search, setSearch] = useState('');
   const [modal, setModal] = useState(null);
   // Persists after close so the modal keeps its content while fading out
@@ -134,7 +146,7 @@ export default function Queue() {
         visible={modal === QueueModal.SUCCESS}
         icon={MODAL_COPY.joined.icon}
         title={MODAL_COPY.joined.title}
-        body={MODAL_COPY.joined.body(selectedOffice?.code ?? '')}
+        body={MODAL_COPY.joined.body(selectedOffice?.name ?? selectedOffice?.code ?? '')}
         buttonLabel={MODAL_COPY.joined.buttonLabel}
         onClose={closeModal}
       />

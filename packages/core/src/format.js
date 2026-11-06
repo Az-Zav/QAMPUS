@@ -105,6 +105,22 @@ export function nextOpening(hours, now = new Date()) {
   return null;
 }
 
+// When a closed queue opens next, for the public display (BUG-018):
+// { when: 'LATER_TODAY', open_min } before today's opening; { when: 'DURING_HOURS' } inside today's hours (staff
+// have not opened it yet, or closed it early); { when: 'DAY', day, daysAhead, open_min } after closing or on a day
+// with no hours; null when the office has no hours on any day.
+export function upcomingOpening(hours, now = new Date()) {
+  const today = todayHours(hours, now);
+  if (today) {
+    const campus = new Date(now.getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);
+    const minute = campus.getUTCHours() * 60 + campus.getUTCMinutes();
+    if (minute < today.open_min) return { when: 'LATER_TODAY', open_min: today.open_min };
+    if (minute < today.close_min) return { when: 'DURING_HOURS' };
+  }
+  const next = nextOpening(hours, now);
+  return next ? { when: 'DAY', ...next } : null;
+}
+
 // The instant the campus day starts (00:00 at UTC+8), `daysAgo` days before the day of `now`
 export function campusDayStart(now = new Date(), daysAgo = 0) {
   const campus = new Date(new Date(now).getTime() + CAMPUS_UTC_OFFSET_MINUTES * 60000);

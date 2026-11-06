@@ -1,9 +1,10 @@
 import CalledModal from '@/components/modals/CalledModal';
 import BottomNav from '@/components/shell/BottomNav';
 import NotificationToast from '@/components/shell/NotificationToast';
+import OfflineBanner from '@/components/shell/OfflineBanner';
 import { AppTab, TicketStatus } from '@/constants';
 import { useBiometric } from '@/providers/BiometricProvider';
-import { useMyTickets, useNotificationToast, usePushRegistration, useTheme, useThemedStyles } from '@/hooks';
+import { useMyTickets, useNotificationToast, useOffline, usePushRegistration, useTheme, useThemedStyles } from '@/hooks';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -21,6 +22,8 @@ export default function AppLayout() {
   const { active } = useMyTickets();
   // Nothing from behind the biometric lock may pop up over it
   const { locked } = useBiometric();
+  // Tickets on screen may be stale while Firestore cannot be reached (BUG-021)
+  const offline = useOffline();
 
   // "It's your turn": shown on any screen while a ticket is being called, until the student dismisses
   // it or opens the scanner. A ticket is only announced once; it is not shown on the scanner itself.
@@ -47,6 +50,7 @@ export default function AppLayout() {
         }}
       />
       <BottomNav active={TAB_PATHS[pathname]} onNavigate={(tab) => router.navigate(`/${tab}`)} />
+      <OfflineBanner visible={offline && !locked} />
       <NotificationToast
         notification={locked ? null : toast}
         onPress={() => {

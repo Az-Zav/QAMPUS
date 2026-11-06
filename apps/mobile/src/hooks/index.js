@@ -10,6 +10,7 @@ export { useNotifications } from './useNotifications';
 export { useNotificationToast } from './useNotificationToast';
 export { usePushRegistration } from './usePushRegistration';
 export { useNow } from './useNow';
+export { useOffline } from './useOffline';
 export { useOffices } from './useOffices';
 export { usePenaltyRecord } from './usePenaltyRecord';
 export { usePrograms } from './usePrograms';

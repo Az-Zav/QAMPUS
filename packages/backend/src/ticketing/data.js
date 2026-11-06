@@ -72,6 +72,18 @@ export function watchMyTickets(db, uid, onData, onError) {
   );
 }
 
+// Whether the user's tickets are live from the server (BUG-021). Firestore marks a snapshot `fromCache` when
+// it cannot reach the backend, so onChange(true) means "offline: what you see may be out of date".
+// Same query as watchMyTickets, so the SDK shares one target and this costs no extra reads.
+export function watchMyTicketsSync(db, uid, onChange, onError) {
+  return onSnapshot(
+    query(collection(db, 'tickets'), where('user_id', '==', uid)),
+    { includeMetadataChanges: true },
+    (snap) => onChange(snap.metadata.fromCache),
+    onError,
+  );
+}
+
 // Every ticket of an office for the campus day of `now` (staff queue screen); callers split waiting from current
 export function watchOfficeTickets(db, officeId, now, onData, onError) {
   return onSnapshot(

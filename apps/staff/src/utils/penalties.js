@@ -1,7 +1,7 @@
+import { activeBanEnd } from '@qampus/backend';
+import { RULES } from '@qampus/core/domain';
 
-import { OFFENSE_TYPE, RULES } from '@qampus/core/domain';
-
-const VALID_OFFENSES = new Set(Object.values(OFFENSE_TYPE));
+const HOUR_MS = 3600 * 1000;
 
 const getTimestamp = (value) => {
   const timestamp = new Date(value).getTime();
@@ -9,100 +9,49 @@ const getTimestamp = (value) => {
 };
 
 /**
- * Calculate the current penalty state for one user.
+ * The penalty state of one student as the Offenses screen shows it (BUG-017).
  *
- * Every two non-revoked offenses form a penalty cycle.
- * The second offense triggers a flat 24-hour ban.
- * The strike count then resets to zero.
- *
- * A display-only summary of the offenses this office can see. The strike and ban that actually count are
- * stored on the student's profile and written with each offense, so a student with offenses at another
- * office can differ from this view.
+ * Nothing is recalculated from pairs of offenses: the ban that counts is the one on the student's profile
+ * (`banned_until`, `strike_count`), written in the same transaction as each offense, and "Caused a 24-hour ban"
+ * is the `resulted_in_ban` flag stored on the offense when it was recorded.
+ * `profile` is the student's users doc when staff could read it. Without it, the ban is taken from this
+ * office's own records: an unrevoked offense that caused a ban less than 24 hours ago.
  */
-export function getPenaltyState(
-  offenses = [],
-  userId,
-  now = Date.now(),
-) {
+export function getPenaltyState(offenses = [], userId, now = Date.now(), profile = null) {
   const currentTime = getTimestamp(now);
 
   const relevant = offenses
-    .filter(
-      (offense) =>
-        offense.holder?.user_id === userId &&
-        !offense.revoked_at &&
-        VALID_OFFENSES.has(offense.type),
-    )
-    .sort((a, b) => {
-      const difference =
-        getTimestamp(a.created_at) -
-        getTimestamp(b.created_at);
+    .filter((offense) => offense.holder?.user_id === userId && !offense.revoked_at)
+    .sort((a, b) => getTimestamp(a.created_at) - getTimestamp(b.created_at) || String(a.id).localeCompare(String(b.id)));
 
-      return difference || String(a.id).localeCompare(String(b.id));
-    });
+  const triggers = relevant.filter((offense) => offense.resulted_in_ban);
+  const latestTrigger = triggers.at(-1) ?? null;
 
-  const triggerOffenseIds = [];
-  let strikes = 0;
-  let latestBanUntil = null;
-  let latestBanOffenseIds = [];
-
-  for (let index = 0; index < relevant.length; index++) {
-    strikes += 1;
-
-    if (strikes === RULES.OFFENSES_PER_BAN) {
-      const triggering = relevant[index];
-      const previous = relevant[index - 1];
-
-      const banUntil = new Date(
-        getTimestamp(triggering.created_at) +
-          RULES.BAN_HOURS * 60 * 60 * 1000,
-      ).toISOString();
-
-      triggerOffenseIds.push(triggering.id);
-
-      latestBanUntil = banUntil;
-      latestBanOffenseIds = [previous.id, triggering.id];
-
-      // R-13: Reset strikes after the second offense.
-      strikes = 0;
-    }
+  let bannedUntil = null;
+  if (profile) {
+    bannedUntil = activeBanEnd(profile, new Date(currentTime))?.toISOString() ?? null;
+  } else if (latestTrigger) {
+    const end = getTimestamp(latestTrigger.created_at) + RULES.BAN_HOURS * HOUR_MS;
+    bannedUntil = end > currentTime ? new Date(end).toISOString() : null;
   }
-
-  const isBanned =
-    latestBanUntil !== null &&
-    getTimestamp(latestBanUntil) > currentTime;
 
   return {
     userId,
-    strikeCount: strikes,
+    strikeCount: profile?.strike_count ?? null,
     activeOffenseCount: relevant.length,
-    isBanned,
-    bannedUntil: isBanned ? latestBanUntil : null,
-    lastBanEndedAt: latestBanUntil,
-    banOffenseIds: isBanned ? latestBanOffenseIds : [],
-    triggerOffenseIds,
+    isBanned: bannedUntil !== null,
+    bannedUntil,
+    banOffenseIds: bannedUntil && latestTrigger ? [latestTrigger.id] : [],
+    triggerOffenseIds: triggers.map((offense) => offense.id),
   };
 }
 
 /**
- * Calculates summary information for an office's
- * offense records.
+ * Summary of an office's offense records. `profiles` maps a student's uid to their users doc.
  */
-export function getPenaltySummary(
-  offenses = [],
-  now = Date.now(),
-) {
-  const userIds = [
-    ...new Set(
-      offenses
-        .map((offense) => offense.holder?.user_id)
-        .filter(Boolean),
-    ),
-  ];
-
-  const states = userIds.map((userId) =>
-    getPenaltyState(offenses, userId, now),
-  );
+export function getPenaltySummary(offenses = [], now = Date.now(), profiles = new Map()) {
+  const userIds = [...new Set(offenses.map((offense) => offense.holder?.user_id).filter(Boolean))];
+  const states = userIds.map((userId) => getPenaltyState(offenses, userId, now, profiles.get(userId) ?? null));
 
   return {
     totalOffenses: offenses.length,

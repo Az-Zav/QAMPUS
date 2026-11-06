@@ -3,7 +3,7 @@
 
 import { db } from '@/lib/firebase';
 import { useSession } from '@/providers/SessionProvider';
-import { watchBoard, watchMyNotifications, watchMyOffenses, watchMyTickets, watchProfile } from '@qampus/backend';
+import { watchBoard, watchMyNotifications, watchMyOffenses, watchMyTickets, watchMyTicketsSync, watchProfile } from '@qampus/backend';
 import { campusDate } from '@qampus/core/format';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
@@ -13,6 +13,8 @@ const EMPTY_BOARD = Object.freeze({ offices: [], queues: {} });
 const EMPTY_TICKETS = Object.freeze([]);
 const EMPTY_OFFENSES = Object.freeze([]);
 const EMPTY_NOTIFICATIONS = Object.freeze([]);
+
+const OFFLINE_DELAY_MS = 3000;
 
 const warn = (label) => (error) => console.warn(label, error);
 
@@ -45,6 +47,24 @@ export function QueueDataProvider({ children }) {
     return watchMyTickets(db, uid, setTickets, warn('Could not load tickets'));
   }, [uid]);
 
+  // Offline sign (BUG-021): the tickets listener answers from the cache while the server cannot be reached.
+  // Going offline waits a few seconds so a cold start (cache first, server a moment later) does not flash it;
+  // coming back clears it at once.
+  const [fromCache, setFromCache] = useState(false);
+  const [offline, setOffline] = useState(false);
+  useEffect(() => {
+    if (!uid) return undefined;
+    return watchMyTicketsSync(db, uid, setFromCache, warn('Could not follow the connection'));
+  }, [uid]);
+  useEffect(() => {
+    if (!fromCache) return undefined;
+    const id = setTimeout(() => setOffline(true), OFFLINE_DELAY_MS);
+    return () => {
+      clearTimeout(id);
+      setOffline(false);
+    };
+  }, [fromCache]);
+
   useEffect(() => {
     if (!uid) return undefined;
     return watchMyOffenses(db, uid, setOffenses, warn('Could not load offenses'));
@@ -69,9 +89,10 @@ export function QueueDataProvider({ children }) {
       profile: uid ? profile : null,
       notifications: uid && mailbox.uid === uid ? mailbox.list : EMPTY_NOTIFICATIONS,
       notificationsReady: !!uid && mailbox.uid === uid,
+      offline: !!uid && offline,
       uid,
     }),
-    [uid, board, tickets, offenses, profile, mailbox],
+    [uid, board, tickets, offenses, profile, mailbox, offline],
   );
 
   return <QueueDataContext.Provider value={value}>{children}</QueueDataContext.Provider>;

@@ -10,9 +10,9 @@ import {
   STAFF_FONT,
   TYPOGRAPHY,
 } from '@/constants';
-import { OfficeLookup, useDisplayQueue, useOfficeByCode } from '@/hooks';
+import { OfficeLookup, useDisplayQueue, useNow, useOfficeByCode } from '@/hooks';
 import { checkInPayload } from '@/utils/office';
-import { formatManualCode } from '@qampus/core/format';
+import { formatManualCode, formatMinutes, upcomingOpening } from '@qampus/core/format';
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -31,6 +31,8 @@ export default function Display() {
   const { width, height } = useWindowDimensions();
   const { office, status } = useOfficeByCode(code);
   const display = useDisplayQueue(office);
+  // The closed screen's "opens ..." line moves on with the clock (today, then tomorrow)
+  const now = useNow(60000);
   const scale = Math.min(width / DISPLAY_WIDTH, height / DISPLAY_HEIGHT);
 
   if (status === OfficeLookup.ERROR || display?.error) return <Outage />;
@@ -69,7 +71,7 @@ export default function Display() {
           ) : (
             <>
               <Text style={[styles.centered, styles.closedTitle]}>{DISPLAY_COPY.closedTitle}</Text>
-              <Text style={[styles.centered, styles.closedBody]}>{DISPLAY_COPY.opensAgain(office.opens)}</Text>
+              <Text style={[styles.centered, styles.closedBody]}>{opensLine(office.hoursByDay, now)}</Text>
             </>
           )}
         </View>
@@ -113,6 +115,19 @@ function OpenStrip({ display }) {
       )}
     </>
   );
+}
+
+const DAY_NAMES = { SUN: 'Sunday', MON: 'Monday', TUE: 'Tuesday', WED: 'Wednesday', THU: 'Thursday', FRI: 'Friday', SAT: 'Saturday' };
+
+// "It opens tomorrow at 08:00." and the like: the next opening with its day, never a time already passed (BUG-018)
+function opensLine(hours, now) {
+  const next = upcomingOpening(hours, new Date(now));
+  if (!next) return DISPLAY_COPY.noHours;
+  if (next.when === 'DURING_HOURS') return DISPLAY_COPY.notOpenYet;
+  const time = formatMinutes(next.open_min);
+  if (next.when === 'LATER_TODAY') return DISPLAY_COPY.opensLaterToday(time);
+  if (next.daysAhead === 1) return DISPLAY_COPY.opensTomorrow(time);
+  return DISPLAY_COPY.opensOn(DAY_NAMES[next.day], time);
 }
 
 function ClosedStrip() {

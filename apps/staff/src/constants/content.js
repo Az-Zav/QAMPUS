@@ -269,7 +269,12 @@ export const DISPLAY_COPY = Object.freeze({
   noOneWaiting: 'No one\nwaiting',
   scanToJoin: 'Scan to join',
   closedTitle: 'This queue is closed',
-  opensAgain: (time) => `It opens again at ${time}.`,
+  // When the queue opens next (BUG-018), from upcomingOpening in @qampus/core/format
+  opensLaterToday: (time) => `It opens today at ${time}.`,
+  notOpenYet: 'It has not opened yet. Please check back soon.',
+  opensTomorrow: (time) => `It opens tomorrow at ${time}.`,
+  opensOn: (day, time) => `It opens ${day} at ${time}.`,
+  noHours: 'Please ask the office for its hours.',
   closedStrip: 'Closed',
   closedStripBody: 'Tickets already issued\nare still valid.',
   unknownOffice: 'This display link does not match an office.',

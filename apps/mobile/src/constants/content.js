@@ -112,8 +112,8 @@ export const EMPTY_STATE_COPY = Object.freeze({
     body: 'Try a different office or service name.',
   },
   [EmptyStateType.OFFLINE]: {
-    title: 'Temporarily unavailable',
-    body: 'Please wait — this clears on its own.',
+    title: 'You’re offline',
+    body: 'Your ticket won’t update until you reconnect.',
   },
 });
 
@@ -181,7 +181,8 @@ export const PROFILE_COPY = Object.freeze({
 // ---------------------------------------------------------------------------
 
 export const PROFILE_MENU = Object.freeze([
-  { id: 'history', title: 'Queue History', icon: 'receipt-outline', href: '/queue' },
+  // The Queue tab opens on History from here (BUG-016): queue.jsx reads `view` and then clears it
+  { id: 'history', title: 'Queue History', icon: 'receipt-outline', href: '/queue?view=history' },
   { id: 'bans', title: 'Bans & Warnings', icon: 'hammer-outline', href: '/bans' },
   { id: 'settings', title: 'Settings', icon: 'settings-outline', href: '/settings' },
   { id: 'help', title: 'Help & Support', icon: 'help-circle-outline', href: '/help' },
@@ -318,7 +319,7 @@ export const MODAL_COPY = Object.freeze({
   joined: {
     icon: 'checkmark-circle-outline',
     title: "You're in the queue",
-    body: (code) => `Your ${code} queue ticket has been issued. Check Home for your position and updates.`,
+    body: (officeName) => `Your ticket for ${officeName} has been issued. Check Home for your position and updates.`,
     buttonLabel: 'Done',
   },
   joinFailed: {

@@ -8,6 +8,7 @@ import {
 
 import { useMemo } from 'react';
 import { useNow } from './useNow';
+import { useOffenderProfiles } from './useOffenderProfiles';
 
 // W04: Offense records and calculated penalty information.
 export function useOffenses(search = '') {
@@ -20,9 +21,13 @@ export function useOffenses(search = '') {
   // even while the staff console remains open.
   const now = useNow(60000);
 
+  // The real strike count and ban of each offender (BUG-017)
+  const userIds = useMemo(() => offenses.map((offense) => offense.holder?.user_id), [offenses]);
+  const profiles = useOffenderProfiles(userIds);
+
   const summary = useMemo(
-    () => getPenaltySummary(offenses, now),
-    [offenses, now],
+    () => getPenaltySummary(offenses, now, profiles),
+    [offenses, now, profiles],
   );
 
   const results = useMemo(() => {
@@ -45,13 +50,12 @@ export function useOffenses(search = '') {
       const userId = offense.holder?.user_id;
 
       const penalty = statesByUser.get(userId) ??
-        getPenaltyState(offenses, userId, now);
+        getPenaltyState(offenses, userId, now, profiles.get(userId) ?? null);
 
       return {
         ...offense,
 
-        // Reflect current calculated history rather than
-        // relying on an old stored flag.
+        // The flag stored when the offense was recorded; a revoked offense no longer shows it
         resulted_in_ban:
           !offense.revoked_at &&
           penalty.triggerOffenseIds.includes(offense.id),
@@ -78,7 +82,7 @@ export function useOffenses(search = '') {
         String(field ?? '').toLowerCase().includes(term),
       ),
     );
-  }, [offenses, search, summary, now]);
+  }, [offenses, search, summary, now, profiles]);
 
   return {
     offenses: results,
