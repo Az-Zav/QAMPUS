@@ -45,8 +45,8 @@ digital one. It has three parts that share one live database:
    - Anyone else can choose **Continue as guest**, fill in the short form, and use the app like a student.
 3. **Join a queue.** Open an office from the Offices tab and tap Join. Your ticket appears on the Home tab.
 4. **Open the staff console** at https://qampus-staff.web.app to call tickets. Staff sign in with Google, and the account must be
-   registered as staff for an office. To request staff access, open an issue on this repository's
-   [Issues page](../../issues). No credentials are published here.
+   registered as staff for an office. To request staff access, contact the developers. No credentials are
+   published here.
 5. **Public display.** From the staff console's Queue screen, choose **Launch public display**.
 
 ## Tech stack
